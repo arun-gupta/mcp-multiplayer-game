@@ -1250,11 +1250,12 @@ async def game_dashboard():
                     
                     let html = '';
                     for (const [agentName, agentInfo] of Object.entries(data.agents)) {{
-                        html += '<div style="margin-bottom: 8px; padding: 6px; background: rgba(0, 255, 0, 0.1); border-radius: 4px; border-left: 2px solid #00ff00;">' +
-                            '<div style="font-weight: bold; color: #00ff00; font-size: 10px;">' + (agentInfo.name || agentName.toUpperCase()) + '</div>' +
-                            '<div style="font-size: 9px; margin: 2px 0;"><strong>Role:</strong> ' + (agentInfo.role || 'N/A') + '</div>' +
-                            '<div style="font-size: 9px; margin: 2px 0;"><strong>Model:</strong> ' + (agentInfo.model || 'N/A') + '</div>' +
-                        '</div>';
+                        const agentDiv = '<div style="margin-bottom: 8px; padding: 6px; background: rgba(0, 255, 0, 0.1); border-radius: 4px; border-left: 2px solid #00ff00;">';
+                        const nameDiv = '<div style="font-weight: bold; color: #00ff00; font-size: 10px;">' + (agentInfo.name || agentName.toUpperCase()) + '</div>';
+                        const roleDiv = '<div style="font-size: 9px; margin: 2px 0;"><strong>Role:</strong> ' + (agentInfo.role || 'N/A') + '</div>';
+                        const modelDiv = '<div style="font-size: 9px; margin: 2px 0;"><strong>Model:</strong> ' + (agentInfo.model || 'N/A') + '</div>';
+                        const agentEnd = '</div>';
+                        html += agentDiv + nameDiv + roleDiv + modelDiv + agentEnd;
                     }}
                     
                     agentsContent.innerHTML = html;
