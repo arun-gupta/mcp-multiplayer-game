@@ -1230,7 +1230,8 @@ async def game_dashboard():
                             const emoji = move.player === 'player' ? '👤' : '🤖';
                             const position = move.position;
                             
-                            html += '<div class="move-item ' + playerClass + '">Move ' + move.move_number + ': <span class="emoji">' + emoji + '</span> <strong>' + position.value + '</strong> at (' + position.row + ',' + position.col + ')</div>';
+                            const moveDiv = '<div class="move-item ' + playerClass + '">Move ' + move.move_number + ': <span class="emoji">' + emoji + '</span> <strong>' + position.value + '</strong> at (' + position.row + ',' + position.col + ')</div>';
+                            html += moveDiv;
                         }});
                         
                         movesList.innerHTML = html;
