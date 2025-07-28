@@ -1230,7 +1230,9 @@ async def game_dashboard():
                             const emoji = move.player === 'player' ? '👤' : '🤖';
                             const position = move.position;
                             
-                            const moveDiv = '<div class="move-item ' + playerClass + '">Move ' + move.move_number + ': <span class="emoji">' + emoji + '</span> <strong>' + position.value + '</strong> at (' + position.row + ',' + position.col + ')</div>';
+                            const moveStart = '<div class="move-item ' + playerClass + '">Move ' + move.move_number + ': <span class="emoji">' + emoji + '</span> <strong>' + position.value + '</strong> at (';
+                            const moveEnd = position.row + ',' + position.col + ')</div>';
+                            const moveDiv = moveStart + moveEnd;
                             html += moveDiv;
                         }});
                         
@@ -1327,7 +1329,9 @@ async def game_dashboard():
                             
                             const headerEnd = '</div>';
                             const detailsEnd = '</details></div>';
-                            const logHtml = logDiv + headerDiv + agentSpan + timeSpan + headerEnd + messageDiv + detailsDiv + summaryDiv + preDiv + detailsEnd;
+                            const logPart1 = logDiv + headerDiv + agentSpan + timeSpan + headerEnd;
+                            const logPart2 = messageDiv + detailsDiv + summaryDiv + preDiv + detailsEnd;
+                            const logHtml = logPart1 + logPart2;
                             html += logHtml;
                         }});
                         
@@ -1411,7 +1415,9 @@ async def game_dashboard():
                             const cost = modelInfo.estimated_cost_per_1k_tokens;
                             const costDisplay = cost > 0 ? '$' + cost.toFixed(6) : 'Free';
                             
-                            const optionClass = (isActive ? 'active' : '') + ' ' + (!isAvailable ? 'unavailable' : '');
+                            const activeClass = isActive ? 'active' : '';
+                            const unavailableClass = !isAvailable ? 'unavailable' : '';
+                            const optionClass = activeClass + ' ' + unavailableClass;
                             const switchCall = 'switchModel(\'' + agent.name + '\', \'' + modelName + '\')';
                             const onClickHandler = isAvailable ? switchCall : '';
                             const optionStart = '<div class="model-option ' + optionClass + '" onclick="' + onClickHandler + '">';
