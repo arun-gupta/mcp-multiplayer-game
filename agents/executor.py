@@ -1,11 +1,12 @@
 """
 Executor Agent Module
-Executes strategic plans for Rock-Paper-Scissors moves
+Executes strategic plans for Tic Tac Toe moves
 """
 import os
 import time
 from crewai import Agent
-from langchain_community.llms import Ollama
+from models.factory import ModelFactory
+from models.registry import model_registry
 from schemas.plan import Plan
 from schemas.action_result import ActionResult, MoveResult
 from schemas.observation import BoardPosition
@@ -13,12 +14,10 @@ from schemas.observation import BoardPosition
 class ExecutorAgent:
     """Executor agent that executes strategic plans"""
     
-    def __init__(self, game_state):
+    def __init__(self, game_state, model_name: str = "llama2-7b"):
         self.game_state = game_state
-        self.llm = Ollama(
-            model="llama2:7b",
-            temperature=0.1
-        )
+        self.model_name = model_name
+        self.llm = self._create_llm(model_name)
         
         self.agent = Agent(
             role="Game Executor",
@@ -36,6 +35,28 @@ class ExecutorAgent:
             allow_delegation=False,
             llm=self.llm
         )
+    
+    def _create_llm(self, model_name: str):
+        """Create LLM instance for the specified model"""
+        llm = ModelFactory.create_llm(model_name)
+        if llm is None:
+            # Fallback to default model
+            print(f"Warning: Could not create LLM for {model_name}, falling back to llama2-7b")
+            llm = ModelFactory.create_llm("llama2-7b")
+        return llm
+    
+    def switch_model(self, model_name: str):
+        """Switch to a different model"""
+        new_llm = self._create_llm(model_name)
+        if new_llm:
+            self.llm = new_llm
+            self.model_name = model_name
+            # Update the agent's LLM
+            self.agent.llm = new_llm
+            # Update game state
+            self.game_state.set_agent_model("executor", model_name)
+            return True
+        return False
     
     def execute_plan(self, plan: Plan) -> ActionResult:
         """Execute the strategic plan by making a move"""
@@ -136,10 +157,14 @@ class ExecutorAgent:
     
     def get_agent_info(self) -> dict:
         """Get information about this agent"""
+        model_config = model_registry.get_model(self.model_name)
+        model_display = model_config.display_name if model_config else self.model_name
+        
         return {
             "name": "Executor Agent",
             "role": "Move Executor",
-            "model": "Ollama Llama2:7B",
+            "model": model_display,
+            "model_name": self.model_name,
             "description": "Executes strategic plans by making board moves",
             "capabilities": ["Plan Execution", "Move Validation", "Board Updates", "Game State Management"]
         } 

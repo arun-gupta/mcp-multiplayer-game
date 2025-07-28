@@ -4,20 +4,19 @@ Observes the current game state and provides intelligence to other agents
 """
 import os
 from crewai import Agent
-from langchain_openai import ChatOpenAI
+from models.factory import ModelFactory
+from models.registry import model_registry
 from schemas.observation import Observation
 
 class ScoutAgent:
     """Scout agent that observes the Tic Tac Toe game state"""
     
-    def __init__(self, game_state):
+    def __init__(self, game_state, model_name: str = "gpt-4"):
         self.game_state = game_state
-        self.llm = ChatOpenAI(
-            model="gpt-4",
-            temperature=0.1,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        self.model_name = model_name
+        self.llm = self._create_llm(model_name)
         
+        # Create the agent with the LLM
         self.agent = Agent(
             role="Game Scout",
             goal="Observe and analyze the current Tic Tac Toe game state to provide accurate intelligence",
@@ -34,6 +33,28 @@ class ScoutAgent:
             allow_delegation=False,
             llm=self.llm
         )
+    
+    def _create_llm(self, model_name: str):
+        """Create LLM instance for the specified model"""
+        llm = ModelFactory.create_llm(model_name)
+        if llm is None:
+            # Fallback to default model
+            print(f"Warning: Could not create LLM for {model_name}, falling back to gpt-4")
+            llm = ModelFactory.create_llm("gpt-4")
+        return llm
+    
+    def switch_model(self, model_name: str):
+        """Switch to a different model"""
+        new_llm = self._create_llm(model_name)
+        if new_llm:
+            self.llm = new_llm
+            self.model_name = model_name
+            # Update the agent's LLM
+            self.agent.llm = new_llm
+            # Update game state
+            self.game_state.set_agent_model("scout", model_name)
+            return True
+        return False
     
     def observe_environment(self) -> Observation:
         """Observe the current game state and return an observation"""
@@ -58,10 +79,14 @@ class ScoutAgent:
     
     def get_agent_info(self) -> dict:
         """Get information about this agent"""
+        model_config = model_registry.get_model(self.model_name)
+        model_display = model_config.display_name if model_config else self.model_name
+        
         return {
             "name": "Scout Agent",
             "role": "Game Observer",
-            "model": "OpenAI GPT-4",
+            "model": model_display,
+            "model_name": self.model_name,
             "description": "Observes board state and analyzes game positions",
             "capabilities": ["Board Analysis", "Threat Detection", "Position Evaluation", "Game State Monitoring"]
         } 

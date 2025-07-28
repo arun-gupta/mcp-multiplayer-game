@@ -33,6 +33,14 @@ class TicTacToeGameState:
             "claude": 0.0,
             "llama": 0.0
         }
+        
+        # Model tracking
+        self.current_models = {
+            "scout": "gpt-4",
+            "strategist": "claude-3-sonnet",
+            "executor": "llama2-7b"
+        }
+        self.model_usage_history = []
     
     def initialize_new_game(self):
         """Reset the game state for a new game"""
@@ -56,6 +64,9 @@ class TicTacToeGameState:
             "claude": 0.0,
             "llama": 0.0
         }
+        
+        # Keep current models but reset history
+        self.model_usage_history = []
     
     def increment_mcp_messages(self):
         """Increment MCP message counter"""
@@ -70,6 +81,29 @@ class TicTacToeGameState:
         """Add cost for an LLM"""
         if llm in self.llm_costs:
             self.llm_costs[llm] += cost
+    
+    def set_agent_model(self, agent: str, model_name: str):
+        """Set the model for a specific agent"""
+        if agent in self.current_models:
+            old_model = self.current_models[agent]
+            self.current_models[agent] = model_name
+            
+            # Record the model change
+            self.model_usage_history.append({
+                "timestamp": datetime.now().isoformat(),
+                "agent": agent,
+                "old_model": old_model,
+                "new_model": model_name,
+                "move_number": self.move_number
+            })
+    
+    def get_current_models(self) -> dict:
+        """Get current model assignments"""
+        return self.current_models.copy()
+    
+    def get_model_usage_history(self) -> list:
+        """Get history of model changes"""
+        return self.model_usage_history.copy()
     
     def get_metrics(self) -> dict:
         """Get current metrics"""

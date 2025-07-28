@@ -1,10 +1,11 @@
 """
 Strategist Agent Module
-Analyzes scout observations and creates strategic plans for Rock-Paper-Scissors
+Analyzes scout observations and creates strategic plans for Tic Tac Toe
 """
 import os
 from crewai import Agent
-from langchain_anthropic import ChatAnthropic
+from models.factory import ModelFactory
+from models.registry import model_registry
 from schemas.observation import Observation
 from schemas.plan import Plan, Strategy
 from schemas.observation import BoardPosition
@@ -13,12 +14,9 @@ import uuid
 class StrategistAgent:
     """Strategist agent that creates plans based on game observations"""
     
-    def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-sonnet-20240229",
-            temperature=0.2,
-            api_key=os.getenv("ANTHROPIC_API_KEY")
-        )
+    def __init__(self, model_name: str = "claude-3-sonnet"):
+        self.model_name = model_name
+        self.llm = self._create_llm(model_name)
         
         self.agent = Agent(
             role="Game Strategist",
@@ -36,6 +34,26 @@ class StrategistAgent:
             allow_delegation=False,
             llm=self.llm
         )
+    
+    def _create_llm(self, model_name: str):
+        """Create LLM instance for the specified model"""
+        llm = ModelFactory.create_llm(model_name)
+        if llm is None:
+            # Fallback to default model
+            print(f"Warning: Could not create LLM for {model_name}, falling back to claude-3-sonnet")
+            llm = ModelFactory.create_llm("claude-3-sonnet")
+        return llm
+    
+    def switch_model(self, model_name: str):
+        """Switch to a different model"""
+        new_llm = self._create_llm(model_name)
+        if new_llm:
+            self.llm = new_llm
+            self.model_name = model_name
+            # Update the agent's LLM
+            self.agent.llm = new_llm
+            return True
+        return False
     
     def create_plan(self, observation: Observation) -> Plan:
         """Create a strategic plan based on the current observation"""
@@ -266,10 +284,14 @@ class StrategistAgent:
     
     def get_agent_info(self) -> dict:
         """Get information about this agent"""
+        model_config = model_registry.get_model(self.model_name)
+        model_display = model_config.display_name if model_config else self.model_name
+        
         return {
             "name": "Strategist Agent",
             "role": "Strategy Creator",
-            "model": "Claude 3 Sonnet",
+            "model": model_display,
+            "model_name": self.model_name,
             "description": "Analyzes board state and creates strategic plans",
             "capabilities": ["Board Analysis", "Strategy Creation", "Threat Assessment", "Move Planning"]
         } 
