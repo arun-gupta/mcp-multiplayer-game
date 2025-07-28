@@ -1340,7 +1340,8 @@ async def game_dashboard():
                             const messageDiv = '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>';
                             const detailsDiv = '<details style="margin-top: 4px;">';
                             const summaryDiv = '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>';
-                            const preDiv = '<pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; max-height: 200px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap;">' + jsonData + '</pre>';
+                            const preStyle = 'background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; max-height: 200px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap;';
+                            const preDiv = '<pre style="' + preStyle + '">' + jsonData + '</pre>';
                             
                             const logHtml = logDiv + headerDiv + agentSpan + timeSpan + '</div>' + messageDiv + detailsDiv + summaryDiv + preDiv + '</details></div>';
                             html += logHtml;
