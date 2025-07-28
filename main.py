@@ -854,6 +854,11 @@ async def game_dashboard():
                         // Update game status to show AI's turn
                         updateTurnIndicator('ai');
                         
+                        // Update moves list immediately to show player's move
+                        setTimeout(() => {{
+                            loadMoves();
+                        }}, 100);
+                        
                         // Wait a moment, then trigger AI move
                         setTimeout(async () => {{
                             try {{
@@ -877,7 +882,12 @@ async def game_dashboard():
                                     // Show AI move notification
                                     showNotification('🤖 AI has made its move!', 'success');
                                     
-                                    // Refresh the moves list and other data
+                                    // Update moves list immediately to show AI's move
+                                    setTimeout(() => {{
+                                        loadMoves();
+                                    }}, 100);
+                                    
+                                    // Refresh other data
                                     setTimeout(() => {{
                                         refreshGameData();
                                     }}, 500);
@@ -972,11 +982,6 @@ async def game_dashboard():
             
             async function refreshGameData() {{
                 try {{
-                    // Refresh moves list
-                    if (document.getElementById('moves-tab').classList.contains('active')) {{
-                        await loadMoves();
-                    }}
-                    
                     // Refresh agents info
                     if (document.getElementById('agents-tab').classList.contains('active')) {{
                         await loadAgents();
