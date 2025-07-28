@@ -987,7 +987,7 @@ async def game_dashboard():
         
         <script>
             async function makeMove(row, col) {{
-                const cell = document.querySelector(`[data-row="${{row}}"][data-col="${{col}}"]`);
+                const cell = document.querySelector('[data-row="' + row + '"][data-col="' + col + '"]');
                 if (cell.textContent !== '') {{
                     showNotification('❌ Cell already occupied!', 'error');
                     return;
@@ -1027,7 +1027,7 @@ async def game_dashboard():
                                     // Update board with AI's move
                                     if (aiResult.execution_result && aiResult.execution_result.move_executed) {{
                                         const aiMove = aiResult.execution_result.move_executed.position;
-                                        const aiCell = document.querySelector(`[data-row="${{aiMove.row}}"][data-col="${{aiMove.col}}"]`);
+                                        const aiCell = document.querySelector('[data-row="' + aiMove.row + '"][data-col="' + aiMove.col + '"]');
                                         if (aiCell) {{
                                             aiCell.textContent = 'O';
                                             aiCell.style.color = '#ff4444';
@@ -1250,7 +1250,7 @@ async def game_dashboard():
                             const emoji = move.player === 'player' ? '👤' : '🤖';
                             const position = move.position;
                             
-                            html += `<div class="move-item ${{playerClass}}">Move ${{move.move_number}}: <span class="emoji">${{emoji}}</span> <strong>${{position.value}}</strong> at (${{position.row}},${{position.col}})</div>`;
+                            html += '<div class="move-item ' + playerClass + '">Move ' + move.move_number + ': <span class="emoji">' + emoji + '</span> <strong>' + position.value + '</strong> at (' + position.row + ',' + position.col + ')</div>';
                         }});
                         
                         movesList.innerHTML = html;
@@ -1455,16 +1455,16 @@ async def game_dashboard():
                     const result = await response.json();
                     
                     if (result.success) {{
-                        showNotification(`✅ ${{result.message}}`, 'success');
+                        showNotification('✅ ' + result.message, 'success');
                         // Reload models to show updated state
                         setTimeout(() => loadModels(), 500);
                         // Also reload agents to show new model info
                         setTimeout(() => loadAgents(), 500);
                     }} else {{
-                        showNotification(`❌ ${{result.error}}`, 'error');
+                        showNotification('❌ ' + result.error, 'error');
                     }}
                 }} catch (error) {{
-                    showNotification(`❌ Error switching model: ${{error.message}}`, 'error');
+                    showNotification('❌ Error switching model: ' + error.message, 'error');
                 }}
             }}
         </script>
