@@ -338,93 +338,119 @@ async def game_dashboard():
             .board-cell:active {{
                 transform: scale(0.95);
             }}
-            .main-game-area {{
-                margin-bottom: 30px;
-            }}
-            .game-layout {{
+            .game-container {{
                 display: grid;
-                grid-template-columns: 1fr 200px;
+                grid-template-columns: 1fr 300px;
                 gap: 20px;
-                align-items: start;
+                margin: 20px 0;
             }}
-            .board-section {{
+            .game-board-section {{
                 display: flex;
                 flex-direction: column;
                 align-items: center;
             }}
-            .sidebar {{
+            .board-header {{
                 display: flex;
-                flex-direction: column;
-                gap: 20px;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                margin-bottom: 15px;
             }}
-            .game-status-card, .dev-note {{
-                background: linear-gradient(135deg, #333, #222);
-                padding: 12px;
-                border-radius: 10px;
-                border: 1px solid #00ff00;
-                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            .board-header h2 {{
+                margin: 0;
+                font-size: 18px;
             }}
-            .status-item {{
-                margin: 4px 0;
-                padding: 4px 0;
-                border-bottom: 1px solid rgba(0, 255, 0, 0.2);
-                font-size: 12px;
-            }}
-            .status-item:last-child {{
-                border-bottom: none;
-            }}
-            .dev-note p {{
-                margin: 4px 0;
-                font-size: 11px;
-                color: #aaa;
-            }}
-            .status-item.winner {{
-                color: #00ff00;
-                font-weight: bold;
-                text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-            }}
-            .compact-section {{
-                margin-top: 20px;
-            }}
-            .compact-layout {{
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-            }}
-            .move-history-compact, .mcp-section-compact {{
-                background: linear-gradient(135deg, #333, #222);
-                padding: 15px;
-                border-radius: 10px;
-                border: 1px solid #00ff00;
-            }}
-            .move-list {{
-                max-height: 120px;
-                overflow-y: auto;
-            }}
-            .move-entry-compact {{
-                padding: 5px 0;
-                border-bottom: 1px solid rgba(0, 255, 0, 0.2);
-                font-size: 12px;
-            }}
-            .move-entry-compact:last-child {{
-                border-bottom: none;
-            }}
-            .mcp-controls {{
+            .game-status-mini {{
                 display: flex;
                 gap: 10px;
-                margin-bottom: 10px;
             }}
-            .btn.small {{
-                padding: 8px 12px;
-                font-size: 12px;
-            }}
-            .compact-content {{
-                max-height: 100px;
-                overflow-y: auto;
+            .status-badge {{
+                background: rgba(0, 255, 0, 0.2);
+                padding: 4px 8px;
+                border-radius: 12px;
                 font-size: 11px;
+                border: 1px solid rgba(0, 255, 0, 0.3);
+            }}
+            .status-badge.winner {{
+                background: rgba(0, 255, 0, 0.3);
+                color: #00ff00;
+                font-weight: bold;
+            }}
+            .game-controls {{
+                margin-top: 15px;
+                text-align: center;
+            }}
+            .turn-indicator-mini {{
+                background: rgba(0, 255, 0, 0.1);
+                padding: 8px 12px;
+                border-radius: 6px;
+                margin-bottom: 10px;
+                font-size: 12px;
+                border: 1px solid rgba(0, 255, 0, 0.3);
+            }}
+            .info-section {{
+                background: linear-gradient(135deg, #333, #222);
+                border-radius: 10px;
+                border: 1px solid #00ff00;
+                overflow: hidden;
+            }}
+            .tab-container {{
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }}
+            .tab-buttons {{
+                display: flex;
                 background: rgba(0, 0, 0, 0.3);
-                padding: 8px;
-                border-radius: 5px;
+                border-bottom: 1px solid #00ff00;
+            }}
+            .tab-btn {{
+                flex: 1;
+                background: none;
+                border: none;
+                color: #aaa;
+                padding: 8px 4px;
+                font-size: 11px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }}
+            .tab-btn:hover {{
+                background: rgba(0, 255, 0, 0.1);
+                color: #00ff00;
+            }}
+            .tab-btn.active {{
+                background: rgba(0, 255, 0, 0.2);
+                color: #00ff00;
+                border-bottom: 2px solid #00ff00;
+            }}
+            .tab-content {{
+                flex: 1;
+                padding: 10px;
+                max-height: 200px;
+                overflow-y: auto;
+            }}
+            .tab-panel {{
+                display: none;
+            }}
+            .tab-panel.active {{
+                display: block;
+            }}
+            .tab-panel h3 {{
+                margin: 0 0 8px 0;
+                font-size: 12px;
+                color: #00ff00;
+            }}
+            .moves-list {{
+                max-height: 150px;
+                overflow-y: auto;
+            }}
+            .move-item {{
+                padding: 4px 0;
+                border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+                font-size: 10px;
+            }}
+            .move-item:last-child {{
+                border-bottom: none;
             }}
             .board-controls {{
                 text-align: center;
@@ -590,72 +616,70 @@ async def game_dashboard():
                 </div>
             </div>
             
-            <div class="game-section main-game-area">
-                <div class="game-layout">
-                    <div class="board-section">
-                        <h2>🎮 Tic Tac Toe Board</h2>
-                        <div class="board-container">
-                            <div class="tic-tac-toe-board">
-                                {chr(10).join([f'<div class="board-row">' + chr(10).join([f'<div class="board-cell" data-row="{row}" data-col="{col}" onclick="makeMove({row}, {col})">{current_state.get("board", [["", "", ""], ["", "", ""], ["", "", ""]])[row][col]}</div>' for col in range(3)]) + '</div>' for row in range(3)])}
-                            </div>
-                        </div>
-                        <div class="board-controls">
-                            <div class="turn-indicator">
-                                {f'<p><span class="emoji">🎉</span> <strong>Game Over!</strong> {current_state.get("winner", "").upper()} wins!</p>' if current_state.get('game_over', False) and current_state.get('winner') else f'<p><span class="emoji">🤝</span> <strong>Game Over!</strong> It is a draw!</p>' if current_state.get('game_over', False) else f'<p><span class="emoji">{"👤" if current_state.get("current_player", "player") == "player" else "🤖"}</span> <strong>{"Your turn!" if current_state.get("current_player", "player") == "player" else "AI is thinking..."}</strong> {"Click any empty cell to make your move" if current_state.get("current_player", "player") == "player" else "AI will respond automatically"}</p>'}
-                                {f'<p><span class="emoji">🤖</span> AI will respond automatically</p>' if not current_state.get('game_over', False) and current_state.get('current_player', 'player') == 'player' else ''}
-                            </div>
-                            <button class="btn" onclick="resetGame()">
-                                <span class="emoji">🔄</span> NEW GAME
-                            </button>
+            <div class="game-container">
+                <!-- Game Board Section -->
+                <div class="game-board-section">
+                    <div class="board-header">
+                        <h2>🎮 Tic Tac Toe</h2>
+                        <div class="game-status-mini">
+                            <span class="status-badge">Move: {current_state.get('move_number', 0)}</span>
+                            <span class="status-badge">Turn: {current_state.get('current_player', 'player').upper()}</span>
+                            {f'<span class="status-badge winner">Winner: {current_state.get("winner", "").upper()}</span>' if current_state.get('game_over', False) and current_state.get('winner') else ''}
                         </div>
                     </div>
                     
-                    <div class="sidebar">
-                        <div class="game-status-card">
-                            <div class="status-item">
-                                <span class="emoji">🎯</span> Move: <strong>{current_state.get('move_number', 0)}</strong>
-                            </div>
-                            <div class="status-item">
-                                <span class="emoji">👤</span> Turn: <strong>{current_state.get('current_player', 'player').upper()}</strong>
-                            </div>
-                            <div class="status-item">
-                                <span class="emoji">🏆</span> Status: <strong>{'GAME OVER' if current_state.get('game_over', False) else 'IN PROGRESS'}</strong>
-                            </div>
-                            {f'<div class="status-item winner"><span class="emoji">🎉</span> Winner: <strong>{current_state.get("winner", "").upper()}</strong></div>' if current_state.get('game_over', False) and current_state.get('winner') else ''}
+                    <div class="board-container">
+                        <div class="tic-tac-toe-board">
+                            {chr(10).join([f'<div class="board-row">' + chr(10).join([f'<div class="board-cell" data-row="{row}" data-col="{col}" onclick="makeMove({row}, {col})">{current_state.get("board", [["", "", ""], ["", "", ""], ["", "", ""]])[row][col]}</div>' for col in range(3)]) + '</div>' for row in range(3)])}
                         </div>
-                        
-                        <div class="dev-note">
-                            <p><span class="emoji">💡</span> <strong>For Developers:</strong></p>
-                            <p>Agent info & MCP logs available below</p>
+                    </div>
+                    
+                    <div class="game-controls">
+                        <div class="turn-indicator-mini">
+                            {f'<span class="emoji">🎉</span> Game Over! {current_state.get("winner", "").upper()} wins!' if current_state.get('game_over', False) and current_state.get('winner') else f'<span class="emoji">🤝</span> Game Over! It is a draw!' if current_state.get('game_over', False) else f'<span class="emoji">{"👤" if current_state.get("current_player", "player") == "player" else "🤖"}</span> {"Your turn! Click any cell" if current_state.get("current_player", "player") == "player" else "AI is thinking..."}'}
                         </div>
+                        <button class="btn" onclick="resetGame()">
+                            <span class="emoji">🔄</span> NEW GAME
+                        </button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="game-section compact-section">
-                <div class="compact-layout">
-                    <div class="move-history-compact">
-                        <h3><span class="emoji">📜</span> Recent Moves</h3>
-                        <div class="move-list">
-                            {chr(10).join([f'<div class="move-entry-compact">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> {move.get("position", {}).get("value", "?")} at ({move.get("position", {}).get("row", "?"), move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-3:]])}
-                        </div>
-                    </div>
-                    
-                    <div class="mcp-section-compact">
-                        <h3><span class="emoji">📡</span> MCP Protocol</h3>
-                        <div class="mcp-controls">
-                            <button class="btn small" onclick="loadAgents()">
+                
+                <!-- Tabbed Info Section -->
+                <div class="info-section">
+                    <div class="tab-container">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" onclick="showTab('moves')">
+                                <span class="emoji">📜</span> Moves
+                            </button>
+                            <button class="tab-btn" onclick="showTab('agents')">
                                 <span class="emoji">🤖</span> Agents
                             </button>
-                            <button class="btn small" onclick="loadMCPLogs()">
-                                <span class="emoji">📋</span> Logs
+                            <button class="tab-btn" onclick="showTab('logs')">
+                                <span class="emoji">📡</span> MCP Logs
                             </button>
                         </div>
-                        <div id="agents-content" class="compact-content">
-                            <p>Click "Agents" to view AI information</p>
-                        </div>
-                        <div id="mcp-logs-content" class="compact-content" style="display: none;">
-                            <p>Click "Logs" to view MCP protocol messages</p>
+                        
+                        <div class="tab-content">
+                            <div id="moves-tab" class="tab-panel active">
+                                <h3>Recent Moves</h3>
+                                <div class="moves-list">
+                                    {chr(10).join([f'<div class="move-item">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> {move.get("position", {}).get("value", "?")} at ({move.get("position", {}).get("row", "?"), move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-5:]])}
+                                </div>
+                            </div>
+                            
+                            <div id="agents-tab" class="tab-panel">
+                                <h3>AI Agents</h3>
+                                <div id="agents-content">
+                                    <p>Loading agent information...</p>
+                                </div>
+                            </div>
+                            
+                            <div id="logs-tab" class="tab-panel">
+                                <h3>MCP Protocol Logs</h3>
+                                <div id="mcp-logs-content">
+                                    <p>Loading MCP logs...</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -869,20 +893,38 @@ async def game_dashboard():
                 }}
             }}
             
+            function showTab(tabName) {{
+                // Hide all tab panels
+                const tabPanels = document.querySelectorAll('.tab-panel');
+                tabPanels.forEach(panel => panel.classList.remove('active'));
+                
+                // Remove active class from all tab buttons
+                const tabButtons = document.querySelectorAll('.tab-btn');
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                
+                // Show selected tab panel
+                document.getElementById(tabName + '-tab').classList.add('active');
+                
+                // Add active class to clicked button
+                event.target.classList.add('active');
+                
+                // Load content based on tab
+                if (tabName === 'agents') {{
+                    loadAgents();
+                }} else if (tabName === 'logs') {{
+                    loadMCPLogs();
+                }}
+            }}
+            
             async function loadMCPLogs() {{
                 try {{
                     const response = await fetch('/mcp-logs');
                     const data = await response.json();
                     const logsContent = document.getElementById('mcp-logs-content');
-                    const agentsContent = document.getElementById('agents-content');
-                    
-                    // Hide agents, show logs
-                    agentsContent.style.display = 'none';
-                    logsContent.style.display = 'block';
                     
                     if (data.mcp_logs && data.mcp_logs.length > 0) {{
                         let html = '';
-                        const recentLogs = data.mcp_logs.slice(-5); // Show last 5 logs for compact view
+                        const recentLogs = data.mcp_logs.slice(-8); // Show last 8 logs
                         
                         recentLogs.forEach(log => {{
                             const timestamp = new Date(log.timestamp).toLocaleTimeString();
@@ -894,12 +936,12 @@ async def game_dashboard():
                             }}[log.agent] || '🤖';
                             
                             html += `
-                                <div style="margin-bottom: 6px; padding: 4px; background: rgba(0, 255, 0, 0.05); border-radius: 3px; border-left: 1px solid #00ff00; font-size: 9px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                                <div style="margin-bottom: 4px; padding: 3px; background: rgba(0, 255, 0, 0.05); border-radius: 2px; border-left: 1px solid #00ff00; font-size: 9px;">
+                                    <div style="display: flex; justify-content: space-between;">
                                         <span style="color: #00ff00; font-weight: bold;">${{agentEmoji}} ${{log.agent}}</span>
                                         <span style="color: #888;">${{timestamp}}</span>
                                     </div>
-                                    <div style="color: #ccc; font-size: 8px;"><strong>Type:</strong> ${{log.message_type}}</div>
+                                    <div style="color: #ccc; font-size: 8px;">${{log.message_type}}</div>
                                 </div>
                             `;
                         }});
