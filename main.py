@@ -1323,7 +1323,9 @@ async def game_dashboard():
                             const preStyle = 'background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; max-height: 200px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap;';
                             const preDiv = '<pre style="' + preStyle + '">' + jsonData + '</pre>';
                             
-                            const logHtml = logDiv + headerDiv + agentSpan + timeSpan + '</div>' + messageDiv + detailsDiv + summaryDiv + preDiv + '</details></div>';
+                            const headerEnd = '</div>';
+                            const detailsEnd = '</details></div>';
+                            const logHtml = logDiv + headerDiv + agentSpan + timeSpan + headerEnd + messageDiv + detailsDiv + summaryDiv + preDiv + detailsEnd;
                             html += logHtml;
                         }});
                         
