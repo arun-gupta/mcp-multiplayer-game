@@ -1420,7 +1420,8 @@ async def game_dashboard():
                             html += optionStart + nameDiv + infoDiv + optionEnd;
                         }});
                         
-                        html += '</div></div>';
+                        const cardEnd = '</div></div>';
+                        html += cardEnd;
                     }});
                     
                     html += '</div>';
