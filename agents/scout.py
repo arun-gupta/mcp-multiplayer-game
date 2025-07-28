@@ -37,7 +37,24 @@ class ScoutAgent:
     
     def observe_environment(self) -> Observation:
         """Observe the current game state and return an observation"""
-        return self.game_state.get_observation()
+        import time
+        start_time = time.time()
+        
+        # Increment MCP message count
+        self.game_state.increment_mcp_messages()
+        
+        # Get observation
+        observation = self.game_state.get_observation()
+        
+        # Calculate response time
+        response_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        self.game_state.add_response_time("scout", response_time)
+        
+        # Add estimated cost (GPT-4 pricing)
+        estimated_cost = 0.00003  # Rough estimate per message
+        self.game_state.add_llm_cost("gpt4", estimated_cost)
+        
+        return observation
     
     def get_agent_info(self) -> dict:
         """Get information about this agent"""

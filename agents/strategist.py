@@ -39,6 +39,9 @@ class StrategistAgent:
     
     def create_plan(self, observation: Observation) -> Plan:
         """Create a strategic plan based on the current observation"""
+        import time
+        start_time = time.time()
+        
         try:
             # Analyze the board state
             board_analysis = self._analyze_board_state(observation)
@@ -54,7 +57,7 @@ class StrategistAgent:
             # Generate plan reasoning
             reasoning = self._generate_reasoning(observation, board_analysis, threat_assessment, game_phase)
             
-            return Plan(
+            plan = Plan(
                 plan_id=f"plan_{uuid.uuid4().hex[:8]}",
                 move_number=observation.move_number + 1,
                 current_board=observation.current_board,
@@ -66,6 +69,13 @@ class StrategistAgent:
                 reasoning=reasoning,
                 game_phase=game_phase
             )
+            
+            # Track metrics
+            response_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+            # Note: We'll need to pass game_state to track metrics properly
+            # For now, we'll just calculate the time
+            
+            return plan
             
         except Exception as e:
             print(f"Error in StrategistAgent.create_plan: {e}")

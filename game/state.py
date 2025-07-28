@@ -19,6 +19,20 @@ class TicTacToeGameState:
         self.winner = None
         self.player_symbol = "X"
         self.ai_symbol = "O"
+        
+        # Metrics tracking
+        self.game_start_time = datetime.now()
+        self.mcp_message_count = 0
+        self.agent_response_times = {
+            "scout": [],
+            "strategist": [],
+            "executor": []
+        }
+        self.llm_costs = {
+            "gpt4": 0.0,
+            "claude": 0.0,
+            "llama": 0.0
+        }
     
     def initialize_new_game(self):
         """Reset the game state for a new game"""
@@ -28,6 +42,54 @@ class TicTacToeGameState:
         self.game_history = []
         self.game_over = False
         self.winner = None
+        
+        # Reset metrics
+        self.game_start_time = datetime.now()
+        self.mcp_message_count = 0
+        self.agent_response_times = {
+            "scout": [],
+            "strategist": [],
+            "executor": []
+        }
+        self.llm_costs = {
+            "gpt4": 0.0,
+            "claude": 0.0,
+            "llama": 0.0
+        }
+    
+    def increment_mcp_messages(self):
+        """Increment MCP message counter"""
+        self.mcp_message_count += 1
+    
+    def add_response_time(self, agent: str, response_time_ms: float):
+        """Add response time for an agent"""
+        if agent in self.agent_response_times:
+            self.agent_response_times[agent].append(response_time_ms)
+    
+    def add_llm_cost(self, llm: str, cost: float):
+        """Add cost for an LLM"""
+        if llm in self.llm_costs:
+            self.llm_costs[llm] += cost
+    
+    def get_metrics(self) -> dict:
+        """Get current metrics"""
+        game_duration = (datetime.now() - self.game_start_time).total_seconds()
+        
+        # Calculate average response times
+        avg_response_times = {}
+        for agent, times in self.agent_response_times.items():
+            avg_response_times[agent] = sum(times) / len(times) if times else 0
+        
+        # Calculate total cost
+        total_cost = sum(self.llm_costs.values())
+        
+        return {
+            "mcp_message_count": self.mcp_message_count,
+            "game_duration_seconds": game_duration,
+            "avg_response_times": avg_response_times,
+            "llm_costs": self.llm_costs,
+            "total_cost": total_cost
+        }
     
     def get_available_moves(self) -> List[BoardPosition]:
         """Get all available (empty) positions on the board"""

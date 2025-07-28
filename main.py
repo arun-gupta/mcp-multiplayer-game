@@ -227,6 +227,64 @@ async def game_dashboard():
             .link-text {{
                 font-size: 11px;
             }}
+            .metrics-grid {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 15px;
+            }}
+            .metric-card {{
+                background: rgba(0, 255, 0, 0.05);
+                border: 1px solid rgba(0, 255, 0, 0.2);
+                border-radius: 6px;
+                padding: 8px;
+                text-align: center;
+            }}
+            .metric-title {{
+                font-size: 9px;
+                color: #00ff00;
+                font-weight: bold;
+                margin-bottom: 4px;
+            }}
+            .metric-value {{
+                font-size: 12px;
+                font-weight: bold;
+                color: #fff;
+                margin-bottom: 2px;
+            }}
+            .metric-desc {{
+                font-size: 7px;
+                color: #888;
+            }}
+            .metrics-breakdown {{
+                margin-top: 10px;
+            }}
+            .metrics-breakdown h4 {{
+                font-size: 10px;
+                color: #00ff00;
+                margin: 0 0 8px 0;
+            }}
+            .llm-costs {{
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }}
+            .llm-cost-item {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 6px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 4px;
+                font-size: 8px;
+            }}
+            .llm-name {{
+                color: #ccc;
+            }}
+            .llm-cost {{
+                color: #00ff00;
+                font-weight: bold;
+            }}
 
             .btn {{ 
                 background: linear-gradient(45deg, #00ff00, #00cc00); 
@@ -667,6 +725,9 @@ async def game_dashboard():
                             <button class="tab-btn" onclick="showTab('logs')">
                                 <span class="emoji">📡</span> MCP Logs
                             </button>
+                            <button class="tab-btn" onclick="showTab('metrics')">
+                                <span class="emoji">📊</span> Metrics
+                            </button>
                         </div>
                         
                         <div class="tab-content">
@@ -688,6 +749,51 @@ async def game_dashboard():
                                 <h3>MCP Protocol Logs</h3>
                                 <div id="mcp-logs-content">
                                     <p>Loading MCP logs...</p>
+                                </div>
+                            </div>
+                            
+                            <div id="metrics-tab" class="tab-panel">
+                                <h3>Game Metrics Dashboard</h3>
+                                <div id="metrics-content">
+                                    <div class="metrics-grid">
+                                        <div class="metric-card">
+                                            <div class="metric-title">📡 MCP Messages</div>
+                                            <div class="metric-value" id="mcp-count">0</div>
+                                            <div class="metric-desc">Total exchanges</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">💰 Total Cost</div>
+                                            <div class="metric-value" id="total-cost">$0.00</div>
+                                            <div class="metric-desc">Across all LLMs</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">🎮 Game Duration</div>
+                                            <div class="metric-value" id="game-duration">0s</div>
+                                            <div class="metric-desc">Time played</div>
+                                        </div>
+                                        <div class="metric-card">
+                                            <div class="metric-title">⚡ Avg Response Time</div>
+                                            <div class="metric-value" id="avg-response">0ms</div>
+                                            <div class="metric-desc">Per agent</div>
+                                        </div>
+                                    </div>
+                                    <div class="metrics-breakdown">
+                                        <h4>LLM Cost Breakdown</h4>
+                                        <div class="llm-costs">
+                                            <div class="llm-cost-item">
+                                                <span class="llm-name">🤖 GPT-4 (Scout)</span>
+                                                <span class="llm-cost" id="gpt4-cost">$0.00</span>
+                                            </div>
+                                            <div class="llm-cost-item">
+                                                <span class="llm-name">🧠 Claude (Strategist)</span>
+                                                <span class="llm-cost" id="claude-cost">$0.00</span>
+                                            </div>
+                                            <div class="llm-cost-item">
+                                                <span class="llm-name">⚡ Llama2 (Executor)</span>
+                                                <span class="llm-cost" id="llama-cost">$0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -923,6 +1029,8 @@ async def game_dashboard():
                     loadAgents();
                 }} else if (tabName === 'logs') {{
                     loadMCPLogs();
+                }} else if (tabName === 'metrics') {{
+                    loadMetrics();
                 }}
             }}
             
@@ -962,6 +1070,32 @@ async def game_dashboard():
                     }}
                 }} catch (error) {{
                     document.getElementById('mcp-logs-content').innerHTML = '<p style="color: #ff4444; font-size: 9px;">Error loading MCP logs</p>';
+                }}
+            }}
+            
+            async function loadMetrics() {{
+                try {{
+                    const response = await fetch('/metrics');
+                    const data = await response.json();
+                    
+                    // Update metric values
+                    document.getElementById('mcp-count').textContent = data.mcp_message_count || 0;
+                    document.getElementById('total-cost').textContent = '$' + (data.total_cost || 0).toFixed(4);
+                    document.getElementById('game-duration').textContent = Math.round(data.game_duration_seconds || 0) + 's';
+                    
+                    // Calculate average response time
+                    const responseTimes = data.avg_response_times || {{}};
+                    const avgResponse = Object.values(responseTimes).reduce((sum, time) => sum + time, 0) / Math.max(Object.keys(responseTimes).length, 1);
+                    document.getElementById('avg-response').textContent = Math.round(avgResponse) + 'ms';
+                    
+                    // Update LLM costs
+                    const costs = data.llm_costs || {{}};
+                    document.getElementById('gpt4-cost').textContent = '$' + (costs.gpt4 || 0).toFixed(4);
+                    document.getElementById('claude-cost').textContent = '$' + (costs.claude || 0).toFixed(4);
+                    document.getElementById('llama-cost').textContent = '$' + (costs.llama || 0).toFixed(4);
+                    
+                }} catch (error) {{
+                    console.error('Error loading metrics:', error);
                 }}
             }}
         </script>
@@ -1090,6 +1224,14 @@ async def get_mcp_logs():
         return {"mcp_logs": mcp_logs}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting MCP logs: {str(e)}")
+
+@app.get("/metrics")
+async def get_metrics():
+    """Get game metrics"""
+    try:
+        return game_state.get_metrics()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting metrics: {str(e)}")
 
 
 @app.post("/reset-game")
