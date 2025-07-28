@@ -1322,7 +1322,9 @@ async def game_dashboard():
                             const agentSpanStart = '<span style="color: #00ff00; font-weight: bold;">' + agentEmoji + ' ';
                             const agentSpanEnd = '</span>';
                             const agentSpan = agentSpanStart + log.agent + agentSpanEnd;
-                            const timeSpan = '<span style="color: #888;">' + timestamp + '</span>';
+                            const timeSpanStart = '<span style="color: #888;">';
+                            const timeSpanEnd = '</span>';
+                            const timeSpan = timeSpanStart + timestamp + timeSpanEnd;
                             const messageDiv = '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>';
                             const detailsDiv = '<details style="margin-top: 4px;">';
                             const summaryDiv = '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>';
