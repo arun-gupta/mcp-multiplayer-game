@@ -1393,12 +1393,14 @@ async def game_dashboard():
                     
                     agents.forEach(agent => {{
                         const currentModel = currentModels[agent.name] || 'Unknown';
-                        html += '<div class="agent-model-card">' +
-                            '<div class="agent-model-header">' +
-                                '<div class="agent-model-title">' + agent.display + '</div>' +
-                                '<div class="current-model">Current: ' + currentModel + '</div>' +
-                            '</div>' +
-                            '<div class="model-selector">';
+                        const cardStart = '<div class="agent-model-card">';
+                        const headerStart = '<div class="agent-model-header">';
+                        const titleDiv = '<div class="agent-model-title">' + agent.display + '</div>';
+                        const currentDiv = '<div class="current-model">Current: ' + currentModel + '</div>';
+                        const headerEnd = '</div>';
+                        const selectorStart = '<div class="model-selector">';
+                        
+                        html += cardStart + headerStart + titleDiv + currentDiv + headerEnd + selectorStart;
                         
                         // Add model options
                         Object.entries(models).forEach(([modelName, modelInfo]) => {{
@@ -1409,10 +1411,11 @@ async def game_dashboard():
                             
                             const optionClass = (isActive ? 'active' : '') + ' ' + (!isAvailable ? 'unavailable' : '');
                             const onClickHandler = isAvailable ? 'switchModel(\'' + agent.name + '\', \'' + modelName + '\')' : '';
-                            html += '<div class="model-option ' + optionClass + '" onclick="' + onClickHandler + '">' +
-                                '<div>' + modelInfo.display_name + '</div>' +
-                                '<div class="model-info">' + costDisplay + ' per 1K tokens</div>' +
-                            '</div>';
+                            const optionStart = '<div class="model-option ' + optionClass + '" onclick="' + onClickHandler + '">';
+                            const nameDiv = '<div>' + modelInfo.display_name + '</div>';
+                            const infoDiv = '<div class="model-info">' + costDisplay + ' per 1K tokens</div>';
+                            const optionEnd = '</div>';
+                            html += optionStart + nameDiv + infoDiv + optionEnd;
                         }});
                         
                         html += '</div></div>';
