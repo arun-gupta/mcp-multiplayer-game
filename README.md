@@ -10,6 +10,21 @@ The game is a 5x5 grid-based strategy game where:
 - **Items** (I) are scattered around the map
 - **Walls** (#) create obstacles and strategic positioning opportunities
 
+## 🚀 QuickStart
+
+**Get the Multi-Agent Game Simulation running in 5 minutes!**
+
+👉 **[📖 Quick Start Guide](QUICKSTART.md)** - Complete setup and usage instructions
+
+The QuickStart guide includes:
+- ✅ **Prerequisites** and dependencies
+- ✅ **Step-by-step setup** commands
+- ✅ **How to play** the game
+- ✅ **API testing** examples
+- ✅ **Troubleshooting** common issues
+
+For detailed setup instructions and troubleshooting, see the [Full Setup Guide](#-setup-instructions) below.
+
 ## 🏗️ Architecture
 
 ### MCP-Style Multi-Agent System
@@ -19,7 +34,7 @@ The game uses a Multi-Context Protocol (MCP) style architecture with three speci
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Scout Agent   │    │ Strategist Agent│    │ Executor Agent  │
-│   (Claude)      │───▶│   (Mistral)     │───▶│  (Llama2:7B)    │
+│  (OpenAI GPT-4) │───▶│  (Claude 3)     │───▶│  (Llama2:7B)    │
 │                 │    │                 │    │                 │
 │ • Observes      │    │ • Analyzes      │    │ • Executes      │
 │ • Reports       │    │ • Plans         │    │ • Updates       │
@@ -39,8 +54,8 @@ The game uses a Multi-Context Protocol (MCP) style architecture with three speci
 
 ### Agent Responsibilities
 
-#### 1. **Scout Agent** (Claude/GPT-4)
-- **Model**: Claude (GPT-4) via OpenAI API
+#### 1. **Scout Agent** (OpenAI GPT-4)
+- **Model**: OpenAI GPT-4 via OpenAI API
 - **Role**: Environment observation and threat detection
 - **Capabilities**:
   - Observes game environment with limited visibility (fog of war)
@@ -48,8 +63,8 @@ The game uses a Multi-Context Protocol (MCP) style architecture with three speci
   - Provides detailed analysis of current situation
   - Reports observations in structured format
 
-#### 2. **Strategist Agent** (Mistral)
-- **Model**: Mistral via Ollama
+#### 2. **Strategist Agent** (Claude 3 Sonnet)
+- **Model**: Claude 3 Sonnet via Anthropic API
 - **Role**: Strategic planning and decision making
 - **Capabilities**:
   - Analyzes scout observations
@@ -128,13 +143,14 @@ Each message is logged with timestamp and agent identifier
 
 - Python 3.11+
 - Ollama (for local models)
-- OpenAI API key (for Claude/GPT-4)
+- OpenAI API key (for Scout Agent)
+- Anthropic API key (for Strategist Agent)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
    cd mcp-multiplayer-game
    ```
 
@@ -151,13 +167,13 @@ Each message is logged with timestamp and agent identifier
 
 4. **Install Ollama models**
    ```bash
-   ollama pull mistral
    ollama pull llama2:7b
    ```
 
 5. **Set environment variables**
    ```bash
    export OPENAI_API_KEY="your-openai-api-key"
+   export ANTHROPIC_API_KEY="your-anthropic-api-key"
    ```
 
 ### Running the Application
@@ -337,7 +353,7 @@ curl -X POST http://localhost:8000/simulate-turn
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the Apache License, Version 2.0 - see the LICENSE file for details.
 
 ## 🤝 Contributing
 

@@ -188,6 +188,15 @@ def test_environment() -> Dict[str, bool]:
         print("⚠️  OPENAI_API_KEY is not set (required for Scout Agent)")
         results["OPENAI_API_KEY"] = False
     
+    # Check Anthropic API key
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    if anthropic_key:
+        print("✅ ANTHROPIC_API_KEY is set")
+        results["ANTHROPIC_API_KEY"] = True
+    else:
+        print("⚠️  ANTHROPIC_API_KEY is not set (required for Strategist Agent)")
+        results["ANTHROPIC_API_KEY"] = False
+    
     # Check if Ollama is available
     try:
         import subprocess
@@ -299,8 +308,11 @@ def main():
     if not env_results.get("OPENAI_API_KEY", False):
         print("- Set OPENAI_API_KEY environment variable for Scout Agent")
     
+    if not env_results.get("ANTHROPIC_API_KEY", False):
+        print("- Set ANTHROPIC_API_KEY environment variable for Strategist Agent")
+    
     if not env_results.get("Ollama", False):
-        print("- Install Ollama for Strategist and Executor Agents")
+        print("- Install Ollama for Executor Agent")
     
     if passed_tests == total_tests and game_test:
         print("🎉 All tests passed! The installation is working correctly.")

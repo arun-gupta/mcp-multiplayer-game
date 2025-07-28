@@ -7,27 +7,59 @@ Get the Multi-Agent Game Simulation running in 5 minutes!
 ### 1. Prerequisites
 - Python 3.11+
 - OpenAI API key (for Scout Agent)
+- Anthropic API key (for Strategist Agent)
 - Ollama (for local models)
 
 ### 2. Install Ollama
+
+Ollama is required for running the local Llama2:7B model used by the Executor Agent.
+
+#### **macOS:**
 ```bash
-# macOS/Linux
+# Install using curl
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Windows
-# Download from https://ollama.ai/download
+# Or install using Homebrew
+brew install ollama
+```
+
+#### **Linux:**
+```bash
+# Install using curl
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Or install using package manager
+# Ubuntu/Debian
+sudo apt-get install ollama
+
+# Fedora
+sudo dnf install ollama
+```
+
+#### **Windows:**
+1. Visit [https://ollama.ai/download](https://ollama.ai/download)
+2. Download the Windows installer (.exe file)
+3. Run the installer and follow the setup wizard
+4. Restart your terminal/command prompt
+
+#### **Verify Installation:**
+```bash
+# Check if Ollama is installed
+ollama --version
+
+# Start Ollama service (if not already running)
+ollama serve
 ```
 
 ### 3. Install Ollama Models
 ```bash
-ollama pull mistral
 ollama pull llama2:7b
 ```
 
 ### 4. Setup Python Environment
 ```bash
 # Clone and setup
-git clone <repository-url>
+git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
 cd mcp-multiplayer-game
 
 # Run automated setup
@@ -44,8 +76,9 @@ pip install -r requirements.txt
 # Copy example file
 cp .env.example .env
 
-# Edit .env and add your OpenAI API key
-export OPENAI_API_KEY="your-api-key-here"
+# Edit .env and add your API keys
+export OPENAI_API_KEY="your-openai-api-key-here"
+export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
 ```
 
 ### 6. Test Installation
@@ -78,7 +111,7 @@ python main.py
 Each turn follows this sequence:
 
 ```
-Scout Agent (Claude) → Strategist Agent (Mistral) → Executor Agent (Llama2:7B)
+Scout Agent (OpenAI GPT-4) → Strategist Agent (Claude 3) → Executor Agent (Llama2:7B)
      ↓                        ↓                        ↓
   Observes              Creates Plan              Executes Actions
   Environment           Based on                  Updates Game State

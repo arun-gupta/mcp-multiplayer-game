@@ -95,6 +95,18 @@ def check_environment_variables():
         else:
             print("export OPENAI_API_KEY=your-api-key-here")
         print("\nYou can get an API key from: https://platform.openai.com/api-keys")
+    
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+    if anthropic_key:
+        print("✅ ANTHROPIC_API_KEY is set")
+    else:
+        print("❌ ANTHROPIC_API_KEY is not set")
+        print("Please set your Anthropic API key:")
+        if platform.system() == "Windows":
+            print("set ANTHROPIC_API_KEY=your-api-key-here")
+        else:
+            print("export ANTHROPIC_API_KEY=your-api-key-here")
+        print("\nYou can get an API key from: https://console.anthropic.com/")
 
 
 def main():
@@ -137,11 +149,13 @@ def main():
         print("   venv\\Scripts\\activate")
     else:
         print("   source venv/bin/activate")
-    print("2. Set your OpenAI API key:")
+    print("2. Set your API keys:")
     if platform.system() == "Windows":
-        print("   set OPENAI_API_KEY=your-api-key-here")
+        print("   set OPENAI_API_KEY=your-openai-api-key-here")
+        print("   set ANTHROPIC_API_KEY=your-anthropic-api-key-here")
     else:
-        print("   export OPENAI_API_KEY=your-api-key-here")
+        print("   export OPENAI_API_KEY=your-openai-api-key-here")
+        print("   export ANTHROPIC_API_KEY=your-anthropic-api-key-here")
     print("3. Run the application:")
     print("   python main.py")
     print("4. Open your browser to: http://localhost:8000")

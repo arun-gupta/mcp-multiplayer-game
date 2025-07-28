@@ -4,7 +4,7 @@ Analyzes scout observations and creates strategic plans
 Uses Mistral for strategic planning and decision making
 """
 from crewai import Agent
-from langchain_community.llms import Ollama
+from langchain_anthropic import ChatAnthropic
 from schemas.observation import Observation
 from schemas.plan import Plan, Action, ActionType, Direction
 from typing import List, Dict, Any
@@ -21,11 +21,12 @@ class StrategistAgent:
         self.agent = self._create_agent()
     
     def _create_agent(self) -> Agent:
-        """Create the CrewAI strategist agent with Mistral"""
-        # Use Mistral for strategic planning
-        llm = Ollama(
-            model="mistral",
-            temperature=0.3
+        """Create the CrewAI strategist agent with Claude"""
+        # Use Claude for strategic planning
+        llm = ChatAnthropic(
+            model="claude-3-sonnet-20240229",
+            temperature=0.3,
+            api_key=os.getenv("ANTHROPIC_API_KEY")
         )
         
         return Agent(
@@ -304,7 +305,7 @@ class StrategistAgent:
         """Get information about the strategist agent"""
         return {
             "agent_type": "Strategist",
-            "model": "Mistral (Ollama)",
+            "model": "Claude 3 Sonnet (Anthropic)",
             "capabilities": [
                 "Strategic analysis",
                 "Threat assessment",

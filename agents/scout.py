@@ -23,8 +23,8 @@ class ScoutAgent:
         self.agent = self._create_agent()
     
     def _create_agent(self) -> Agent:
-        """Create the CrewAI scout agent with Claude"""
-        # Use Claude for intelligent observation
+        """Create the CrewAI scout agent with OpenAI GPT-4"""
+        # Use OpenAI GPT-4 for intelligent observation
         llm = ChatOpenAI(
             model="gpt-4",
             temperature=0.1,
@@ -173,7 +173,7 @@ class ScoutAgent:
         """Get information about the scout agent"""
         return {
             "agent_type": "Scout",
-            "model": "Claude (GPT-4)",
+            "model": "OpenAI GPT-4",
             "visibility_range": self.visibility_range,
             "capabilities": [
                 "Environment observation",
