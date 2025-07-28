@@ -286,6 +286,31 @@ async def game_dashboard():
                 color: #00ff00;
                 font-weight: bold;
             }}
+            
+            .agent-response-times {{
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }}
+            
+            .response-time-item {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 8px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 4px;
+                font-size: 10px;
+            }}
+            
+            .agent-name {{
+                color: #ccc;
+            }}
+            
+            .response-time {{
+                color: #00ff00;
+                font-weight: bold;
+            }}
 
             .btn {{ 
                 background: linear-gradient(45deg, #00ff00, #00cc00); 
@@ -819,6 +844,23 @@ async def game_dashboard():
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="metrics-breakdown">
+                                        <h4>Agent Response Times</h4>
+                                        <div class="agent-response-times">
+                                            <div class="response-time-item">
+                                                <span class="agent-name">🔍 Scout (GPT-4)</span>
+                                                <span class="response-time" id="scout-response">0ms</span>
+                                            </div>
+                                            <div class="response-time-item">
+                                                <span class="agent-name">🧠 Strategist (Claude)</span>
+                                                <span class="response-time" id="strategist-response">0ms</span>
+                                            </div>
+                                            <div class="response-time-item">
+                                                <span class="agent-name">⚡ Executor (Llama2)</span>
+                                                <span class="response-time" id="executor-response">0ms</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1261,13 +1303,23 @@ async def game_dashboard():
                     // Calculate average response time
                     const responseTimes = data.avg_response_times || {{}};
                     const avgResponse = Object.values(responseTimes).reduce((sum, time) => sum + time, 0) / Math.max(Object.keys(responseTimes).length, 1);
-                    document.getElementById('avg-response').textContent = Math.round(avgResponse) + 'ms';
+                    document.getElementById('avg-response').textContent = avgResponse < 1 ? avgResponse.toFixed(2) + 'ms' : Math.round(avgResponse) + 'ms';
                     
                     // Update LLM costs
                     const costs = data.llm_costs || {{}};
                     document.getElementById('gpt4-cost').textContent = '$' + parseFloat(costs.gpt4 || 0).toFixed(6);
                     document.getElementById('claude-cost').textContent = '$' + parseFloat(costs.claude || 0).toFixed(6);
                     document.getElementById('llama-cost').textContent = '$' + parseFloat(costs.llama || 0).toFixed(6);
+                    
+                    // Update individual agent response times
+                    const responseTimes = data.avg_response_times || {{}};
+                    const scoutTime = responseTimes.scout || 0;
+                    const strategistTime = responseTimes.strategist || 0;
+                    const executorTime = responseTimes.executor || 0;
+                    
+                    document.getElementById('scout-response').textContent = scoutTime < 1 ? scoutTime.toFixed(2) + 'ms' : Math.round(scoutTime) + 'ms';
+                    document.getElementById('strategist-response').textContent = strategistTime < 1 ? strategistTime.toFixed(2) + 'ms' : Math.round(strategistTime) + 'ms';
+                    document.getElementById('executor-response').textContent = executorTime < 1 ? executorTime.toFixed(2) + 'ms' : Math.round(executorTime) + 'ms';
                     
                 }} catch (error) {{
                     console.error('Error loading metrics:', error);
