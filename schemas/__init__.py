@@ -1,0 +1,1 @@
+# Schemas package for MCP-style communication objects 
