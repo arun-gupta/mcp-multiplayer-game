@@ -449,15 +449,19 @@ async def game_dashboard():
                 max-height: 300px;
                 overflow-y: auto;
                 padding-right: 5px;
+                word-wrap: break-word;
+                overflow-x: hidden;
             }}
             .move-item {{
-                padding: 4px 6px;
+                padding: 3px 5px;
                 margin: 1px 0;
                 border-radius: 3px;
-                font-size: 9px;
+                font-size: 8px;
                 border-left: 3px solid;
                 transition: all 0.3s ease;
-                line-height: 1.2;
+                line-height: 1.1;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
             }}
             .move-item.player-move {{
                 background: rgba(0, 255, 0, 0.1);
@@ -666,7 +670,7 @@ async def game_dashboard():
                             <div id="moves-tab" class="tab-panel active">
                                 <h3>All Moves</h3>
                                 <div class="moves-list">
-                                    {chr(10).join([f'<div class="move-item {"player-move" if move.get("player") == "player" else "ai-move"}">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤 Player" if move.get("player") == "player" else "🤖 AI"}</span> placed <strong>{move.get("position", {}).get("value", "?")}</strong> at position ({move.get("position", {}).get("row", "?")}, {move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])]) if current_state.get('game_history', []) else '<div class="move-item no-moves"><span class="emoji">🎮</span> No moves yet. Start the game by clicking any cell!</div>'}
+                                    {chr(10).join([f'<div class="move-item {"player-move" if move.get("player") == "player" else "ai-move"}">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> <strong>{move.get("position", {}).get("value", "?")}</strong> at ({move.get("position", {}).get("row", "?")},{move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])]) if current_state.get('game_history', []) else '<div class="move-item no-moves"><span class="emoji">🎮</span> No moves yet. Start the game by clicking any cell!</div>'}
                                 </div>
                             </div>
                             
