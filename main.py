@@ -513,7 +513,7 @@ async def game_dashboard():
             .tab-content {{
                 flex: 1;
                 padding: 15px;
-                max-height: 350px;
+                max-height: 450px;
                 overflow-y: auto;
             }}
             .tab-panel {{
@@ -529,7 +529,7 @@ async def game_dashboard():
                 font-weight: bold;
             }}
             .moves-list {{
-                max-height: 300px;
+                max-height: 400px;
                 overflow-y: auto;
                 padding-right: 5px;
                 word-wrap: break-word;
