@@ -1335,17 +1335,18 @@ async def game_dashboard():
                             const jsonData = JSON.stringify(log.data, null, 2);
                             const shortData = jsonData.length > 200 ? jsonData.substring(0, 200) + '...' : jsonData;
                             
-                            html += '<div style="margin-bottom: 8px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 4px; border-left: 3px solid #00ff00; font-size: 11px;">' +
+                            const logHtml = '<div style="margin-bottom: 8px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 4px; border-left: 3px solid #00ff00; font-size: 11px;">' +
                                 '<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">' +
                                     '<span style="color: #00ff00; font-weight: bold;">' + agentEmoji + ' ' + log.agent + '</span>' +
                                     '<span style="color: #888;">' + timestamp + '</span>' +
                                 '</div>' +
                                 '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>' +
-                                                                '<details style="margin-top: 4px;">' +
+                                '<details style="margin-top: 4px;">' +
                                     '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>' +
                                     '<pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; max-height: 200px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap;">' + jsonData + '</pre>' +
                                 '</details>' +
                             '</div>';
+                            html += logHtml;
                         }});
                         
                         logsContent.innerHTML = html;
