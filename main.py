@@ -1030,13 +1030,12 @@ async def game_dashboard():
                     position: relative;
                 `;
                 
-                modalContent.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="color: #00ff00; margin: 0;">${{title}}</h3>
-                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; color: #00ff00; font-size: 20px; cursor: pointer;">×</button>
-                    </div>
-                    <pre style="background: #000; padding: 15px; border-radius: 5px; color: #ccc; font-size: 11px; overflow-x: auto; white-space: pre-wrap;">${{jsonData}}</pre>
-                `;
+                modalContent.innerHTML = 
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">' +
+                        '<h3 style="color: #00ff00; margin: 0;">' + title + '</h3>' +
+                        '<button onclick="this.closest(\'.modal-overlay\').remove()" style="background: none; border: none; color: #00ff00; font-size: 20px; cursor: pointer;">×</button>' +
+                    '</div>' +
+                    '<pre style="background: #000; padding: 15px; border-radius: 5px; color: #ccc; font-size: 11px; overflow-x: auto; white-space: pre-wrap;">' + jsonData + '</pre>';
                 
                 modal.className = 'modal-overlay';
                 modal.appendChild(modalContent);
@@ -1220,20 +1219,18 @@ async def game_dashboard():
                             const jsonData = JSON.stringify(log.data, null, 2);
                             const shortData = jsonData.length > 200 ? jsonData.substring(0, 200) + '...' : jsonData;
                             
-                            html += `
-                                <div style="margin-bottom: 8px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 4px; border-left: 3px solid #00ff00; font-size: 11px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                                        <span style="color: #00ff00; font-weight: bold;">${{agentEmoji}} ${{log.agent}}</span>
-                                        <span style="color: #888;">${{timestamp}}</span>
-                                    </div>
-                                    <div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">${{log.message_type}}</div>
-                                    <details style="margin-top: 4px;">
-                                        <summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>
-                                        <pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; overflow-x: auto; white-space: pre-wrap;">${{shortData}}</pre>
-                                        <button onclick="showFullJSON('${{agentEmoji}} ${{log.agent}} - ${{log.message_type}}', `${{jsonData.replace(/`/g, '\\`')}}`)" style="background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff00; padding: 2px 6px; border-radius: 2px; font-size: 8px; cursor: pointer; margin-top: 4px;">📋 Full JSON</button>
-                                    </details>
-                                </div>
-                            `;
+                            html += '<div style="margin-bottom: 8px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 4px; border-left: 3px solid #00ff00; font-size: 11px;">' +
+                                '<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">' +
+                                    '<span style="color: #00ff00; font-weight: bold;">' + agentEmoji + ' ' + log.agent + '</span>' +
+                                    '<span style="color: #888;">' + timestamp + '</span>' +
+                                '</div>' +
+                                '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>' +
+                                '<details style="margin-top: 4px;">' +
+                                    '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>' +
+                                    '<pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; overflow-x: auto; white-space: pre-wrap;">' + shortData + '</pre>' +
+                                    '<button onclick="showFullJSON(\'' + agentEmoji + ' ' + log.agent + ' - ' + log.message_type + '\', \'' + jsonData.replace(/'/g, "\\'") + '\')" style="background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff00; padding: 2px 6px; border-radius: 2px; font-size: 8px; cursor: pointer; margin-top: 4px;">📋 Full JSON</button>' +
+                                '</details>' +
+                            '</div>';
                         }});
                         
                         logsContent.innerHTML = html;
