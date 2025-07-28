@@ -430,6 +430,18 @@ async def game_dashboard():
                 text-align: center;
                 margin: 20px 0;
             }}
+            .turn-indicator {{
+                margin-bottom: 15px;
+                padding: 10px;
+                background: rgba(0, 255, 0, 0.1);
+                border-radius: 8px;
+                border: 1px solid rgba(0, 255, 0, 0.3);
+            }}
+            .turn-indicator p {{
+                margin: 5px 0;
+                font-size: 14px;
+                color: #00ff00;
+            }}
             .move-history {{ 
                 background: linear-gradient(135deg, #000, #1a1a1a); 
                 padding: 20px; 
@@ -588,9 +600,10 @@ async def game_dashboard():
                             </div>
                         </div>
                         <div class="board-controls">
-                            <button class="btn" onclick="simulateTurn()" {'disabled' if current_state.get('game_over', False) or current_state.get('current_player', 'player') == 'player' else ''}>
-                                <span class="emoji">🤖</span> AI MOVE
-                            </button>
+                            <div class="turn-indicator">
+                                {f'<p><span class="emoji">🎉</span> <strong>Game Over!</strong> {current_state.get("winner", "").upper()} wins!</p>' if current_state.get('game_over', False) and current_state.get('winner') else f'<p><span class="emoji">🤝</span> <strong>Game Over!</strong> It\'s a draw!</p>' if current_state.get('game_over', False) else f'<p><span class="emoji">{"👤" if current_state.get("current_player", "player") == "player" else "🤖"}</span> <strong>{"Your turn!" if current_state.get("current_player", "player") == "player" else "AI is thinking..."}</strong> {"Click any empty cell to make your move" if current_state.get("current_player", "player") == "player" else "AI will respond automatically"}</p>'}
+                                {f'<p><span class="emoji">🤖</span> AI will respond automatically</p>' if not current_state.get('game_over', False) and current_state.get('current_player', 'player') == 'player' else ''}
+                            </div>
                             <button class="btn" onclick="resetGame()">
                                 <span class="emoji">🔄</span> NEW GAME
                             </button>
@@ -666,7 +679,28 @@ async def game_dashboard():
                     }});
                     
                     if (response.ok) {{
-                        location.reload();
+                        // Show player move
+                        showNotification('✅ Your move made! AI is thinking...', 'success');
+                        
+                        // Wait a moment, then trigger AI move
+                        setTimeout(async () => {{
+                            try {{
+                                const aiResponse = await fetch('/simulate-turn', {{ method: 'POST' }});
+                                if (aiResponse.ok) {{
+                                    showNotification('🤖 AI has made its move!', 'success');
+                                    setTimeout(() => {{
+                                        location.reload();
+                                    }}, 1000);
+                                }} else {{
+                                    showNotification('❌ AI move failed!', 'error');
+                                    location.reload();
+                                }}
+                            }} catch (error) {{
+                                showNotification('❌ AI move error: ' + error.message, 'error');
+                                location.reload();
+                            }}
+                        }}, 1500);
+                        
                     }} else {{
                         showNotification('❌ Invalid move!', 'error');
                     }}
