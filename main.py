@@ -1049,6 +1049,12 @@ async def game_dashboard():
                 }});
             }}
             
+            function showFullJSONFromData(button) {{
+                const title = button.getAttribute('data-title');
+                const jsonData = button.getAttribute('data-json').replace(/&apos;/g, "'");
+                showFullJSON(title, jsonData);
+            }}
+            
             function showNotification(message, type) {{
                 // Create notification element
                 const notification = document.createElement('div');
@@ -1228,7 +1234,7 @@ async def game_dashboard():
                                 '<details style="margin-top: 4px;">' +
                                     '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>' +
                                     '<pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; overflow-x: auto; white-space: pre-wrap;">' + shortData + '</pre>' +
-                                                                         '<button onclick="showFullJSON(\\'' + agentEmoji + ' ' + log.agent + ' - ' + log.message_type + '\\', \\'' + jsonData.replace(/'/g, "\\\\'") + '\\')" style="background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff00; padding: 2px 6px; border-radius: 2px; font-size: 8px; cursor: pointer; margin-top: 4px;">📋 Full JSON</button>' +
+                                                                         '<button onclick="showFullJSONFromData(this)" data-title="' + agentEmoji + ' ' + log.agent + ' - ' + log.message_type + '" data-json=\'' + jsonData.replace(/'/g, "&apos;") + '\' style="background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff00; padding: 2px 6px; border-radius: 2px; font-size: 8px; cursor: pointer; margin-top: 4px;">📋 Full JSON</button>' +
                                 '</details>' +
                             '</div>';
                         }});
