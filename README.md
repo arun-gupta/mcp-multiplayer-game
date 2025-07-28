@@ -4,29 +4,29 @@ A **Multi-Context Protocol (MCP) demonstration** featuring a turn-based strategy
 
 ## 🎮 Game Overview
 
-The game is a **Rock-Paper-Scissors tournament** where three AI agents work together to play against an AI opponent:
+The game is an **interactive Tic Tac Toe** where you play against three AI agents working together:
 
-- **Tournament Format**: Best of 10 rounds
-- **Player Team**: Three specialized AI agents working together
-  - **Scout Agent** (OpenAI GPT-4): Analyzes opponent patterns
+- **Game Format**: Classic 3x3 Tic Tac Toe
+- **Player**: You play as X against the AI team
+- **AI Team**: Three specialized AI agents working together
+  - **Scout Agent** (OpenAI GPT-4): Analyzes board state and threats
   - **Strategist Agent** (Claude 3 Sonnet): Creates strategic plans
   - **Executor Agent** (Llama2:7B): Executes the chosen move
-- **Opponent**: AI opponent with adaptive behavior
-- **Objective**: Win the tournament by scoring more points than the opponent
+- **Objective**: Get three X's in a row (horizontally, vertically, or diagonally)
 
 ### 🎯 How It Works
 
-1. **Scout Agent** observes the current game state and opponent's move history
-2. **Strategist Agent** analyzes patterns and creates a strategic plan
-3. **Executor Agent** executes the chosen move (Rock, Paper, or Scissors)
-4. **Game Engine** determines the winner and updates the score
-5. **Process repeats** until all 10 rounds are completed
+1. **You click** any empty cell to place your X
+2. **Scout Agent** observes the current board state and identifies threats/opportunities
+3. **Strategist Agent** analyzes the board and creates a strategic plan
+4. **Executor Agent** executes the AI's move (places O)
+5. **Game continues** until someone wins or it's a draw
 
 ### 🏆 Victory Conditions
 
-- **Win**: Score more points than the opponent after 10 rounds
-- **Lose**: Score fewer points than the opponent after 10 rounds  
-- **Tie**: Equal scores after 10 rounds
+- **Player Win**: Three X's in a row (horizontally, vertically, or diagonally)
+- **AI Win**: Three O's in a row (horizontally, vertically, or diagonally)
+- **Draw**: All 9 cells filled with no winner
 
 ## 🚀 QuickStart
 
@@ -245,25 +245,27 @@ curl -X POST http://localhost:8000/reset-game
 
 ## 🎯 Game Mechanics
 
-### Available Moves
+### Board Layout
 
-1. **Rock** 🪨 - Beats Scissors, loses to Paper
-2. **Paper** 📄 - Beats Rock, loses to Scissors  
-3. **Scissors** ✂️ - Beats Paper, loses to Rock
+- **3x3 Grid**: Classic Tic Tac Toe board
+- **Player Symbol**: X (green color)
+- **AI Symbol**: O (red color)
+- **Empty Cells**: Available for moves
 
-### Tournament System
+### Game Rules
 
-- **Format**: Best of 10 rounds
-- **Scoring**: Win = +1 point, Loss = +0 points, Draw = +0 points
-- **Victory**: Highest score after 10 rounds
-- **Tie**: Equal scores after 10 rounds
+- **Player Goes First**: You always start with X
+- **Alternating Turns**: Player (X) → AI (O) → Player (X) → etc.
+- **Win Condition**: Three of your symbols in a row (horizontal, vertical, or diagonal)
+- **Draw Condition**: All 9 cells filled with no winner
 
-### Game Features
+### AI Strategy Features
 
-- **Pattern Recognition**: AI analyzes opponent's move history
-- **Strategic Planning**: Multiple strategies with confidence levels
-- **Adaptive Opponent**: AI opponent that learns and adapts
-- **Real-time Feedback**: Live score updates and move history
+- **Threat Detection**: AI identifies immediate win opportunities
+- **Blocking Moves**: AI blocks your potential winning moves
+- **Strategic Planning**: AI creates multiple move strategies with confidence levels
+- **Board Analysis**: Real-time analysis of board state and game phase
+- **Adaptive Play**: AI adjusts strategy based on game progression
 
 ## 🔍 Monitoring and Debugging
 
@@ -277,24 +279,25 @@ All agent communications are logged in JSON format:
   "agent": "Scout",
   "message_type": "Observation",
   "data": {
-    "current_round": 1,
-    "player_score": 0,
-    "opponent_score": 0,
-    "game_history": [...],
-    "last_opponent_moves": ["rock", "paper"],
+    "current_board": [["X", "", ""], ["", "O", ""], ["", "", ""]],
+    "current_player": "ai",
+    "move_number": 2,
+    "available_moves": [...],
+    "threats": [...],
+    "blocking_moves": [...],
     ...
   }
 }
 ```
 
-### Round History
+### Move History
 
-Each round is logged with:
-- Round number
-- Player move vs Opponent move
-- Result (win/lose/draw)
-- Score updates
-- Pattern analysis
+Each move is logged with:
+- Move number
+- Player (X) or AI (O) move
+- Board position (row, col)
+- Board state after move
+- Game phase (opening, midgame, endgame)
 
 ### Agent Performance
 
@@ -324,16 +327,15 @@ mcp-multiplayer-game/
 │   └── executor.py      # Executor agent (Llama2:7B)
 └── game/                # Game logic and state
     ├── __init__.py
-    ├── state.py        # RPS game state management
-    └── engine.py       # Game mechanics and execution
+    └── state.py        # Tic Tac Toe game state management
 ```
 
 ### Adding New Features
 
-1. **New Moves**: Add to `schemas/plan.py` Strategy class
+1. **New Board Sizes**: Modify `game/state.py` board dimensions
 2. **New Agents**: Create new agent class in `agents/` directory
-3. **New Game Mechanics**: Extend `game/engine.py`
-4. **New Tournament Formats**: Modify `game/state.py`
+3. **New Game Mechanics**: Extend `game/state.py` game logic
+4. **New Game Modes**: Add different game variations to `game/state.py`
 
 ### Testing
 
