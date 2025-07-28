@@ -185,6 +185,44 @@ async def game_dashboard():
                 font-size: 12px;
                 color: #aaa;
             }}
+            .header-content {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }}
+            .title-section {{
+                flex: 1;
+            }}
+            .github-link {{
+                margin-left: 20px;
+            }}
+            .github-link a {{
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 0, 0, 0.3));
+                border: 1px solid rgba(0, 255, 0, 0.3);
+                border-radius: 6px;
+                color: #00ff00;
+                text-decoration: none;
+                font-size: 12px;
+                font-weight: bold;
+                transition: all 0.3s ease;
+            }}
+            .github-link a:hover {{
+                background: linear-gradient(135deg, rgba(0, 255, 0, 0.2), rgba(0, 0, 0, 0.4));
+                border-color: #00ff00;
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(0, 255, 0, 0.3);
+            }}
+            .octocat {{
+                font-size: 16px;
+            }}
+            .link-text {{
+                font-size: 11px;
+            }}
 
             .btn {{ 
                 background: linear-gradient(45deg, #00ff00, #00cc00); 
@@ -393,7 +431,7 @@ async def game_dashboard():
             .tab-content {{
                 flex: 1;
                 padding: 10px;
-                max-height: 200px;
+                max-height: 350px;
                 overflow-y: auto;
             }}
             .tab-panel {{
@@ -408,16 +446,18 @@ async def game_dashboard():
                 color: #00ff00;
             }}
             .moves-list {{
-                max-height: 200px;
+                max-height: 300px;
                 overflow-y: auto;
+                padding-right: 5px;
             }}
             .move-item {{
-                padding: 6px 8px;
-                margin: 2px 0;
-                border-radius: 4px;
-                font-size: 10px;
+                padding: 4px 6px;
+                margin: 1px 0;
+                border-radius: 3px;
+                font-size: 9px;
                 border-left: 3px solid;
                 transition: all 0.3s ease;
+                line-height: 1.2;
             }}
             .move-item.player-move {{
                 background: rgba(0, 255, 0, 0.1);
@@ -564,8 +604,18 @@ async def game_dashboard():
             
             <div class="game-section">
                 <div class="game-header">
-                    <h2>🎮 Tic Tac Toe Multi-Agent Game</h2>
-                    <p>Experience MCP protocol with three different AI agents</p>
+                    <div class="header-content">
+                        <div class="title-section">
+                            <h2>🎮 Tic Tac Toe Multi-Agent Game</h2>
+                            <p>Experience MCP protocol with three different AI agents</p>
+                        </div>
+                        <div class="github-link">
+                            <a href="https://github.com/arungupta/mcp-multiplayer-game" target="_blank" title="View on GitHub">
+                                <span class="octocat">🐙</span>
+                                <span class="link-text">GitHub</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
             
