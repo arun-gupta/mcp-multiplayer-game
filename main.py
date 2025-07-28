@@ -1033,7 +1033,7 @@ async def game_dashboard():
                 modalContent.innerHTML = 
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">' +
                         '<h3 style="color: #00ff00; margin: 0;">' + title + '</h3>' +
-                        '<button onclick="this.closest(\'.modal-overlay\').remove()" style="background: none; border: none; color: #00ff00; font-size: 20px; cursor: pointer;">×</button>' +
+                        '<button onclick="this.closest(\\'.modal-overlay\\').remove()" style="background: none; border: none; color: #00ff00; font-size: 20px; cursor: pointer;">×</button>' +
                     '</div>' +
                     '<pre style="background: #000; padding: 15px; border-radius: 5px; color: #ccc; font-size: 11px; overflow-x: auto; white-space: pre-wrap;">' + jsonData + '</pre>';
                 
