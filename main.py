@@ -22,7 +22,7 @@ except ImportError:
     pass
 
 # Import our modules
-from game.state import RPSGameState
+from game.state import TicTacToeGameState
 from agents.scout import ScoutAgent
 from agents.strategist import StrategistAgent
 from agents.executor import ExecutorAgent
@@ -51,7 +51,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Global game state
-game_state = RPSGameState()
+game_state = TicTacToeGameState()
 
 # Global agents
 scout_agent = None
@@ -86,20 +86,24 @@ def log_mcp_message(agent: str, message_type: str, data: Dict[str, Any]):
 # Pydantic models for API requests/responses
 class SimulateTurnRequest(BaseModel):
     """Request model for simulating a turn"""
-    turn_number: Optional[int] = None
+    move_number: Optional[int] = None
 
 
 class GameStateResponse(BaseModel):
     """Response model for game state"""
-    game_state: Dict[str, Any]
+    board: List[List[str]]
+    current_player: str
+    move_number: int
+    game_over: bool
+    winner: Optional[str]
     game_history: List[Dict[str, Any]]
-    recent_moves: List[Dict[str, Any]]
+    available_moves: List[Dict[str, Any]]
     statistics: Dict[str, Any]
 
 
 class TurnSimulationResponse(BaseModel):
     """Response model for turn simulation"""
-    turn_number: int
+    move_number: int
     observation: Dict[str, Any]
     plan: Dict[str, Any]
     execution_result: Dict[str, Any]
@@ -292,6 +296,52 @@ async def game_dashboard():
                 0% {{ transform: translateX(-100%); }}
                 100% {{ transform: translateX(100%); }}
             }}
+            .board-container {{
+                display: flex;
+                justify-content: center;
+                margin: 20px 0;
+            }}
+            .tic-tac-toe-board {{
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 5px;
+                background: #333;
+                padding: 10px;
+                border-radius: 15px;
+                border: 2px solid #00ff00;
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+            }}
+            .board-row {{
+                display: contents;
+            }}
+            .board-cell {{
+                width: 80px;
+                height: 80px;
+                background: linear-gradient(135deg, #222, #1a1a1a);
+                border: 2px solid #00ff00;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 36px;
+                font-weight: bold;
+                color: #00ff00;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            }}
+            .board-cell:hover {{
+                background: linear-gradient(135deg, #333, #2a2a2a);
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+            }}
+            .board-cell:active {{
+                transform: scale(0.95);
+            }}
+            .board-controls {{
+                text-align: center;
+                margin: 20px 0;
+            }}
             .move-history {{ 
                 background: linear-gradient(135deg, #000, #1a1a1a); 
                 padding: 20px; 
@@ -441,18 +491,13 @@ async def game_dashboard():
             </div>
             
             <div class="game-section">
-                <h2>📊 Battle Statistics</h2>
+                <h2>🎯 Game Status</h2>
                 <div class="agent-info">
                     <div class="agent-card">
-                        <h3><span class="emoji">👤</span> Player Stats</h3>
-                        <p><span class="emoji">✅</span> Wins: <strong>{current_state.get('statistics', {}).get('player_wins', 0)}</strong></p>
-                        <p><span class="emoji">❌</span> Losses: <strong>{current_state.get('statistics', {}).get('opponent_wins', 0)}</strong></p>
-                        <p><span class="emoji">🤝</span> Draws: <strong>{current_state.get('statistics', {}).get('draws', 0)}</strong></p>
-                    </div>
-                    <div class="agent-card">
                         <h3><span class="emoji">📈</span> Game Progress</h3>
-                        <p><span class="emoji">🎯</span> Total Rounds: <strong>{current_state.get('statistics', {}).get('total_rounds', 0)}</strong></p>
-                        <p><span class="emoji">🏆</span> Win Rate: <strong>{(current_state.get('statistics', {}).get('player_wins', 0) / max(1, current_state.get('statistics', {}).get('total_rounds', 1)) * 100):.1f}%</strong></p>
+                        <p><span class="emoji">🎯</span> Move Number: <strong>{current_state.get('move_number', 0)}</strong></p>
+                        <p><span class="emoji">👤</span> Current Player: <strong>{current_state.get('current_player', 'player').upper()}</strong></p>
+                        <p><span class="emoji">🏆</span> Status: <strong>{'GAME OVER' if current_state.get('game_over', False) else 'IN PROGRESS'}</strong></p>
                     </div>
                     <div class="agent-card">
                         <h3><span class="emoji">🤖</span> AI Agents</h3>
@@ -464,9 +509,26 @@ async def game_dashboard():
             </div>
             
             <div class="game-section">
-                <h2>📜 Battle History</h2>
+                <h2>🎮 Tic Tac Toe Board</h2>
+                <div class="board-container">
+                    <div class="tic-tac-toe-board">
+                        {chr(10).join([f'<div class="board-row">' + chr(10).join([f'<div class="board-cell" data-row="{row}" data-col="{col}" onclick="makeMove({row}, {col})">{current_state.get("board", [["", "", ""], ["", "", ""], ["", "", ""]])[row][col]}</div>' for col in range(3)]) + '</div>' for row in range(3)])}
+                    </div>
+                </div>
+                <div class="board-controls">
+                    <button class="btn" onclick="simulateTurn()" {'disabled' if current_state.get('game_over', False) or current_state.get('current_player', 'player') == 'player' else ''}>
+                        <span class="emoji">🤖</span> AI MOVE
+                    </button>
+                    <button class="btn" onclick="resetGame()">
+                        <span class="emoji">🔄</span> NEW GAME
+                    </button>
+                </div>
+            </div>
+            
+            <div class="game-section">
+                <h2>📜 Move History</h2>
                 <div class="move-history">
-                    {chr(10).join([f'<div class="move-entry">Round {move.get("round_number", "N/A")}: <span class="emoji">{"🪨" if move.get("player_move") == "rock" else "📄" if move.get("player_move") == "paper" else "✂️"}</span> Player {move.get("player_move", "?").upper()} <span class="emoji">⚔️</span> <span class="emoji">{"🪨" if move.get("opponent_move") == "rock" else "📄" if move.get("opponent_move") == "paper" else "✂️"}</span> Opponent {move.get("opponent_move", "?").upper()} <span class="move-result result-{move.get("result", "?").lower()}">{move.get("result", "?").upper()}</span></div>' for move in current_state.get('recent_moves', [])[-5:]])}
+                    {chr(10).join([f'<div class="move-entry">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> {move.get("player", "?").upper()} placed {move.get("position", {}).get("value", "?")} at ({move.get("position", {}).get("row", "?"), move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-5:]])}
                 </div>
             </div>
             
@@ -496,6 +558,31 @@ async def game_dashboard():
         </div>
         
         <script>
+            async function makeMove(row, col) {{
+                const cell = document.querySelector(`[data-row="${{row}}"][data-col="${{col}}"]`);
+                if (cell.textContent !== '') {{
+                    showNotification('❌ Cell already occupied!', 'error');
+                    return;
+                }}
+                
+                try {{
+                    // Make player move
+                    const response = await fetch('/make-move', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify({{ row: row, col: col }})
+                    }});
+                    
+                    if (response.ok) {{
+                        location.reload();
+                    }} else {{
+                        showNotification('❌ Invalid move!', 'error');
+                    }}
+                }} catch (error) {{
+                    showNotification('❌ Error: ' + error.message, 'error');
+                }}
+            }}
+            
             async function simulateTurn() {{
                 const loading = document.getElementById('loading');
                 const btn = event.target;
@@ -510,7 +597,7 @@ async def game_dashboard():
                     const result = await response.json();
                     
                     // Show success message
-                    showNotification('🎯 Round completed! Check the battle history below.', 'success');
+                    showNotification('🤖 AI move completed!', 'success');
                     
                     // Reload after a short delay to show the animation
                     setTimeout(() => {{
@@ -523,7 +610,7 @@ async def game_dashboard():
                     // Hide loading animation
                     loading.style.display = 'none';
                     btn.disabled = false;
-                    btn.innerHTML = '<span class="emoji">🎯</span> PLAY ROUND';
+                    btn.innerHTML = '<span class="emoji">🤖</span> AI MOVE';
                 }}
             }}
             
@@ -712,54 +799,91 @@ async def get_game_state():
         raise HTTPException(status_code=500, detail=f"Error getting game state: {str(e)}")
 
 
+@app.post("/make-move")
+async def make_move(request: dict):
+    """Make a player move on the board"""
+    try:
+        row = request.get("row")
+        col = request.get("col")
+        
+        if row is None or col is None:
+            return {"error": "Row and column are required"}
+        
+        # Check if it's player's turn
+        if game_state.current_player != "player":
+            return {"error": "Not player's turn"}
+        
+        # Check if game is over
+        if game_state.game_over:
+            return {"error": "Game is over"}
+        
+        # Make the move
+        success = game_state.make_move(row, col, "player")
+        
+        if not success:
+            return {"error": "Invalid move"}
+        
+        # Log the move
+        log_mcp_message("GameEngine", "PlayerMove", {
+            "row": row,
+            "col": col,
+            "symbol": game_state.player_symbol
+        })
+        
+        return {"success": True, "message": "Move made successfully"}
+        
+    except Exception as e:
+        print(f"Error in make_move: {e}")
+        return {"error": "Internal server error"}
+
 @app.post("/simulate-turn", response_model=TurnSimulationResponse)
 async def simulate_turn(request: SimulateTurnRequest = SimulateTurnRequest()):
     """
-    Simulate a complete game round using the three-agent system:
+    Simulate AI's turn using the three-agent system:
     1. Scout Agent observes the environment
     2. Strategist Agent creates a plan
     3. Executor Agent executes the plan
     """
     try:
+        # Check if it's AI's turn
+        if game_state.current_player != "ai":
+            raise HTTPException(status_code=400, detail="Not AI's turn")
+        
         # Check if game is over
         if game_state.game_over:
             raise HTTPException(status_code=400, detail="Game is already over. Start a new game.")
         
         # Step 1: Scout Agent observes the environment
         print("\n" + "="*50)
-        print("ROUND SIMULATION STARTED")
+        print("AI TURN SIMULATION STARTED")
         print("="*50)
         
         observation = scout_agent.observe_environment()
         log_mcp_message("Scout", "Observation", observation.dict())
         
         # Step 2: Strategist Agent creates a plan
-        plan = strategist_agent.create_strategic_plan(observation)
+        plan = strategist_agent.create_plan(observation)
         log_mcp_message("Strategist", "Plan", plan.dict())
         
         # Step 3: Executor Agent executes the plan
         action_result = executor_agent.execute_plan(plan)
         log_mcp_message("Executor", "ExecutionResult", action_result.dict())
         
-        # Step 4: Update game state
-        game_state_update = game_state.update_from_result(action_result)
-        log_mcp_message("GameEngine", "StateUpdate", game_state_update)
-        
         print("="*50)
-        print("ROUND SIMULATION COMPLETED")
+        print("AI TURN SIMULATION COMPLETED")
         print("="*50)
         
         return TurnSimulationResponse(
-            turn_number=observation.current_round,
+            move_number=observation.move_number + 1,
             observation=observation.dict(),
             plan=plan.dict(),
             execution_result=action_result.dict(),
-            game_state_update=game_state_update,
+            game_state_update=action_result.dict(),
             mcp_logs=mcp_logs[-10:]  # Last 10 MCP messages
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error simulating round: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error simulating AI move: {str(e)}")
 
 
 @app.get("/agents", response_model=AgentInfoResponse)

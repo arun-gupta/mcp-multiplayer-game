@@ -8,123 +8,130 @@ from crewai import Agent
 from langchain_community.llms import Ollama
 from schemas.plan import Plan
 from schemas.action_result import ActionResult, MoveResult
-from game.state import RPSGameState
+from schemas.observation import BoardPosition
 
 class ExecutorAgent:
     """Executor agent that executes strategic plans"""
     
-    def __init__(self, game_state: RPSGameState):
+    def __init__(self, game_state):
         self.game_state = game_state
+        self.llm = Ollama(
+            model="llama2:7b",
+            temperature=0.1
+        )
         
-        # Initialize LLM (Ollama Llama2:7B)
-        try:
-            self.llm = Ollama(
-                model="llama2:7b",
-                temperature=0.1
-            )
-        except Exception as e:
-            print(f"Warning: Could not initialize Ollama LLM: {e}")
-            self.llm = None
-        
-        # Create CrewAI agent
         self.agent = Agent(
             role="Game Executor",
-            goal="Execute strategic plans by making the optimal Rock-Paper-Scissors move",
-            backstory="""You are an expert Rock-Paper-Scissors executor with perfect execution skills.
+            goal="Execute strategic plans by making optimal Tic Tac Toe moves",
+            backstory="""You are an expert Tic Tac Toe executor with perfect execution skills.
             Your job is to take the strategist's plan and execute it flawlessly by making the chosen move.
             You focus on:
-            - Following the strategist's recommendations
-            - Executing moves with confidence
+            - Following the strategist's recommendations precisely
+            - Executing moves with confidence and accuracy
+            - Validating move legality before execution
             - Adapting if the primary strategy fails
-            - Maintaining consistency with the overall game plan""",
+            - Maintaining consistency with the overall game plan
+            - Ensuring proper board state updates""",
             verbose=True,
             allow_delegation=False,
             llm=self.llm
         )
     
     def execute_plan(self, plan: Plan) -> ActionResult:
-        """Execute the strategic plan and return the result"""
+        """Execute the strategic plan by making a move"""
         try:
             start_time = time.time()
             
-            # Get the move to execute
-            move = plan.primary_strategy.move
-            confidence = plan.primary_strategy.confidence
+            # Validate the plan
+            if not self._validate_plan(plan):
+                return self._create_error_result(plan, "Invalid plan - no valid moves available")
             
-            # Generate opponent's move
-            opponent_move = self.game_state.generate_opponent_move()
+            # Execute the primary strategy
+            primary_move = plan.primary_strategy.position
+            success = self.game_state.make_move(primary_move.row, primary_move.col, "ai")
             
-            # Determine the result
-            result = self.game_state.determine_winner(move, opponent_move)
+            if not success:
+                # Try alternative strategies
+                for alt_strategy in plan.alternative_strategies:
+                    alt_move = alt_strategy.position
+                    if self.game_state.make_move(alt_move.row, alt_move.col, "ai"):
+                        primary_move = alt_move
+                        success = True
+                        break
             
-            # Calculate execution time
             execution_time = time.time() - start_time
+            
+            if not success:
+                return self._create_error_result(plan, "Failed to execute any strategy")
             
             # Create move result
             move_result = MoveResult(
-                move=move,
-                opponent_move=opponent_move,
-                result=result,
-                confidence=confidence,
+                position=primary_move,
+                move_type=plan.primary_strategy.move_type,
+                success=True,
                 execution_time=execution_time
             )
             
-            # Determine score change
-            score_change = 0
-            if result == "win":
-                score_change = 1
-            elif result == "lose":
-                score_change = -1
-            
             # Create action result
-            action_result = ActionResult(
-                round_number=plan.round_number,
+            return ActionResult(
+                move_number=plan.move_number,
                 plan_id=plan.plan_id,
                 move_executed=move_result,
-                strategy_followed="primary",
+                strategy_followed=plan.primary_strategy.move_type,
                 success=True,
-                message=f"Successfully executed {move} against opponent's {opponent_move} - {result}",
-                score_change=score_change,
-                game_continues=len(self.game_state.game_history) < self.game_state.max_rounds
+                message=f"Successfully executed {plan.primary_strategy.move_type} move at position ({primary_move.row}, {primary_move.col})",
+                new_board_state=self.game_state.board,
+                game_over=self.game_state.game_over,
+                winner=self.game_state.winner,
+                next_player=self.game_state.current_player
             )
-            
-            return action_result
             
         except Exception as e:
             print(f"Error in ExecutorAgent.execute_plan: {e}")
-            # Return a fallback result
-            return self._create_fallback_result(plan)
+            return self._create_error_result(plan, f"Execution error: {str(e)}")
     
-    def _create_fallback_result(self, plan: Plan) -> ActionResult:
-        """Create a fallback result if execution fails"""
-        # Default to rock if execution fails
-        move = "rock"
-        opponent_move = self.game_state.generate_opponent_move()
-        result = self.game_state.determine_winner(move, opponent_move)
+    def _validate_plan(self, plan: Plan) -> bool:
+        """Validate that the plan contains valid moves"""
+        if not plan.primary_strategy or not plan.primary_strategy.position:
+            return False
         
-        move_result = MoveResult(
-            move=move,
-            opponent_move=opponent_move,
-            result=result,
-            confidence=0.1,
-            execution_time=0.1
-        )
+        # Check if the primary move is valid
+        pos = plan.primary_strategy.position
+        if not self._is_valid_move(pos.row, pos.col):
+            return False
         
-        score_change = 0
-        if result == "win":
-            score_change = 1
-        elif result == "lose":
-            score_change = -1
+        # Check if any alternative moves are valid
+        for alt_strategy in plan.alternative_strategies:
+            if alt_strategy.position and self._is_valid_move(alt_strategy.position.row, alt_strategy.position.col):
+                return True
         
+        return True
+    
+    def _is_valid_move(self, row: int, col: int) -> bool:
+        """Check if a move is valid (within bounds and empty)"""
+        if row < 0 or row >= 3 or col < 0 or col >= 3:
+            return False
+        return self.game_state.board[row][col] == ""
+    
+    def _create_error_result(self, plan: Plan, error_message: str) -> ActionResult:
+        """Create an error result when execution fails"""
         return ActionResult(
-            round_number=plan.round_number,
+            move_number=plan.move_number,
             plan_id=plan.plan_id,
-            move_executed=move_result,
-            strategy_followed="fallback",
+            move_executed=MoveResult(
+                position=BoardPosition(row=0, col=0, value=""),
+                move_type="error",
+                success=False,
+                execution_time=0.0,
+                validation_errors=[error_message]
+            ),
+            strategy_followed="error",
             success=False,
-            message=f"Fallback execution: {move} vs {opponent_move} - {result}",
-            score_change=score_change,
-            game_continues=len(self.game_state.game_history) < self.game_state.max_rounds
+            message=error_message,
+            new_board_state=self.game_state.board,
+            game_over=self.game_state.game_over,
+            winner=self.game_state.winner,
+            next_player=self.game_state.current_player
         )
     
     def get_agent_info(self) -> dict:
@@ -133,6 +140,6 @@ class ExecutorAgent:
             "name": "Executor Agent",
             "role": "Move Executor",
             "model": "Ollama Llama2:7B",
-            "description": "Executes strategic plans by making moves",
-            "capabilities": ["Plan Execution", "Move Selection", "Result Analysis", "Adaptive Execution"]
+            "description": "Executes strategic plans by making board moves",
+            "capabilities": ["Plan Execution", "Move Validation", "Board Updates", "Game State Management"]
         } 

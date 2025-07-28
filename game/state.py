@@ -4,155 +4,198 @@ Manages the overall game state, turn management, and game progression
 """
 import random
 from datetime import datetime
-from typing import List, Dict, Any
-from schemas.observation import Observation, GameHistory
-from schemas.action_result import ActionResult, MoveResult
+from typing import List, Optional, Tuple
+from schemas.observation import Observation, GameHistory, BoardPosition
 
-class RPSGameState:
-    """Manages the state of a Rock-Paper-Scissors game"""
+class TicTacToeGameState:
+    """Manages the state of a Tic Tac Toe game"""
     
     def __init__(self):
-        self.current_round = 0
-        self.player_score = 0
-        self.opponent_score = 0
+        self.board = [["" for _ in range(3)] for _ in range(3)]
+        self.current_player = "player"  # "player" or "ai"
+        self.move_number = 0
         self.game_history: List[GameHistory] = []
-        self.max_rounds = 10
-        self.game_mode = "tournament"
         self.game_over = False
         self.winner = None
-        
+        self.player_symbol = "X"
+        self.ai_symbol = "O"
+    
     def initialize_new_game(self):
-        """Start a new game"""
-        self.current_round = 0
-        self.player_score = 0
-        self.opponent_score = 0
+        """Reset the game state for a new game"""
+        self.board = [["" for _ in range(3)] for _ in range(3)]
+        self.current_player = "player"
+        self.move_number = 0
         self.game_history = []
         self.game_over = False
         self.winner = None
+    
+    def get_available_moves(self) -> List[BoardPosition]:
+        """Get all available (empty) positions on the board"""
+        moves = []
+        for row in range(3):
+            for col in range(3):
+                if self.board[row][col] == "":
+                    moves.append(BoardPosition(row=row, col=col, value=""))
+        return moves
+    
+    def make_move(self, row: int, col: int, player: str) -> bool:
+        """Make a move on the board"""
+        if self.game_over or self.board[row][col] != "":
+            return False
         
-    def get_observation(self) -> Observation:
-        """Get current game state for the Scout agent"""
-        last_opponent_moves = [h.opponent_move for h in self.game_history[-5:]]
+        symbol = self.player_symbol if player == "player" else self.ai_symbol
+        self.board[row][col] = symbol
+        self.move_number += 1
         
-        # Determine current streak
-        if len(self.game_history) == 0:
-            current_streak = "neutral"
-        else:
-            last_result = self.game_history[-1].result
-            if last_result == "win":
-                current_streak = "winning"
-            elif last_result == "lose":
-                current_streak = "losing"
-            else:
-                current_streak = "drawing"
-        
-        return Observation(
-            current_round=self.current_round + 1,  # Next round
-            player_score=self.player_score,
-            opponent_score=self.opponent_score,
-            game_history=self.game_history,
-            last_opponent_moves=last_opponent_moves,
-            total_rounds_played=len(self.game_history),
-            current_streak=current_streak,
-            game_mode=self.game_mode,
-            max_rounds=self.max_rounds
+        # Record the move
+        position = BoardPosition(row=row, col=col, value=symbol)
+        move_history = GameHistory(
+            move_number=self.move_number,
+            player=player,
+            position=position
         )
+        self.game_history.append(move_history)
         
-    def generate_opponent_move(self) -> str:
-        """Generate the opponent's move (AI opponent)"""
-        # Simple AI: sometimes follows patterns, sometimes random
-        if len(self.game_history) >= 3:
-            # 30% chance to counter the player's most common move
-            player_moves = [h.player_move for h in self.game_history[-3:]]
-            if player_moves.count(player_moves[0]) >= 2:
-                # Player seems to favor one move, counter it
-                if random.random() < 0.3:
-                    if player_moves[0] == "rock":
-                        return "paper"
-                    elif player_moves[0] == "paper":
-                        return "scissors"
-                    else:
-                        return "rock"
+        # Check for game over
+        self._check_game_over()
         
-        # Default to random
-        return random.choice(["rock", "paper", "scissors"])
+        # Switch players
+        if not self.game_over:
+            self.current_player = "ai" if player == "player" else "player"
         
-    def determine_winner(self, player_move: str, opponent_move: str) -> str:
-        """Determine the winner of a round"""
-        if player_move == opponent_move:
-            return "draw"
-        
-        winning_combinations = {
-            ("rock", "scissors"): "win",
-            ("paper", "rock"): "win", 
-            ("scissors", "paper"): "win"
-        }
-        
-        return winning_combinations.get((player_move, opponent_move), "lose")
-        
-    def update_from_result(self, result: ActionResult) -> Dict[str, Any]:
-        """Update game state from execution result"""
-        move_result = result.move_executed
-        
-        # Create game history entry
-        history_entry = GameHistory(
-            round_number=result.round_number,
-            player_move=move_result.move,
-            opponent_move=move_result.opponent_move,
-            result=move_result.result,
-            timestamp=datetime.now().isoformat()
-        )
-        
-        self.game_history.append(history_entry)
-        
-        # Update scores
-        if move_result.result == "win":
-            self.player_score += 1
-        elif move_result.result == "lose":
-            self.opponent_score += 1
-        
-        # Check if game is over
-        if len(self.game_history) >= self.max_rounds:
+        return True
+    
+    def _check_game_over(self):
+        """Check if the game is over (win, lose, or draw)"""
+        # Check for win
+        winner = self._check_winner()
+        if winner:
             self.game_over = True
-            if self.player_score > self.opponent_score:
-                self.winner = "player"
-            elif self.opponent_score > self.player_score:
-                self.winner = "opponent"
-            else:
-                self.winner = "tie"
+            self.winner = winner
+            # Update the last move with result
+            if self.game_history:
+                self.game_history[-1].result = "win" if winner == self.current_player else "lose"
+            return
         
+        # Check for draw
+        if self.move_number >= 9:
+            self.game_over = True
+            self.winner = "draw"
+            if self.game_history:
+                self.game_history[-1].result = "draw"
+    
+    def _check_winner(self) -> Optional[str]:
+        """Check if there's a winner"""
+        # Check rows
+        for row in range(3):
+            if self.board[row][0] == self.board[row][1] == self.board[row][2] != "":
+                return "player" if self.board[row][0] == self.player_symbol else "ai"
+        
+        # Check columns
+        for col in range(3):
+            if self.board[0][col] == self.board[1][col] == self.board[2][col] != "":
+                return "player" if self.board[0][col] == self.player_symbol else "ai"
+        
+        # Check diagonals
+        if self.board[0][0] == self.board[1][1] == self.board[2][2] != "":
+            return "player" if self.board[0][0] == self.player_symbol else "ai"
+        
+        if self.board[0][2] == self.board[1][1] == self.board[2][0] != "":
+            return "player" if self.board[0][2] == self.player_symbol else "ai"
+        
+        return None
+    
+    def get_threats(self) -> List[BoardPosition]:
+        """Get positions that could lead to immediate win for AI"""
+        threats = []
+        for row in range(3):
+            for col in range(3):
+                if self.board[row][col] == "":
+                    # Test if this move would win
+                    self.board[row][col] = self.ai_symbol
+                    if self._check_winner() == "ai":
+                        threats.append(BoardPosition(row=row, col=col, value=""))
+                    self.board[row][col] = ""
+        return threats
+    
+    def get_blocking_moves(self) -> List[BoardPosition]:
+        """Get positions that block player's immediate win"""
+        blocking = []
+        for row in range(3):
+            for col in range(3):
+                if self.board[row][col] == "":
+                    # Test if this move would win for player
+                    self.board[row][col] = self.player_symbol
+                    if self._check_winner() == "player":
+                        blocking.append(BoardPosition(row=row, col=col, value=""))
+                    self.board[row][col] = ""
+        return blocking
+    
+    def get_observation(self) -> Observation:
+        """Get the current game state as an observation for the Scout agent"""
+        return Observation(
+            current_board=self.board,
+            current_player=self.current_player,
+            move_number=self.move_number,
+            game_history=self.game_history,
+            available_moves=self.get_available_moves(),
+            player_symbol=self.player_symbol,
+            ai_symbol=self.ai_symbol,
+            game_over=self.game_over,
+            winner=self.winner,
+            last_move=self.game_history[-1].position if self.game_history else None,
+            threats=self.get_threats(),
+            blocking_moves=self.get_blocking_moves()
+        )
+    
+    def generate_ai_move(self) -> Tuple[int, int]:
+        """Generate AI's move using simple strategy"""
+        import random
+        
+        # First priority: Win if possible
+        threats = self.get_threats()
+        if threats:
+            pos = random.choice(threats)
+            return pos.row, pos.col
+        
+        # Second priority: Block player's win
+        blocking = self.get_blocking_moves()
+        if blocking:
+            pos = random.choice(blocking)
+            return pos.row, pos.col
+        
+        # Third priority: Take center
+        if self.board[1][1] == "":
+            return 1, 1
+        
+        # Fourth priority: Take corners
+        corners = [(0, 0), (0, 2), (2, 0), (2, 2)]
+        available_corners = [(r, c) for r, c in corners if self.board[r][c] == ""]
+        if available_corners:
+            return random.choice(available_corners)
+        
+        # Last resort: Take any available edge
+        edges = [(0, 1), (1, 0), (1, 2), (2, 1)]
+        available_edges = [(r, c) for r, c in edges if self.board[r][c] == ""]
+        if available_edges:
+            return random.choice(available_edges)
+        
+        # Should never reach here if game is not over
+        return 0, 0
+    
+    def get_state_for_api(self) -> dict:
+        """Get the current game state formatted for API response"""
         return {
-            "round_number": result.round_number,
-            "player_score": self.player_score,
-            "opponent_score": self.opponent_score,
-            "last_move": {
-                "player": move_result.move,
-                "opponent": move_result.opponent_move,
-                "result": move_result.result
-            },
+            "board": self.board,
+            "current_player": self.current_player,
+            "move_number": self.move_number,
             "game_over": self.game_over,
             "winner": self.winner,
-            "rounds_remaining": max(0, self.max_rounds - len(self.game_history))
-        }
-        
-    def get_state_for_api(self) -> Dict[str, Any]:
-        """Get formatted state for API response"""
-        return {
-            "game_state": {
-                "current_round": self.current_round + 1,
-                "player_score": self.player_score,
-                "opponent_score": self.opponent_score,
-                "game_over": self.game_over,
-                "winner": self.winner,
-                "max_rounds": self.max_rounds,
-                "rounds_remaining": max(0, self.max_rounds - len(self.game_history))
-            },
-            "game_history": [h.dict() for h in self.game_history],
-            "recent_moves": [h.dict() for h in self.game_history[-5:]],
+            "game_history": [move.dict() for move in self.game_history],
+            "available_moves": [move.dict() for move in self.get_available_moves()],
             "statistics": {
-                "total_rounds": len(self.game_history),
-                "player_wins": sum(1 for h in self.game_history if h.result == "win"),
-                "opponent_wins": sum(1 for h in self.game_history if h.result == "lose"),
-                "draws": sum(1 for h in self.game_history if h.result == "draw")
+                "total_moves": self.move_number,
+                "player_moves": len([m for m in self.game_history if m.player == "player"]),
+                "ai_moves": len([m for m in self.game_history if m.player == "ai"])
             }
         } 
