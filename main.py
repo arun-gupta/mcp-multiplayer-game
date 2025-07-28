@@ -241,42 +241,43 @@ async def game_dashboard():
                 text-align: center;
             }}
             .metric-title {{
-                font-size: 9px;
+                font-size: 11px;
                 color: #00ff00;
                 font-weight: bold;
-                margin-bottom: 4px;
+                margin-bottom: 6px;
             }}
             .metric-value {{
-                font-size: 12px;
+                font-size: 14px;
                 font-weight: bold;
                 color: #fff;
-                margin-bottom: 2px;
+                margin-bottom: 4px;
             }}
             .metric-desc {{
-                font-size: 7px;
+                font-size: 9px;
                 color: #888;
             }}
             .metrics-breakdown {{
                 margin-top: 10px;
             }}
             .metrics-breakdown h4 {{
-                font-size: 10px;
+                font-size: 12px;
                 color: #00ff00;
-                margin: 0 0 8px 0;
+                margin: 0 0 10px 0;
+                font-weight: bold;
             }}
             .llm-costs {{
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 6px;
             }}
             .llm-cost-item {{
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 4px 6px;
+                padding: 6px 8px;
                 background: rgba(0, 0, 0, 0.2);
                 border-radius: 4px;
-                font-size: 8px;
+                font-size: 10px;
             }}
             .llm-name {{
                 color: #ccc;
@@ -447,6 +448,25 @@ async def game_dashboard():
                 margin-top: 15px;
                 text-align: center;
             }}
+            .game-status-bar {{
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-bottom: 10px;
+            }}
+            .status-item {{
+                background: rgba(0, 255, 0, 0.1);
+                padding: 6px 10px;
+                border-radius: 4px;
+                font-size: 11px;
+                border: 1px solid rgba(0, 255, 0, 0.3);
+                color: #00ff00;
+            }}
+            .status-item.winner {{
+                background: rgba(0, 255, 0, 0.2);
+                color: #fff;
+                font-weight: bold;
+            }}
             .turn-indicator-mini {{
                 background: rgba(0, 255, 0, 0.1);
                 padding: 8px 12px;
@@ -492,7 +512,7 @@ async def game_dashboard():
             }}
             .tab-content {{
                 flex: 1;
-                padding: 10px;
+                padding: 15px;
                 max-height: 350px;
                 overflow-y: auto;
             }}
@@ -503,9 +523,10 @@ async def game_dashboard():
                 display: block;
             }}
             .tab-panel h3 {{
-                margin: 0 0 8px 0;
-                font-size: 12px;
+                margin: 0 0 12px 0;
+                font-size: 14px;
                 color: #00ff00;
+                font-weight: bold;
             }}
             .moves-list {{
                 max-height: 300px;
@@ -515,13 +536,13 @@ async def game_dashboard():
                 overflow-x: hidden;
             }}
             .move-item {{
-                padding: 3px 5px;
-                margin: 1px 0;
-                border-radius: 3px;
-                font-size: 8px;
+                padding: 6px 8px;
+                margin: 2px 0;
+                border-radius: 4px;
+                font-size: 11px;
                 border-left: 3px solid;
                 transition: all 0.3s ease;
-                line-height: 1.1;
+                line-height: 1.2;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
             }}
@@ -689,11 +710,6 @@ async def game_dashboard():
                 <div class="game-board-section">
                     <div class="board-header">
                         <h2>🎮 Tic Tac Toe</h2>
-                        <div class="game-status-mini">
-                            <span class="status-badge">Move: {current_state.get('move_number', 0)}</span>
-                            <span class="status-badge">Turn: {current_state.get('current_player', 'player').upper()}</span>
-                            {f'<span class="status-badge winner">Winner: {current_state.get("winner", "").upper()}</span>' if current_state.get('game_over', False) and current_state.get('winner') else ''}
-                        </div>
                     </div>
                     
                     <div class="board-container">
@@ -703,6 +719,11 @@ async def game_dashboard():
                     </div>
                     
                     <div class="game-controls">
+                        <div class="game-status-bar">
+                            <span class="status-item">Move: {current_state.get('move_number', 0)}</span>
+                            <span class="status-item">Turn: {current_state.get('current_player', 'player').upper()}</span>
+                            {f'<span class="status-item winner">Winner: {current_state.get("winner", "").upper()}</span>' if current_state.get('game_over', False) and current_state.get('winner') else ''}
+                        </div>
                         <div class="turn-indicator-mini">
                             {f'<span class="emoji">🎉</span> Game Over! {current_state.get("winner", "").upper()} wins!' if current_state.get('game_over', False) and current_state.get('winner') else f'<span class="emoji">🤝</span> Game Over! It is a draw!' if current_state.get('game_over', False) else f'<span class="emoji">{"👤" if current_state.get("current_player", "player") == "player" else "🤖"}</span> {"Your turn! Click any cell" if current_state.get("current_player", "player") == "player" else "AI is thinking..."}'}
                         </div>
