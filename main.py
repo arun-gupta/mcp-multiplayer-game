@@ -160,65 +160,32 @@ async def game_dashboard():
                 to {{ text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00; }}
             }}
             .game-section {{ 
-                margin-bottom: 30px; 
+                margin-bottom: 20px; 
                 animation: slideIn 0.5s ease-out;
             }}
             @keyframes slideIn {{
                 from {{ opacity: 0; transform: translateY(20px); }}
                 to {{ opacity: 1; transform: translateY(0); }}
             }}
-            .score-board {{ 
-                background: linear-gradient(45deg, #000, #1a1a1a); 
-                padding: 30px; 
-                border-radius: 15px; 
-                text-align: center; 
-                font-size: 24px; 
-                border: 2px solid #00ff00;
-                box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-                position: relative;
-                overflow: hidden;
-            }}
-            .score-board::before {{
-                content: '';
-                position: absolute;
-                top: -50%;
-                left: -50%;
-                width: 200%;
-                height: 200%;
-                background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
-                animation: shimmer 3s infinite;
-            }}
-            @keyframes shimmer {{
-                0% {{ transform: translateX(-100%) translateY(-100%) rotate(45deg); }}
-                100% {{ transform: translateX(100%) translateY(100%) rotate(45deg); }}
-            }}
-            .score-display {{
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                margin: 20px 0;
-            }}
-            .player-score, .opponent-score {{
-                padding: 15px 30px;
+            .game-header {{
+                text-align: center;
+                margin-bottom: 20px;
+                padding: 15px;
+                background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 0, 0, 0.3));
                 border-radius: 10px;
-                font-weight: bold;
-                font-size: 28px;
-                transition: all 0.3s ease;
+                border: 1px solid rgba(0, 255, 0, 0.3);
             }}
-            .player-score {{
-                background: linear-gradient(45deg, #00ff00, #00cc00);
-                color: #000;
-                box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            .game-header h2 {{
+                margin: 0 0 5px 0;
+                font-size: 20px;
+                color: #00ff00;
             }}
-            .opponent-score {{
-                background: linear-gradient(45deg, #ff4444, #cc0000);
-                color: #fff;
-                box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+            .game-header p {{
+                margin: 0;
+                font-size: 12px;
+                color: #aaa;
             }}
-            .controls {{ 
-                text-align: center; 
-                margin: 30px 0; 
-            }}
+
             .btn {{ 
                 background: linear-gradient(45deg, #00ff00, #00cc00); 
                 color: #000; 
@@ -572,47 +539,9 @@ async def game_dashboard():
             </div>
             
             <div class="game-section">
-                <h2>🏆 Live Battle Arena</h2>
-                <div class="score-board">
-                    <div class="score-display">
-                        <div class="player-score">
-                            <div class="emoji">👤</div>
-                            <div>PLAYER</div>
-                            <div>{current_state.get('game_state', {}).get('player_score', 0)}</div>
-                        </div>
-                        <div class="emoji">⚔️</div>
-                        <div class="opponent-score">
-                            <div class="emoji">🤖</div>
-                            <div>OPPONENT</div>
-                            <div>{current_state.get('game_state', {}).get('opponent_score', 0)}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: {(current_state.get('game_state', {}).get('current_round', 1) / current_state.get('game_state', {}).get('max_rounds', 10)) * 100}%"></div>
-                    </div>
-                    
-                    <p>Round: <strong>{current_state.get('game_state', {}).get('current_round', 1)}</strong> / {current_state.get('game_state', {}).get('max_rounds', 10)}</p>
-                    <p>Rounds Remaining: <strong>{current_state.get('game_state', {}).get('rounds_remaining', 10)}</strong></p>
-                    
-                    {f'<div class="game-over"><span class="emoji">🏁</span> GAME OVER! Winner: {current_state.get("game_state", {}).get("winner", "Unknown").title()} <span class="emoji">🏆</span></div>' if current_state.get('game_state', {}).get('game_over', False) else ""}
-                </div>
-                
-                <div class="controls">
-                    <button class="btn" onclick="simulateTurn()" {"disabled" if current_state.get('game_state', {}).get('game_over', False) else ""}>
-                        <span class="emoji">🎯</span> PLAY ROUND
-                    </button>
-                    <button class="btn" onclick="resetGame()">
-                        <span class="emoji">🔄</span> NEW GAME
-                    </button>
-                    <button class="btn" onclick="refreshState()">
-                        <span class="emoji">🔄</span> REFRESH
-                    </button>
-                </div>
-                
-                <div class="loading" id="loading">
-                    <div class="spinner"></div>
-                    <p>🤖 Agents are thinking...</p>
+                <div class="game-header">
+                    <h2>🎮 Tic Tac Toe Multi-Agent Game</h2>
+                    <p>Experience MCP protocol with three different AI agents</p>
                 </div>
             </div>
             
