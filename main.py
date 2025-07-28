@@ -412,12 +412,36 @@ async def game_dashboard():
                 overflow-y: auto;
             }}
             .move-item {{
-                padding: 4px 0;
-                border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+                padding: 6px 8px;
+                margin: 2px 0;
+                border-radius: 4px;
                 font-size: 10px;
+                border-left: 3px solid;
+                transition: all 0.3s ease;
+            }}
+            .move-item.player-move {{
+                background: rgba(0, 255, 0, 0.1);
+                border-left-color: #00ff00;
+                color: #00ff00;
+            }}
+            .move-item.ai-move {{
+                background: rgba(255, 68, 68, 0.1);
+                border-left-color: #ff4444;
+                color: #ff4444;
+            }}
+            .move-item:hover {{
+                transform: translateX(2px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             }}
             .move-item:last-child {{
                 border-bottom: none;
+            }}
+            .move-item.no-moves {{
+                background: rgba(255, 255, 255, 0.1);
+                border-left-color: #888;
+                color: #888;
+                text-align: center;
+                font-style: italic;
             }}
             .board-controls {{
                 text-align: center;
@@ -592,7 +616,7 @@ async def game_dashboard():
                             <div id="moves-tab" class="tab-panel active">
                                 <h3>Recent Moves</h3>
                                 <div class="moves-list">
-                                    {chr(10).join([f'<div class="move-item">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> {move.get("position", {}).get("value", "?")} at ({move.get("position", {}).get("row", "?"), move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-5:]])}
+                                    {chr(10).join([f'<div class="move-item {"player-move" if move.get("player") == "player" else "ai-move"}">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤 Player" if move.get("player") == "player" else "🤖 AI"}</span> placed <strong>{move.get("position", {}).get("value", "?")}</strong> at position ({move.get("position", {}).get("row", "?")}, {move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-8:]]) if current_state.get('game_history', []) else '<div class="move-item no-moves"><span class="emoji">🎮</span> No moves yet. Start the game by clicking any cell!</div>'}
                                 </div>
                             </div>
                             
