@@ -408,7 +408,7 @@ async def game_dashboard():
                 color: #00ff00;
             }}
             .moves-list {{
-                max-height: 150px;
+                max-height: 200px;
                 overflow-y: auto;
             }}
             .move-item {{
@@ -614,9 +614,9 @@ async def game_dashboard():
                         
                         <div class="tab-content">
                             <div id="moves-tab" class="tab-panel active">
-                                <h3>Recent Moves</h3>
+                                <h3>All Moves</h3>
                                 <div class="moves-list">
-                                    {chr(10).join([f'<div class="move-item {"player-move" if move.get("player") == "player" else "ai-move"}">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤 Player" if move.get("player") == "player" else "🤖 AI"}</span> placed <strong>{move.get("position", {}).get("value", "?")}</strong> at position ({move.get("position", {}).get("row", "?")}, {move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-8:]]) if current_state.get('game_history', []) else '<div class="move-item no-moves"><span class="emoji">🎮</span> No moves yet. Start the game by clicking any cell!</div>'}
+                                    {chr(10).join([f'<div class="move-item {"player-move" if move.get("player") == "player" else "ai-move"}">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤 Player" if move.get("player") == "player" else "🤖 AI"}</span> placed <strong>{move.get("position", {}).get("value", "?")}</strong> at position ({move.get("position", {}).get("row", "?")}, {move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])]) if current_state.get('game_history', []) else '<div class="move-item no-moves"><span class="emoji">🎮</span> No moves yet. Start the game by clicking any cell!</div>'}
                                 </div>
                             </div>
                             
