@@ -1312,7 +1312,6 @@ async def game_dashboard():
                     document.getElementById('llama-cost').textContent = '$' + parseFloat(costs.llama || 0).toFixed(6);
                     
                     // Update individual agent response times
-                    const responseTimes = data.avg_response_times || {{}};
                     const scoutTime = responseTimes.scout || 0;
                     const strategistTime = responseTimes.strategist || 0;
                     const executorTime = responseTimes.executor || 0;
