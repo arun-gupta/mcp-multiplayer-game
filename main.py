@@ -1325,7 +1325,9 @@ async def game_dashboard():
                             const timeSpanStart = '<span style="color: #888;">';
                             const timeSpanEnd = '</span>';
                             const timeSpan = timeSpanStart + timestamp + timeSpanEnd;
-                            const messageDiv = '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>';
+                            const messageDivStart = '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">';
+                            const messageDivEnd = '</div>';
+                            const messageDiv = messageDivStart + log.message_type + messageDivEnd;
                             const detailsDiv = '<details style="margin-top: 4px;">';
                             const summaryDiv = '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>';
                             const preStyle = 'background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; max-height: 200px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap;';
