@@ -8,6 +8,14 @@ import sys
 import subprocess
 import platform
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed yet, that's okay
+    pass
+
 
 def run_command(command, description):
     """Run a command and handle errors"""

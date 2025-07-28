@@ -8,6 +8,14 @@ import os
 import importlib
 from typing import List, Dict, Any
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed yet, that's okay
+    pass
+
 
 def test_imports() -> Dict[str, bool]:
     """Test if all required modules can be imported"""

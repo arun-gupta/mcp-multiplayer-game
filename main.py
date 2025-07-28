@@ -12,6 +12,14 @@ import os
 import json
 from datetime import datetime
 
+# Load environment variables from .env file if it exists
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv not installed, that's okay
+    pass
+
 # Import our modules
 from game.state import GameStateManager
 from agents.scout import ScoutAgent
@@ -105,14 +113,9 @@ class AgentInfoResponse(BaseModel):
 async def startup_event():
     """Initialize the application on startup"""
     initialize_agents()
-    print("Multi-Agent Game Simulation started!")
-    print("Available endpoints:")
-    print("  GET  / - Game dashboard")
-    print("  GET  /state - Current game state")
-    print("  POST /simulate-turn - Simulate a game turn")
-    print("  GET  /agents - Agent information")
-    print("  GET  /mcp-logs - MCP protocol logs")
-    print("  POST /reset-game - Reset the game")
+
+
+
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -326,7 +329,19 @@ async def reset_game():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    # Get the port from environment or use default
+    port = int(os.getenv("PORT", 8000))
+    
+    return {
+        "status": "healthy", 
+        "timestamp": datetime.now().isoformat(),
+        "message": "Multi-Agent Game Simulation is running!",
+        "endpoints": {
+            "game_dashboard": f"http://localhost:{port}",
+            "api_documentation": f"http://localhost:{port}/docs",
+            "health_check": f"http://localhost:{port}/health"
+        }
+    }
 
 
 if __name__ == "__main__":
@@ -334,6 +349,15 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     
     # Run the application
+    print("🎮 Multi-Agent Game Simulation")
+    print("="*50)
+    print("🚀 Starting server...")
+    print(f"📍 Server will be available at:")
+    print(f"   🌐 Game Dashboard: http://localhost:{port}")
+    print(f"   📚 API Documentation: http://localhost:{port}/docs")
+    print(f"   🔍 Health Check: http://localhost:{port}/health")
+    print("="*50)
+    
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

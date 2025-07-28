@@ -15,24 +15,34 @@ Get the Multi-Agent Game Simulation running in 5 minutes!
 Ollama is required for running the local Llama2:7B model used by the Executor Agent.
 
 #### **macOS:**
-```bash
-# Install using curl
-curl -fsSL https://ollama.ai/install.sh | sh
 
-# Or install using Homebrew
+**Method 1: Install using Homebrew (recommended)**
+```bash
 brew install ollama
 ```
 
+**Method 2: Download from website**
+1. Visit [https://ollama.ai/download](https://ollama.ai/download)
+2. Download the macOS installer (.pkg file)
+3. Run the installer and follow the setup wizard
+4. Restart your terminal
+
 #### **Linux:**
+
+**Method 1: Install using curl (works on all Linux distributions)**
 ```bash
-# Install using curl
 curl -fsSL https://ollama.ai/install.sh | sh
+```
 
-# Or install using package manager
-# Ubuntu/Debian
+**Method 2: Install using package manager**
+
+*Ubuntu/Debian:*
+```bash
 sudo apt-get install ollama
+```
 
-# Fedora
+*Fedora:*
+```bash
 sudo dnf install ollama
 ```
 
@@ -57,28 +67,41 @@ ollama pull llama2:7b
 ```
 
 ### 4. Setup Python Environment
+
+**Clone the repository:**
 ```bash
-# Clone and setup
 git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
 cd mcp-multiplayer-game
+```
 
-# Run automated setup
-python setup.py
-
-# Or manual setup:
+**Create virtual environment and install dependencies:**
+```bash
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 ### 5. Set Environment Variables
-```bash
-# Copy example file
-cp .env.example .env
 
-# Edit .env and add your API keys
-export OPENAI_API_KEY="your-openai-api-key-here"
-export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
+**Copy the example environment file:**
+```bash
+cp .env.example .env
+```
+
+**Edit the .env file and add your API keys:**
+```bash
+# Open .env in your preferred editor
+nano .env
+# or
+code .env
+# or
+vim .env
+```
+
+**Replace the placeholder values with your actual API keys:**
+```
+OPENAI_API_KEY=your-actual-openai-api-key-here
+ANTHROPIC_API_KEY=your-actual-anthropic-api-key-here
 ```
 
 ### 6. Test Installation

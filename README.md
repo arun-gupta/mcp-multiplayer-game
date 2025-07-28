@@ -172,8 +172,18 @@ Each message is logged with timestamp and agent identifier
 
 5. **Set environment variables**
    ```bash
-   export OPENAI_API_KEY="your-openai-api-key"
-   export ANTHROPIC_API_KEY="your-anthropic-api-key"
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit the .env file and add your API keys
+   # Replace the placeholder values with your actual API keys:
+   # OPENAI_API_KEY=your-actual-openai-api-key-here
+   # ANTHROPIC_API_KEY=your-actual-anthropic-api-key-here
+   ```
+
+6. **Test the installation**
+   ```bash
+   python test_installation.py
    ```
 
 ### Running the Application
