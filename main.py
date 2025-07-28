@@ -469,6 +469,30 @@ async def game_dashboard():
                     {chr(10).join([f'<div class="move-entry">Round {move.get("round_number", "N/A")}: <span class="emoji">{"🪨" if move.get("player_move") == "rock" else "📄" if move.get("player_move") == "paper" else "✂️"}</span> Player {move.get("player_move", "?").upper()} <span class="emoji">⚔️</span> <span class="emoji">{"🪨" if move.get("opponent_move") == "rock" else "📄" if move.get("opponent_move") == "paper" else "✂️"}</span> Opponent {move.get("opponent_move", "?").upper()} <span class="move-result result-{move.get("result", "?").lower()}">{move.get("result", "?").upper()}</span></div>' for move in current_state.get('recent_moves', [])[-5:]])}
                 </div>
             </div>
+            
+            <div class="game-section">
+                <h2>🤖 AI Agents & MCP Protocol</h2>
+                <div class="agent-info">
+                    <div class="agent-card" id="agents-card">
+                        <h3><span class="emoji">🤖</span> Agent Information</h3>
+                        <div id="agents-content">
+                            <p>Loading agent information...</p>
+                        </div>
+                        <button class="btn" onclick="loadAgents()" style="margin-top: 10px; padding: 8px 16px; font-size: 12px;">
+                            <span class="emoji">🔄</span> Refresh Agents
+                        </button>
+                    </div>
+                    <div class="agent-card" id="mcp-logs-card">
+                        <h3><span class="emoji">📡</span> MCP Protocol Logs</h3>
+                        <div id="mcp-logs-content">
+                            <p>Loading MCP logs...</p>
+                        </div>
+                        <button class="btn" onclick="loadMCPLogs()" style="margin-top: 10px; padding: 8px 16px; font-size: 12px;">
+                            <span class="emoji">🔄</span> Refresh Logs
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <script>
@@ -598,7 +622,78 @@ async def game_dashboard():
                         }}, 150);
                     }});
                 }});
+                
+                // Load initial data
+                loadAgents();
+                loadMCPLogs();
             }});
+            
+            async function loadAgents() {{
+                try {{
+                    const response = await fetch('/agents');
+                    const data = await response.json();
+                    const agentsContent = document.getElementById('agents-content');
+                    
+                    let html = '';
+                    for (const [agentName, agentInfo] of Object.entries(data.agents)) {{
+                        html += `
+                            <div style="margin-bottom: 15px; padding: 10px; background: rgba(0, 255, 0, 0.1); border-radius: 8px; border-left: 3px solid #00ff00;">
+                                <h4 style="margin: 0 0 8px 0; color: #00ff00;">${{agentInfo.name || agentName.toUpperCase()}}</h4>
+                                <p style="margin: 2px 0; font-size: 12px;"><strong>Role:</strong> ${{agentInfo.role || 'N/A'}}</p>
+                                <p style="margin: 2px 0; font-size: 12px;"><strong>Model:</strong> ${{agentInfo.model || 'N/A'}}</p>
+                                <p style="margin: 2px 0; font-size: 12px;"><strong>Description:</strong> ${{agentInfo.description || 'N/A'}}</p>
+                                <p style="margin: 2px 0; font-size: 12px;"><strong>Capabilities:</strong> ${{agentInfo.capabilities ? agentInfo.capabilities.join(', ') : 'N/A'}}</p>
+                            </div>
+                        `;
+                    }}
+                    
+                    agentsContent.innerHTML = html;
+                }} catch (error) {{
+                    document.getElementById('agents-content').innerHTML = '<p style="color: #ff4444;">Error loading agent information</p>';
+                }}
+            }}
+            
+            async function loadMCPLogs() {{
+                try {{
+                    const response = await fetch('/mcp-logs');
+                    const data = await response.json();
+                    const logsContent = document.getElementById('mcp-logs-content');
+                    
+                    if (data.mcp_logs && data.mcp_logs.length > 0) {{
+                        let html = '';
+                        const recentLogs = data.mcp_logs.slice(-10); // Show last 10 logs
+                        
+                        recentLogs.forEach(log => {{
+                            const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                            const agentEmoji = {{
+                                'Scout': '🔍',
+                                'Strategist': '🧠', 
+                                'Executor': '⚡',
+                                'GameEngine': '🎮'
+                            }}[log.agent] || '🤖';
+                            
+                            html += `
+                                <div style="margin-bottom: 10px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 5px; border-left: 2px solid #00ff00; font-size: 11px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span style="color: #00ff00; font-weight: bold;">${{agentEmoji}} ${{log.agent}}</span>
+                                        <span style="color: #888;">${{timestamp}}</span>
+                                    </div>
+                                    <div style="color: #ccc; margin-bottom: 3px;"><strong>Type:</strong> ${{log.message_type}}</div>
+                                    <div style="color: #aaa; font-size: 10px; max-height: 60px; overflow-y: auto;">
+                                        <pre style="margin: 0; white-space: pre-wrap;">${{JSON.stringify(log.data, null, 2)}}</pre>
+                                    </div>
+                                </div>
+                            `;
+                        }});
+                        
+                        logsContent.innerHTML = html;
+                    }} else {{
+                        logsContent.innerHTML = '<p style="color: #888;">No MCP logs available yet. Play a round to see the protocol in action!</p>';
+                    }}
+                }} catch (error) {{
+                    document.getElementById('mcp-logs-content').innerHTML = '<p style="color: #ff4444;">Error loading MCP logs</p>';
+                }}
+            }}
         </script>
     </body>
     </html>
