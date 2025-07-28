@@ -523,8 +523,8 @@ async def game_dashboard():
                 display: block;
             }}
             .tab-panel h3 {{
-                margin: 0 0 12px 0;
-                font-size: 14px;
+                margin: 0 0 15px 0;
+                font-size: 16px;
                 color: #00ff00;
                 font-weight: bold;
             }}
@@ -536,13 +536,13 @@ async def game_dashboard():
                 overflow-x: hidden;
             }}
             .move-item {{
-                padding: 6px 8px;
-                margin: 2px 0;
+                padding: 8px 10px;
+                margin: 3px 0;
                 border-radius: 4px;
-                font-size: 11px;
+                font-size: 12px;
                 border-left: 3px solid;
                 transition: all 0.3s ease;
-                line-height: 1.2;
+                line-height: 1.3;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
             }}
@@ -569,6 +569,9 @@ async def game_dashboard():
                 color: #888;
                 text-align: center;
                 font-style: italic;
+                font-size: 13px;
+                padding: 12px 15px;
+                margin: 8px 0;
             }}
             .board-controls {{
                 text-align: center;
@@ -762,14 +765,14 @@ async def game_dashboard():
                             <div id="agents-tab" class="tab-panel">
                                 <h3>AI Agents</h3>
                                 <div id="agents-content">
-                                    <p>Loading agent information...</p>
+                                    <p style="color: #888; font-size: 12px; text-align: center; padding: 15px;">Loading agent information...</p>
                                 </div>
                             </div>
                             
                             <div id="logs-tab" class="tab-panel">
                                 <h3>MCP Protocol Logs</h3>
                                 <div id="mcp-logs-content">
-                                    <p>Loading MCP logs...</p>
+                                    <p style="color: #888; font-size: 12px; text-align: center; padding: 15px;">Loading MCP logs...</p>
                                 </div>
                             </div>
                             
@@ -1026,7 +1029,7 @@ async def game_dashboard():
                     
                     agentsContent.innerHTML = html;
                 }} catch (error) {{
-                    document.getElementById('agents-content').innerHTML = '<p style="color: #ff4444; font-size: 9px;">Error loading agent information</p>';
+                    document.getElementById('agents-content').innerHTML = '<p style="color: #ff4444; font-size: 12px; text-align: center; padding: 15px;">Error loading agent information</p>';
                 }}
             }}
             
@@ -1075,22 +1078,22 @@ async def game_dashboard():
                             }}[log.agent] || '🤖';
                             
                             html += `
-                                <div style="margin-bottom: 4px; padding: 3px; background: rgba(0, 255, 0, 0.05); border-radius: 2px; border-left: 1px solid #00ff00; font-size: 9px;">
+                                <div style="margin-bottom: 6px; padding: 6px; background: rgba(0, 255, 0, 0.05); border-radius: 3px; border-left: 2px solid #00ff00; font-size: 11px;">
                                     <div style="display: flex; justify-content: space-between;">
                                         <span style="color: #00ff00; font-weight: bold;">${{agentEmoji}} ${{log.agent}}</span>
                                         <span style="color: #888;">${{timestamp}}</span>
                                     </div>
-                                    <div style="color: #ccc; font-size: 8px;">${{log.message_type}}</div>
+                                    <div style="color: #ccc; font-size: 10px;">${{log.message_type}}</div>
                                 </div>
                             `;
                         }});
                         
                         logsContent.innerHTML = html;
                     }} else {{
-                        logsContent.innerHTML = '<p style="color: #888; font-size: 9px;">No MCP logs yet. Play to see protocol in action!</p>';
+                        logsContent.innerHTML = '<p style="color: #888; font-size: 12px; text-align: center; padding: 15px;">No MCP logs yet. Play to see protocol in action!</p>';
                     }}
                 }} catch (error) {{
-                    document.getElementById('mcp-logs-content').innerHTML = '<p style="color: #ff4444; font-size: 9px;">Error loading MCP logs</p>';
+                    document.getElementById('mcp-logs-content').innerHTML = '<p style="color: #ff4444; font-size: 12px; text-align: center; padding: 15px;">Error loading MCP logs</p>';
                 }}
             }}
             
