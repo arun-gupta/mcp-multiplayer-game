@@ -338,6 +338,88 @@ async def game_dashboard():
             .board-cell:active {{
                 transform: scale(0.95);
             }}
+            .main-game-area {{
+                margin-bottom: 30px;
+            }}
+            .game-layout {{
+                display: grid;
+                grid-template-columns: 1fr 300px;
+                gap: 30px;
+                align-items: start;
+            }}
+            .board-section {{
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }}
+            .sidebar {{
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }}
+            .game-status-card, .ai-agents-card {{
+                background: linear-gradient(135deg, #333, #222);
+                padding: 20px;
+                border-radius: 15px;
+                border: 1px solid #00ff00;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }}
+            .status-item, .agent-item {{
+                margin: 10px 0;
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+            }}
+            .status-item:last-child, .agent-item:last-child {{
+                border-bottom: none;
+            }}
+            .status-item.winner {{
+                color: #00ff00;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            }}
+            .compact-section {{
+                margin-top: 20px;
+            }}
+            .compact-layout {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }}
+            .move-history-compact, .mcp-section-compact {{
+                background: linear-gradient(135deg, #333, #222);
+                padding: 15px;
+                border-radius: 10px;
+                border: 1px solid #00ff00;
+            }}
+            .move-list {{
+                max-height: 120px;
+                overflow-y: auto;
+            }}
+            .move-entry-compact {{
+                padding: 5px 0;
+                border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+                font-size: 12px;
+            }}
+            .move-entry-compact:last-child {{
+                border-bottom: none;
+            }}
+            .mcp-controls {{
+                display: flex;
+                gap: 10px;
+                margin-bottom: 10px;
+            }}
+            .btn.small {{
+                padding: 8px 12px;
+                font-size: 12px;
+            }}
+            .compact-content {{
+                max-height: 100px;
+                overflow-y: auto;
+                font-size: 11px;
+                background: rgba(0, 0, 0, 0.3);
+                padding: 8px;
+                border-radius: 5px;
+            }}
             .board-controls {{
                 text-align: center;
                 margin: 20px 0;
@@ -490,68 +572,81 @@ async def game_dashboard():
                 </div>
             </div>
             
-            <div class="game-section">
-                <h2>🎯 Game Status</h2>
-                <div class="agent-info">
-                    <div class="agent-card">
-                        <h3><span class="emoji">📈</span> Game Progress</h3>
-                        <p><span class="emoji">🎯</span> Move Number: <strong>{current_state.get('move_number', 0)}</strong></p>
-                        <p><span class="emoji">👤</span> Current Player: <strong>{current_state.get('current_player', 'player').upper()}</strong></p>
-                        <p><span class="emoji">🏆</span> Status: <strong>{'GAME OVER' if current_state.get('game_over', False) else 'IN PROGRESS'}</strong></p>
-                    </div>
-                    <div class="agent-card">
-                        <h3><span class="emoji">🤖</span> AI Agents</h3>
-                        <p><span class="emoji">🔍</span> Scout: <strong>OpenAI GPT-4</strong></p>
-                        <p><span class="emoji">🧠</span> Strategist: <strong>Claude 3 Sonnet</strong></p>
-                        <p><span class="emoji">⚡</span> Executor: <strong>Llama2:7B</strong></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="game-section">
-                <h2>🎮 Tic Tac Toe Board</h2>
-                <div class="board-container">
-                    <div class="tic-tac-toe-board">
-                        {chr(10).join([f'<div class="board-row">' + chr(10).join([f'<div class="board-cell" data-row="{row}" data-col="{col}" onclick="makeMove({row}, {col})">{current_state.get("board", [["", "", ""], ["", "", ""], ["", "", ""]])[row][col]}</div>' for col in range(3)]) + '</div>' for row in range(3)])}
-                    </div>
-                </div>
-                <div class="board-controls">
-                    <button class="btn" onclick="simulateTurn()" {'disabled' if current_state.get('game_over', False) or current_state.get('current_player', 'player') == 'player' else ''}>
-                        <span class="emoji">🤖</span> AI MOVE
-                    </button>
-                    <button class="btn" onclick="resetGame()">
-                        <span class="emoji">🔄</span> NEW GAME
-                    </button>
-                </div>
-            </div>
-            
-            <div class="game-section">
-                <h2>📜 Move History</h2>
-                <div class="move-history">
-                    {chr(10).join([f'<div class="move-entry">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> {move.get("player", "?").upper()} placed {move.get("position", {}).get("value", "?")} at ({move.get("position", {}).get("row", "?"), move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-5:]])}
-                </div>
-            </div>
-            
-            <div class="game-section">
-                <h2>🤖 AI Agents & MCP Protocol</h2>
-                <div class="agent-info">
-                    <div class="agent-card" id="agents-card">
-                        <h3><span class="emoji">🤖</span> Agent Information</h3>
-                        <div id="agents-content">
-                            <p>Loading agent information...</p>
+            <div class="game-section main-game-area">
+                <div class="game-layout">
+                    <div class="board-section">
+                        <h2>🎮 Tic Tac Toe Board</h2>
+                        <div class="board-container">
+                            <div class="tic-tac-toe-board">
+                                {chr(10).join([f'<div class="board-row">' + chr(10).join([f'<div class="board-cell" data-row="{row}" data-col="{col}" onclick="makeMove({row}, {col})">{current_state.get("board", [["", "", ""], ["", "", ""], ["", "", ""]])[row][col]}</div>' for col in range(3)]) + '</div>' for row in range(3)])}
+                            </div>
                         </div>
-                        <button class="btn" onclick="loadAgents()" style="margin-top: 10px; padding: 8px 16px; font-size: 12px;">
-                            <span class="emoji">🔄</span> Refresh Agents
-                        </button>
-                    </div>
-                    <div class="agent-card" id="mcp-logs-card">
-                        <h3><span class="emoji">📡</span> MCP Protocol Logs</h3>
-                        <div id="mcp-logs-content">
-                            <p>Loading MCP logs...</p>
+                        <div class="board-controls">
+                            <button class="btn" onclick="simulateTurn()" {'disabled' if current_state.get('game_over', False) or current_state.get('current_player', 'player') == 'player' else ''}>
+                                <span class="emoji">🤖</span> AI MOVE
+                            </button>
+                            <button class="btn" onclick="resetGame()">
+                                <span class="emoji">🔄</span> NEW GAME
+                            </button>
                         </div>
-                        <button class="btn" onclick="loadMCPLogs()" style="margin-top: 10px; padding: 8px 16px; font-size: 12px;">
-                            <span class="emoji">🔄</span> Refresh Logs
-                        </button>
+                    </div>
+                    
+                    <div class="sidebar">
+                        <div class="game-status-card">
+                            <h3><span class="emoji">📊</span> Game Status</h3>
+                            <div class="status-item">
+                                <span class="emoji">🎯</span> Move: <strong>{current_state.get('move_number', 0)}</strong>
+                            </div>
+                            <div class="status-item">
+                                <span class="emoji">👤</span> Turn: <strong>{current_state.get('current_player', 'player').upper()}</strong>
+                            </div>
+                            <div class="status-item">
+                                <span class="emoji">🏆</span> Status: <strong>{'GAME OVER' if current_state.get('game_over', False) else 'IN PROGRESS'}</strong>
+                            </div>
+                            {f'<div class="status-item winner"><span class="emoji">🎉</span> Winner: <strong>{current_state.get("winner", "").upper()}</strong></div>' if current_state.get('game_over', False) and current_state.get('winner') else ''}
+                        </div>
+                        
+                        <div class="ai-agents-card">
+                            <h3><span class="emoji">🤖</span> AI Agents</h3>
+                            <div class="agent-item">
+                                <span class="emoji">🔍</span> Scout: <strong>GPT-4</strong>
+                            </div>
+                            <div class="agent-item">
+                                <span class="emoji">🧠</span> Strategist: <strong>Claude 3</strong>
+                            </div>
+                            <div class="agent-item">
+                                <span class="emoji">⚡</span> Executor: <strong>Llama2:7B</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-section compact-section">
+                <div class="compact-layout">
+                    <div class="move-history-compact">
+                        <h3><span class="emoji">📜</span> Recent Moves</h3>
+                        <div class="move-list">
+                            {chr(10).join([f'<div class="move-entry-compact">Move {move.get("move_number", "N/A")}: <span class="emoji">{"👤" if move.get("player") == "player" else "🤖"}</span> {move.get("position", {}).get("value", "?")} at ({move.get("position", {}).get("row", "?"), move.get("position", {}).get("col", "?")})</div>' for move in current_state.get('game_history', [])[-3:]])}
+                        </div>
+                    </div>
+                    
+                    <div class="mcp-section-compact">
+                        <h3><span class="emoji">📡</span> MCP Protocol</h3>
+                        <div class="mcp-controls">
+                            <button class="btn small" onclick="loadAgents()">
+                                <span class="emoji">🤖</span> Agents
+                            </button>
+                            <button class="btn small" onclick="loadMCPLogs()">
+                                <span class="emoji">📋</span> Logs
+                            </button>
+                        </div>
+                        <div id="agents-content" class="compact-content">
+                            <p>Click "Agents" to view AI information</p>
+                        </div>
+                        <div id="mcp-logs-content" class="compact-content" style="display: none;">
+                            <p>Click "Logs" to view MCP protocol messages</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -720,23 +815,26 @@ async def game_dashboard():
                     const response = await fetch('/agents');
                     const data = await response.json();
                     const agentsContent = document.getElementById('agents-content');
+                    const logsContent = document.getElementById('mcp-logs-content');
+                    
+                    // Hide logs, show agents
+                    logsContent.style.display = 'none';
+                    agentsContent.style.display = 'block';
                     
                     let html = '';
                     for (const [agentName, agentInfo] of Object.entries(data.agents)) {{
                         html += `
-                            <div style="margin-bottom: 15px; padding: 10px; background: rgba(0, 255, 0, 0.1); border-radius: 8px; border-left: 3px solid #00ff00;">
-                                <h4 style="margin: 0 0 8px 0; color: #00ff00;">${{agentInfo.name || agentName.toUpperCase()}}</h4>
-                                <p style="margin: 2px 0; font-size: 12px;"><strong>Role:</strong> ${{agentInfo.role || 'N/A'}}</p>
-                                <p style="margin: 2px 0; font-size: 12px;"><strong>Model:</strong> ${{agentInfo.model || 'N/A'}}</p>
-                                <p style="margin: 2px 0; font-size: 12px;"><strong>Description:</strong> ${{agentInfo.description || 'N/A'}}</p>
-                                <p style="margin: 2px 0; font-size: 12px;"><strong>Capabilities:</strong> ${{agentInfo.capabilities ? agentInfo.capabilities.join(', ') : 'N/A'}}</p>
+                            <div style="margin-bottom: 8px; padding: 6px; background: rgba(0, 255, 0, 0.1); border-radius: 4px; border-left: 2px solid #00ff00;">
+                                <div style="font-weight: bold; color: #00ff00; font-size: 10px;">${{agentInfo.name || agentName.toUpperCase()}}</div>
+                                <div style="font-size: 9px; margin: 2px 0;"><strong>Role:</strong> ${{agentInfo.role || 'N/A'}}</div>
+                                <div style="font-size: 9px; margin: 2px 0;"><strong>Model:</strong> ${{agentInfo.model || 'N/A'}}</div>
                             </div>
                         `;
                     }}
                     
                     agentsContent.innerHTML = html;
                 }} catch (error) {{
-                    document.getElementById('agents-content').innerHTML = '<p style="color: #ff4444;">Error loading agent information</p>';
+                    document.getElementById('agents-content').innerHTML = '<p style="color: #ff4444; font-size: 9px;">Error loading agent information</p>';
                 }}
             }}
             
@@ -745,10 +843,15 @@ async def game_dashboard():
                     const response = await fetch('/mcp-logs');
                     const data = await response.json();
                     const logsContent = document.getElementById('mcp-logs-content');
+                    const agentsContent = document.getElementById('agents-content');
+                    
+                    // Hide agents, show logs
+                    agentsContent.style.display = 'none';
+                    logsContent.style.display = 'block';
                     
                     if (data.mcp_logs && data.mcp_logs.length > 0) {{
                         let html = '';
-                        const recentLogs = data.mcp_logs.slice(-10); // Show last 10 logs
+                        const recentLogs = data.mcp_logs.slice(-5); // Show last 5 logs for compact view
                         
                         recentLogs.forEach(log => {{
                             const timestamp = new Date(log.timestamp).toLocaleTimeString();
@@ -760,25 +863,22 @@ async def game_dashboard():
                             }}[log.agent] || '🤖';
                             
                             html += `
-                                <div style="margin-bottom: 10px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 5px; border-left: 2px solid #00ff00; font-size: 11px;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <div style="margin-bottom: 6px; padding: 4px; background: rgba(0, 255, 0, 0.05); border-radius: 3px; border-left: 1px solid #00ff00; font-size: 9px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                                         <span style="color: #00ff00; font-weight: bold;">${{agentEmoji}} ${{log.agent}}</span>
                                         <span style="color: #888;">${{timestamp}}</span>
                                     </div>
-                                    <div style="color: #ccc; margin-bottom: 3px;"><strong>Type:</strong> ${{log.message_type}}</div>
-                                    <div style="color: #aaa; font-size: 10px; max-height: 60px; overflow-y: auto;">
-                                        <pre style="margin: 0; white-space: pre-wrap;">${{JSON.stringify(log.data, null, 2)}}</pre>
-                                    </div>
+                                    <div style="color: #ccc; font-size: 8px;"><strong>Type:</strong> ${{log.message_type}}</div>
                                 </div>
                             `;
                         }});
                         
                         logsContent.innerHTML = html;
                     }} else {{
-                        logsContent.innerHTML = '<p style="color: #888;">No MCP logs available yet. Play a round to see the protocol in action!</p>';
+                        logsContent.innerHTML = '<p style="color: #888; font-size: 9px;">No MCP logs yet. Play to see protocol in action!</p>';
                     }}
                 }} catch (error) {{
-                    document.getElementById('mcp-logs-content').innerHTML = '<p style="color: #ff4444;">Error loading MCP logs</p>';
+                    document.getElementById('mcp-logs-content').innerHTML = '<p style="color: #ff4444; font-size: 9px;">Error loading MCP logs</p>';
                 }}
             }}
         </script>
