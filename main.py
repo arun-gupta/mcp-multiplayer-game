@@ -1412,7 +1412,8 @@ async def game_dashboard():
                             const costDisplay = cost > 0 ? '$' + cost.toFixed(6) : 'Free';
                             
                             const optionClass = (isActive ? 'active' : '') + ' ' + (!isAvailable ? 'unavailable' : '');
-                            const onClickHandler = isAvailable ? 'switchModel(\'' + agent.name + '\', \'' + modelName + '\')' : '';
+                            const switchCall = 'switchModel(\'' + agent.name + '\', \'' + modelName + '\')';
+                            const onClickHandler = isAvailable ? switchCall : '';
                             const optionStart = '<div class="model-option ' + optionClass + '" onclick="' + onClickHandler + '">';
                             const nameDiv = '<div>' + modelInfo.display_name + '</div>';
                             const infoDiv = '<div class="model-info">' + costDisplay + ' per 1K tokens</div>';
