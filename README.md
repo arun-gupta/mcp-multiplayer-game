@@ -1,6 +1,6 @@
 # Multi-Agent Game Simulation
 
-A turn-based strategy game simulation using CrewAI, FastAPI, and MCP-style architecture. The simulation features three independent agents working together to play a grid-based strategy game.
+A **Multi-Context Protocol (MCP) demonstration** featuring a turn-based strategy game where **three different LLMs work together** in isolated contexts. This project showcases how multiple AI models can collaborate through structured communication protocols - each agent runs on a different LLM (OpenAI GPT-4, Claude 3 Sonnet, and local Llama2:7B) and communicates only through standardized JSON schemas, demonstrating true MCP principles of model isolation and structured data flow.
 
 ## 🎮 Game Overview
 
@@ -325,7 +325,7 @@ curl -X POST http://localhost:8000/simulate-turn
 
 ## 🔮 Future Enhancements
 
-### Planned Features
+### 🎮 Game Features & Improvements
 
 1. **Multiple Players**: Support for multiple player entities
 2. **Enhanced Fog of War**: Dynamic visibility based on terrain
@@ -333,6 +333,40 @@ curl -X POST http://localhost:8000/simulate-turn
 4. **Advanced AI**: More sophisticated agent decision making
 5. **Custom Maps**: User-defined map layouts
 6. **Real-time Multiplayer**: WebSocket support for live games
+
+### 🔄 MCP Protocol Features
+
+7. **Hot-Swappable LLMs**: Dynamic LLM replacement between games
+   - **Runtime Model Switching**: Swap out any agent's LLM without restarting the game
+   - **Model Registry**: Centralized registry of available LLMs (OpenAI, Anthropic, Ollama, local models)
+   - **Performance Comparison**: A/B test different models for each agent role
+   - **Configuration API**: REST endpoints to change agent models on-the-fly
+   - **Model Validation**: Automatic compatibility checking for new models
+   - **Preset Configurations**: Save and load different LLM combinations
+
+8. **Protocol Versioning & Schema Evolution**: MCP protocol enhancements
+   - **Version Headers**: Protocol version tracking in all messages
+   - **Schema Registry**: Centralized schema management with versioning
+   - **Backward Compatibility**: Support for multiple schema versions simultaneously
+   - **Migration Tools**: Automatic schema migration between versions
+   - **Deprecation Warnings**: Notify when using deprecated schemas
+
+9. **Enhanced Observability & Monitoring**: Comprehensive system visibility
+   - **MCP Metrics Dashboard**: Real-time protocol performance monitoring
+   - **Message Latency Tracking**: Monitor communication delays between agents
+   - **Schema Validation Metrics**: Track validation success/failure rates
+   - **Agent Performance Analytics**: Response times and error rates per agent
+   - **Throughput Monitoring**: Messages per second and system capacity
+   - **Error Rate Tracking**: Monitor and alert on communication failures
+   - **Distributed Tracing**: Track message flow across the entire system
+
+10. **Multi-Protocol Support**: Flexible communication options
+    - **WebSocket Integration**: Real-time bidirectional communication
+    - **gRPC Endpoints**: High-performance RPC communication
+    - **GraphQL API**: Flexible querying of game state and agent data
+    - **Event Streaming**: Kafka/RabbitMQ for event-driven architecture
+    - **Protocol Adapters**: Seamless switching between communication protocols
+    - **Load Balancing**: Distribute load across multiple protocol endpoints
 
 ### Agent Improvements
 
