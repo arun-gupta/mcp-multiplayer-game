@@ -26,6 +26,8 @@ from game.state import TicTacToeGameState
 from agents.scout import ScoutAgent
 from agents.strategist import StrategistAgent
 from agents.executor import ExecutorAgent
+from models.registry import model_registry
+from models.factory import ModelFactory
 from schemas.observation import Observation
 from schemas.plan import Plan
 from schemas.action_result import ActionResult
@@ -310,6 +312,110 @@ async def game_dashboard():
             .response-time {{
                 color: #00ff00;
                 font-weight: bold;
+            }}
+            
+            /* Model Selection Styles */
+            .model-selection {{
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }}
+            
+            .agent-model-card {{
+                background: linear-gradient(135deg, #333, #222);
+                border: 1px solid #00ff00;
+                border-radius: 10px;
+                padding: 15px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            }}
+            
+            .agent-model-header {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }}
+            
+            .agent-model-title {{
+                color: #00ff00;
+                font-weight: bold;
+                font-size: 14px;
+            }}
+            
+            .current-model {{
+                color: #ccc;
+                font-size: 12px;
+                background: rgba(0, 255, 0, 0.1);
+                padding: 4px 8px;
+                border-radius: 4px;
+            }}
+            
+            .model-selector {{
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }}
+            
+            .model-option {{
+                background: rgba(0, 0, 0, 0.3);
+                border: 1px solid #444;
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 11px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                color: #ccc;
+            }}
+            
+            .model-option:hover {{
+                border-color: #00ff00;
+                background: rgba(0, 255, 0, 0.1);
+            }}
+            
+            .model-option.active {{
+                border-color: #00ff00;
+                background: rgba(0, 255, 0, 0.2);
+                color: #00ff00;
+            }}
+            
+            .model-option.unavailable {{
+                opacity: 0.5;
+                cursor: not-allowed;
+                border-color: #666;
+            }}
+            
+            .model-info {{
+                font-size: 10px;
+                color: #888;
+                margin-top: 4px;
+            }}
+            
+            .model-cost {{
+                color: #00ff00;
+                font-weight: bold;
+            }}
+            
+            .model-switch-btn {{
+                background: linear-gradient(45deg, #00ff00, #00cc00);
+                color: #000;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 10px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }}
+            
+            .model-switch-btn:hover {{
+                background: linear-gradient(45deg, #00cc00, #009900);
+                transform: translateY(-1px);
+            }}
+            
+            .model-switch-btn:disabled {{
+                background: #666;
+                cursor: not-allowed;
+                transform: none;
             }}
 
             .btn {{ 
@@ -778,6 +884,9 @@ async def game_dashboard():
                             <button class="tab-btn" onclick="showTab('metrics')">
                                 <span class="emoji">📊</span> Metrics
                             </button>
+                            <button class="tab-btn" onclick="showTab('models')">
+                                <span class="emoji">🤖</span> Models
+                            </button>
                         </div>
                         
                         <div class="tab-content">
@@ -861,6 +970,13 @@ async def game_dashboard():
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            
+                            <div id="models-tab" class="tab-panel">
+                                <h3>Hot-Swappable LLM Models</h3>
+                                <div id="models-content">
+                                    <p style="color: #888; font-size: 12px; text-align: center; padding: 15px;">Loading available models...</p>
                                 </div>
                             </div>
                         </div>
@@ -1191,6 +1307,8 @@ async def game_dashboard():
                     loadMCPLogs();
                 }} else if (tabName === 'metrics') {{
                     loadMetrics();
+                }} else if (tabName === 'models') {{
+                    loadModels();
                 }}
             }}
             
@@ -1271,6 +1389,86 @@ async def game_dashboard():
                     
                 }} catch (error) {{
                     console.error('Error loading metrics:', error);
+                }}
+            }}
+            
+            async function loadModels() {{
+                try {{
+                    const response = await fetch('/models');
+                    const data = await response.json();
+                    const modelsContent = document.getElementById('models-content');
+                    
+                    const models = data.models || {{}};
+                    const currentModels = data.current_models || {{}};
+                    
+                    let html = '<div class="model-selection">';
+                    
+                    // Create model selection for each agent
+                    const agents = [
+                        {{ name: 'scout', display: '🔍 Scout Agent', emoji: '🔍' }},
+                        {{ name: 'strategist', display: '🧠 Strategist Agent', emoji: '🧠' }},
+                        {{ name: 'executor', display: '⚡ Executor Agent', emoji: '⚡' }}
+                    ];
+                    
+                    agents.forEach(agent => {{
+                        const currentModel = currentModels[agent.name] || 'Unknown';
+                        html += `
+                            <div class="agent-model-card">
+                                <div class="agent-model-header">
+                                    <div class="agent-model-title">${{agent.display}}</div>
+                                    <div class="current-model">Current: ${{currentModel}}</div>
+                                </div>
+                                <div class="model-selector">
+                        `;
+                        
+                        // Add model options
+                        Object.entries(models).forEach(([modelName, modelInfo]) => {{
+                            const isActive = currentModel === modelName;
+                            const isAvailable = modelInfo.is_available;
+                            const cost = modelInfo.estimated_cost_per_1k_tokens;
+                            const costDisplay = cost > 0 ? '$' + cost.toFixed(6) : 'Free';
+                            
+                            html += '<div class="model-option ' + (isActive ? 'active' : '') + ' ' + (!isAvailable ? 'unavailable' : '') + '" onclick="' + (isAvailable ? 'switchModel(\'' + agent.name + '\', \'' + modelName + '\')' : '') + '">' +
+                                '<div>' + modelInfo.display_name + '</div>' +
+                                '<div class="model-info">' + costDisplay + ' per 1K tokens</div>' +
+                            '</div>';
+                        }});
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }});
+                    
+                    html += '</div>';
+                    modelsContent.innerHTML = html;
+                    
+                }} catch (error) {{
+                    document.getElementById('models-content').innerHTML = '<p style="color: #ff4444; font-size: 12px; text-align: center; padding: 15px;">Error loading models</p>';
+                }}
+            }}
+            
+            async function switchModel(agent, modelName) {{
+                try {{
+                    const response = await fetch('/switch-model', {{
+                        method: 'POST',
+                        headers: {{ 'Content-Type': 'application/json' }},
+                        body: JSON.stringify({{ agent: agent, model_name: modelName }})
+                    }});
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {{
+                        showNotification(`✅ ${{result.message}}`, 'success');
+                        // Reload models to show updated state
+                        setTimeout(() => loadModels(), 500);
+                        // Also reload agents to show new model info
+                        setTimeout(() => loadAgents(), 500);
+                    }} else {{
+                        showNotification(`❌ ${{result.error}}`, 'error');
+                    }}
+                }} catch (error) {{
+                    showNotification(`❌ Error switching model: ${{error.message}}`, 'error');
                 }}
             }}
         </script>
@@ -1427,6 +1625,57 @@ async def reset_game():
         return {"message": "New game started successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting new game: {str(e)}")
+
+
+@app.get("/models")
+async def get_available_models():
+    """Get all available models"""
+    try:
+        return {
+            "models": model_registry.get_model_info(),
+            "current_models": game_state.get_current_models(),
+            "model_usage_history": game_state.get_model_usage_history()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting models: {str(e)}")
+
+
+@app.post("/switch-model")
+async def switch_agent_model(request: dict):
+    """Switch the model for a specific agent"""
+    try:
+        agent = request.get("agent")
+        model_name = request.get("model_name")
+        
+        if not agent or not model_name:
+            return {"error": "Agent and model_name are required"}
+        
+        # Validate model availability
+        if not ModelFactory.validate_model_availability(model_name):
+            return {"error": f"Model {model_name} is not available"}
+        
+        success = False
+        
+        if agent == "scout" and scout_agent:
+            success = scout_agent.switch_model(model_name)
+        elif agent == "strategist" and strategist_agent:
+            success = strategist_agent.switch_model(model_name)
+        elif agent == "executor" and executor_agent:
+            success = executor_agent.switch_model(model_name)
+        else:
+            return {"error": f"Unknown agent: {agent}"}
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Successfully switched {agent} to {model_name}",
+                "current_models": game_state.get_current_models()
+            }
+        else:
+            return {"error": f"Failed to switch {agent} to {model_name}"}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error switching model: {str(e)}")
 
 
 @app.get("/health")
