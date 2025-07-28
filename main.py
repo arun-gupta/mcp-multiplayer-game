@@ -1412,14 +1412,12 @@ async def game_dashboard():
                     
                     agents.forEach(agent => {{
                         const currentModel = currentModels[agent.name] || 'Unknown';
-                        html += `
-                            <div class="agent-model-card">
-                                <div class="agent-model-header">
-                                    <div class="agent-model-title">${{agent.display}}</div>
-                                    <div class="current-model">Current: ${{currentModel}}</div>
-                                </div>
-                                <div class="model-selector">
-                        `;
+                        html += '<div class="agent-model-card">' +
+                            '<div class="agent-model-header">' +
+                                '<div class="agent-model-title">' + agent.display + '</div>' +
+                                '<div class="current-model">Current: ' + currentModel + '</div>' +
+                            '</div>' +
+                            '<div class="model-selector">';
                         
                         // Add model options
                         Object.entries(models).forEach(([modelName, modelInfo]) => {{
@@ -1434,10 +1432,7 @@ async def game_dashboard():
                             '</div>';
                         }});
                         
-                        html += `
-                                </div>
-                            </div>
-                        `;
+                        html += '</div></div>';
                     }});
                     
                     html += '</div>';
