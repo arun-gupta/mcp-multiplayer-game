@@ -844,18 +844,44 @@ async def game_dashboard():
                     }});
                     
                     if (response.ok) {{
-                        // Show player move
+                        // Update the board immediately with player's move
+                        cell.textContent = 'X';
+                        cell.style.color = '#00ff00';
+                        
+                        // Show player move notification
                         showNotification('✅ Your move made! AI is thinking...', 'success');
+                        
+                        // Update game status to show AI's turn
+                        updateTurnIndicator('ai');
                         
                         // Wait a moment, then trigger AI move
                         setTimeout(async () => {{
                             try {{
                                 const aiResponse = await fetch('/simulate-turn', {{ method: 'POST' }});
                                 if (aiResponse.ok) {{
+                                    const aiResult = await aiResponse.json();
+                                    
+                                    // Update board with AI's move
+                                    if (aiResult.execution_result && aiResult.execution_result.move_executed) {{
+                                        const aiMove = aiResult.execution_result.move_executed.position;
+                                        const aiCell = document.querySelector(`[data-row="${{aiMove.row}}"][data-col="${{aiMove.col}}"]`);
+                                        if (aiCell) {{
+                                            aiCell.textContent = 'O';
+                                            aiCell.style.color = '#ff4444';
+                                        }}
+                                    }}
+                                    
+                                    // Update turn indicator
+                                    updateTurnIndicator('player');
+                                    
+                                    // Show AI move notification
                                     showNotification('🤖 AI has made its move!', 'success');
+                                    
+                                    // Refresh the moves list and other data
                                     setTimeout(() => {{
-                                        location.reload();
-                                    }}, 1000);
+                                        refreshGameData();
+                                    }}, 500);
+                                    
                                 }} else {{
                                     showNotification('❌ AI move failed!', 'error');
                                     location.reload();
@@ -933,6 +959,43 @@ async def game_dashboard():
                 location.reload();
             }}
             
+            function updateTurnIndicator(player) {{
+                const turnIndicator = document.querySelector('.turn-indicator-mini');
+                if (turnIndicator) {{
+                    if (player === 'ai') {{
+                        turnIndicator.innerHTML = '<span class="emoji">🤖</span> AI is thinking...';
+                    }} else {{
+                        turnIndicator.innerHTML = '<span class="emoji">👤</span> Your turn! Click any cell';
+                    }}
+                }}
+            }}
+            
+            async function refreshGameData() {{
+                try {{
+                    // Refresh moves list
+                    if (document.getElementById('moves-tab').classList.contains('active')) {{
+                        await loadMoves();
+                    }}
+                    
+                    // Refresh agents info
+                    if (document.getElementById('agents-tab').classList.contains('active')) {{
+                        await loadAgents();
+                    }}
+                    
+                    // Refresh MCP logs
+                    if (document.getElementById('logs-tab').classList.contains('active')) {{
+                        await loadMCPLogs();
+                    }}
+                    
+                    // Refresh metrics
+                    if (document.getElementById('metrics-tab').classList.contains('active')) {{
+                        await loadMetrics();
+                    }}
+                }} catch (error) {{
+                    console.error('Error refreshing game data:', error);
+                }}
+            }}
+            
             function showNotification(message, type) {{
                 // Create notification element
                 const notification = document.createElement('div');
@@ -1005,6 +1068,31 @@ async def game_dashboard():
                 loadAgents();
                 loadMCPLogs();
             }});
+            
+            async function loadMoves() {{
+                try {{
+                    const response = await fetch('/state');
+                    const data = await response.json();
+                    const movesList = document.querySelector('.moves-list');
+                    
+                    if (data.game_history && data.game_history.length > 0) {{
+                        let html = '';
+                        data.game_history.forEach(move => {{
+                            const playerClass = move.player === 'player' ? 'player-move' : 'ai-move';
+                            const emoji = move.player === 'player' ? '👤' : '🤖';
+                            const position = move.position;
+                            
+                            html += `<div class="move-item ${{playerClass}}">Move ${{move.move_number}}: <span class="emoji">${{emoji}}</span> <strong>${{position.value}}</strong> at (${{position.row}},${{position.col}})</div>`;
+                        }});
+                        
+                        movesList.innerHTML = html;
+                    }} else {{
+                        movesList.innerHTML = '<div class="move-item no-moves"><span class="emoji">🎮</span> No moves yet. Start the game by clicking any cell!</div>';
+                    }}
+                }} catch (error) {{
+                    console.error('Error loading moves:', error);
+                }}
+            }}
             
             async function loadAgents() {{
                 try {{
