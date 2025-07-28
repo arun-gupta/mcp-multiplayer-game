@@ -1166,19 +1166,8 @@ async def game_dashboard():
             function showNotification(message, type) {{
                 // Create notification element
                 const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    color: white;
-                    font-weight: bold;
-                    z-index: 1000;
-                    animation: slideInRight 0.5s ease-out;
-                    background: ${{type === 'success' ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'linear-gradient(45deg, #ff4444, #cc0000)'}};
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-                `;
+                const background = type === 'success' ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'linear-gradient(45deg, #ff4444, #cc0000)';
+                notification.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 15px 20px; border-radius: 10px; color: white; font-weight: bold; z-index: 1000; animation: slideInRight 0.5s ease-out; background: ' + background + '; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);';
                 notification.textContent = message;
                 
                 // Add to page
@@ -1195,16 +1184,7 @@ async def game_dashboard():
             
             // Add CSS animations for notifications
             const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideInRight {{
-                    from {{ transform: translateX(100%); opacity: 0; }}
-                    to {{ transform: translateX(0); opacity: 1; }}
-                }}
-                @keyframes slideOutRight {{
-                    from {{ transform: translateX(0); opacity: 1; }}
-                    to {{ transform: translateX(100%); opacity: 0; }}
-                }}
-            `;
+            style.textContent = '@keyframes slideInRight {{ from {{ transform: translateX(100%); opacity: 0; }} to {{ transform: translateX(0); opacity: 1; }} }} @keyframes slideOutRight {{ from {{ transform: translateX(0); opacity: 1; }} to {{ transform: translateX(100%); opacity: 0; }} }}';
             document.head.appendChild(style);
             
             // Add some interactive effects
