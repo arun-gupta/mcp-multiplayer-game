@@ -343,8 +343,8 @@ async def game_dashboard():
             }}
             .game-layout {{
                 display: grid;
-                grid-template-columns: 1fr 300px;
-                gap: 30px;
+                grid-template-columns: 1fr 200px;
+                gap: 20px;
                 align-items: start;
             }}
             .board-section {{
@@ -357,20 +357,26 @@ async def game_dashboard():
                 flex-direction: column;
                 gap: 20px;
             }}
-            .game-status-card, .ai-agents-card {{
+            .game-status-card, .dev-note {{
                 background: linear-gradient(135deg, #333, #222);
-                padding: 20px;
-                border-radius: 15px;
+                padding: 12px;
+                border-radius: 10px;
                 border: 1px solid #00ff00;
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
             }}
-            .status-item, .agent-item {{
-                margin: 10px 0;
-                padding: 8px 0;
+            .status-item {{
+                margin: 4px 0;
+                padding: 4px 0;
                 border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+                font-size: 12px;
             }}
-            .status-item:last-child, .agent-item:last-child {{
+            .status-item:last-child {{
                 border-bottom: none;
+            }}
+            .dev-note p {{
+                margin: 4px 0;
+                font-size: 11px;
+                color: #aaa;
             }}
             .status-item.winner {{
                 color: #00ff00;
@@ -593,7 +599,6 @@ async def game_dashboard():
                     
                     <div class="sidebar">
                         <div class="game-status-card">
-                            <h3><span class="emoji">📊</span> Game Status</h3>
                             <div class="status-item">
                                 <span class="emoji">🎯</span> Move: <strong>{current_state.get('move_number', 0)}</strong>
                             </div>
@@ -606,17 +611,9 @@ async def game_dashboard():
                             {f'<div class="status-item winner"><span class="emoji">🎉</span> Winner: <strong>{current_state.get("winner", "").upper()}</strong></div>' if current_state.get('game_over', False) and current_state.get('winner') else ''}
                         </div>
                         
-                        <div class="ai-agents-card">
-                            <h3><span class="emoji">🤖</span> AI Agents</h3>
-                            <div class="agent-item">
-                                <span class="emoji">🔍</span> Scout: <strong>GPT-4</strong>
-                            </div>
-                            <div class="agent-item">
-                                <span class="emoji">🧠</span> Strategist: <strong>Claude 3</strong>
-                            </div>
-                            <div class="agent-item">
-                                <span class="emoji">⚡</span> Executor: <strong>Llama2:7B</strong>
-                            </div>
+                        <div class="dev-note">
+                            <p><span class="emoji">💡</span> <strong>For Developers:</strong></p>
+                            <p>Agent info & MCP logs available below</p>
                         </div>
                     </div>
                 </div>
