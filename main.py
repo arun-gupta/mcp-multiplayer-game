@@ -139,7 +139,7 @@ async def game_dashboard():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Rock-Paper-Scissors Multi-Agent Game</title>
+        <title>Tic Tac Toe Multi-Agent Game</title>
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <style>
             body {{ 
@@ -523,7 +523,7 @@ async def game_dashboard():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🎮 <span class="emoji">✂️</span> Rock-Paper-Scissors <span class="emoji">🪨</span> Multi-Agent Battle <span class="emoji">📄</span></h1>
+                <h1>🎮 <span class="emoji">⭕</span> Tic Tac Toe <span class="emoji">❌</span> Multi-Agent Battle <span class="emoji">🎯</span></h1>
                 <p>Watch three AI agents work together using MCP protocol!</p>
             </div>
             
