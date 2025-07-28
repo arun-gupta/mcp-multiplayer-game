@@ -1319,7 +1319,9 @@ async def game_dashboard():
                             
                             const logDiv = '<div style="margin-bottom: 8px; padding: 8px; background: rgba(0, 255, 0, 0.05); border-radius: 4px; border-left: 3px solid #00ff00; font-size: 11px;">';
                             const headerDiv = '<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">';
-                            const agentSpan = '<span style="color: #00ff00; font-weight: bold;">' + agentEmoji + ' ' + log.agent + '</span>';
+                            const agentSpanStart = '<span style="color: #00ff00; font-weight: bold;">' + agentEmoji + ' ';
+                            const agentSpanEnd = '</span>';
+                            const agentSpan = agentSpanStart + log.agent + agentSpanEnd;
                             const timeSpan = '<span style="color: #888;">' + timestamp + '</span>';
                             const messageDiv = '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>';
                             const detailsDiv = '<details style="margin-top: 4px;">';
