@@ -4,11 +4,29 @@ A **Multi-Context Protocol (MCP) demonstration** featuring a turn-based strategy
 
 ## 🎮 Game Overview
 
-The game is a 5x5 grid-based strategy game where:
-- **Player** (P) starts at position (0,0) with 100 HP
-- **Enemy** (E) is located at position (4,4) with 50 HP  
-- **Items** (I) are scattered around the map
-- **Walls** (#) create obstacles and strategic positioning opportunities
+The game is a **Rock-Paper-Scissors tournament** where three AI agents work together to play against an AI opponent:
+
+- **Tournament Format**: Best of 10 rounds
+- **Player Team**: Three specialized AI agents working together
+  - **Scout Agent** (OpenAI GPT-4): Analyzes opponent patterns
+  - **Strategist Agent** (Claude 3 Sonnet): Creates strategic plans
+  - **Executor Agent** (Llama2:7B): Executes the chosen move
+- **Opponent**: AI opponent with adaptive behavior
+- **Objective**: Win the tournament by scoring more points than the opponent
+
+### 🎯 How It Works
+
+1. **Scout Agent** observes the current game state and opponent's move history
+2. **Strategist Agent** analyzes patterns and creates a strategic plan
+3. **Executor Agent** executes the chosen move (Rock, Paper, or Scissors)
+4. **Game Engine** determines the winner and updates the score
+5. **Process repeats** until all 10 rounds are completed
+
+### 🏆 Victory Conditions
+
+- **Win**: Score more points than the opponent after 10 rounds
+- **Lose**: Score fewer points than the opponent after 10 rounds  
+- **Tie**: Equal scores after 10 rounds
 
 ## 🚀 QuickStart
 
@@ -38,7 +56,7 @@ The game uses a Multi-Context Protocol (MCP) style architecture with three speci
 │                 │    │                 │    │                 │
 │ • Observes      │    │ • Analyzes      │    │ • Executes      │
 │ • Reports       │    │ • Plans         │    │ • Updates       │
-│ • Limited View  │    │ • Prioritizes   │    │ • Validates     │
+│ • Pattern Rec.  │    │ • Prioritizes   │    │ • Validates     │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
@@ -46,8 +64,8 @@ The game uses a Multi-Context Protocol (MCP) style architecture with three speci
 │                    Game State Manager                           │
 │                                                                 │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
-│  │ Game Map    │  │ Game Engine │  │ Turn History│            │
-│  │ (5x5 Grid)  │  │ (Mechanics) │  │ (Logging)   │            │
+│  │ Game State  │  │ Game Engine │  │ Move History│            │
+│  │ (RPS Logic) │  │ (RPS Rules) │  │ (Logging)   │            │
 │  └─────────────┘  └─────────────┘  └─────────────┘            │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -56,79 +74,79 @@ The game uses a Multi-Context Protocol (MCP) style architecture with three speci
 
 #### 1. **Scout Agent** (OpenAI GPT-4)
 - **Model**: OpenAI GPT-4 via OpenAI API
-- **Role**: Environment observation and threat detection
+- **Role**: Game state observation and pattern analysis
 - **Capabilities**:
-  - Observes game environment with limited visibility (fog of war)
-  - Detects enemies, items, and terrain features
-  - Provides detailed analysis of current situation
+  - Observes current game state and score
+  - Analyzes opponent's move history and patterns
+  - Tracks win/loss streaks and game progress
   - Reports observations in structured format
 
 #### 2. **Strategist Agent** (Claude 3 Sonnet)
 - **Model**: Claude 3 Sonnet via Anthropic API
-- **Role**: Strategic planning and decision making
+- **Role**: Strategic planning and move selection
 - **Capabilities**:
-  - Analyzes scout observations
-  - Creates prioritized action plans
-  - Assesses risks and opportunities
-  - Provides alternative strategies
+  - Analyzes opponent patterns from scout observations
+  - Creates strategic plans for next move (Rock/Paper/Scissors)
+  - Assesses confidence levels and risks
+  - Provides alternative strategies as backups
 
 #### 3. **Executor Agent** (Llama2:7B)
 - **Model**: Llama2:7B via Ollama (local)
-- **Role**: Plan execution and game state updates
+- **Role**: Move execution and result processing
 - **Capabilities**:
-  - Validates plans before execution
-  - Executes actions in priority order
-  - Updates game state
-  - Provides execution feedback
+  - Executes the chosen move (Rock/Paper/Scissors)
+  - Generates opponent's move
+  - Determines round winner
+  - Updates game state and score
 
 ## 🔄 Protocol Flow
 
-### Turn Execution Process
+### Round Execution Process
 
 ```
 1. SCOUT OBSERVATION
    ┌─────────────────────────────────────┐
-   │ Scout Agent observes environment    │
-   │ • Limited visibility (3-tile range) │
-   │ • Detects enemies, items, terrain   │
-   │ • Creates detailed observation      │
+   │ Scout Agent observes game state     │
+   │ • Current score and round number    │
+   │ • Opponent's move history           │
+   │ • Win/loss streaks and patterns     │
    └─────────────────────────────────────┘
                     │
                     ▼
 2. STRATEGIC PLANNING
    ┌─────────────────────────────────────┐
    │ Strategist Agent analyzes           │
-   │ • Threat assessment                 │
-   │ • Opportunity identification        │
-   │ • Action prioritization             │
-   │ • Risk evaluation                   │
+   │ • Opponent pattern analysis         │
+   │ • Move selection strategy           │
+   │ • Confidence assessment             │
+   │ • Alternative strategies            │
    └─────────────────────────────────────┘
                     │
                     ▼
-3. PLAN EXECUTION
+3. MOVE EXECUTION
    ┌─────────────────────────────────────┐
-   │ Executor Agent executes plan        │
-   │ • Validates actions                 │
-   │ • Executes in priority order        │
-   │ • Updates game state                │
-   │ • Reports results                   │
+   │ Executor Agent executes move        │
+   │ • Chooses Rock/Paper/Scissors       │
+   │ • Generates opponent's move         │
+   │ • Determines round winner           │
+   │ • Updates score                     │
    └─────────────────────────────────────┘
                     │
                     ▼
 4. STATE UPDATE
    ┌─────────────────────────────────────┐
    │ Game State Manager updates          │
-   │ • Advances turn counter             │
-   │ • Checks win/lose conditions        │
-   │ • Logs turn history                 │
-   │ • Prepares for next turn            │
+   │ • Advances round counter            │
+   │ • Checks tournament end             │
+   │ • Logs move history                 │
+   │ • Prepares for next round           │
    └─────────────────────────────────────┘
 ```
 
 ### MCP Message Flow
 
 ```
-Turn N:
+Round N:
 ├── Scout → Observation (JSON)
 ├── Strategist → Plan (JSON)
 ├── Executor → ExecutionResult (JSON)
@@ -227,29 +245,25 @@ curl -X POST http://localhost:8000/reset-game
 
 ## 🎯 Game Mechanics
 
-### Actions Available
+### Available Moves
 
-1. **Move** - Move in 8 directions (N, S, E, W, NE, NW, SE, SW)
-2. **Attack** - Attack enemies within 1 tile range
-3. **Pickup** - Collect items at current position
-4. **Retreat** - Move away from enemies
-5. **Wait** - Skip turn
+1. **Rock** 🪨 - Beats Scissors, loses to Paper
+2. **Paper** 📄 - Beats Rock, loses to Scissors  
+3. **Scissors** ✂️ - Beats Paper, loses to Rock
 
-### Combat System
+### Tournament System
 
-- **Attack Range**: 1 tile (adjacent only)
-- **Damage**: Base damage ± 20% variance
-- **Health**: Enemies die at 0 HP
-- **Victory**: Defeat all enemies
-- **Defeat**: Player health reaches 0
+- **Format**: Best of 10 rounds
+- **Scoring**: Win = +1 point, Loss = +0 points, Draw = +0 points
+- **Victory**: Highest score after 10 rounds
+- **Tie**: Equal scores after 10 rounds
 
-### Map Features
+### Game Features
 
-- **5x5 Grid**: Bounded world
-- **Walls**: Impassable obstacles
-- **Fog of War**: Limited visibility (3-tile range)
-- **Items**: Collectible resources
-- **Enemies**: Hostile entities
+- **Pattern Recognition**: AI analyzes opponent's move history
+- **Strategic Planning**: Multiple strategies with confidence levels
+- **Adaptive Opponent**: AI opponent that learns and adapts
+- **Real-time Feedback**: Live score updates and move history
 
 ## 🔍 Monitoring and Debugging
 
@@ -263,23 +277,24 @@ All agent communications are logged in JSON format:
   "agent": "Scout",
   "message_type": "Observation",
   "data": {
-    "scout_position": [0, 0],
-    "enemies_in_range": [...],
-    "items_in_range": [...],
+    "current_round": 1,
+    "player_score": 0,
+    "opponent_score": 0,
+    "game_history": [...],
+    "last_opponent_moves": ["rock", "paper"],
     ...
   }
 }
 ```
 
-### Turn History
+### Round History
 
-Each turn is logged with:
-- Turn number
-- Actions executed
-- Success/failure rates
-- Damage dealt/taken
-- Items collected
-- Enemies defeated
+Each round is logged with:
+- Round number
+- Player move vs Opponent move
+- Result (win/lose/draw)
+- Score updates
+- Pattern analysis
 
 ### Agent Performance
 
@@ -309,17 +324,16 @@ mcp-multiplayer-game/
 │   └── executor.py      # Executor agent (Llama2:7B)
 └── game/                # Game logic and state
     ├── __init__.py
-    ├── map.py          # Game map and entities
-    ├── state.py        # Game state management
+    ├── state.py        # RPS game state management
     └── engine.py       # Game mechanics and execution
 ```
 
 ### Adding New Features
 
-1. **New Actions**: Add to `schemas/plan.py` ActionType enum
+1. **New Moves**: Add to `schemas/plan.py` Strategy class
 2. **New Agents**: Create new agent class in `agents/` directory
 3. **New Game Mechanics**: Extend `game/engine.py`
-4. **New Map Features**: Modify `game/map.py`
+4. **New Tournament Formats**: Modify `game/state.py`
 
 ### Testing
 
@@ -337,12 +351,12 @@ curl -X POST http://localhost:8000/simulate-turn
 
 ### 🎮 Game Features & Improvements
 
-1. **Multiple Players**: Support for multiple player entities
-2. **Enhanced Fog of War**: Dynamic visibility based on terrain
-3. **Turn History Replay**: Visual replay of game turns
-4. **Advanced AI**: More sophisticated agent decision making
-5. **Custom Maps**: User-defined map layouts
-6. **Real-time Multiplayer**: WebSocket support for live games
+1. **Multiple Opponents**: Support for different AI opponent personalities
+2. **Tournament Modes**: Best of 3, 5, 7, or custom round counts
+3. **Move History Replay**: Visual replay of game rounds
+4. **Advanced AI**: More sophisticated pattern recognition and strategy
+5. **Custom Rules**: User-defined Rock-Paper-Scissors variants
+6. **Real-time Multiplayer**: WebSocket support for live tournaments
 
 ### 🔄 MCP Protocol Features
 
@@ -381,17 +395,17 @@ curl -X POST http://localhost:8000/simulate-turn
 ### Agent Improvements
 
 1. **Scout Agent**: 
-   - Enhanced threat detection
-   - Pathfinding capabilities
-   - Resource tracking
+   - Enhanced pattern recognition
+   - Opponent behavior analysis
+   - Statistical trend detection
 
 2. **Strategist Agent**:
-   - Long-term planning
-   - Risk assessment algorithms
-   - Adaptive strategies
+   - Advanced strategy algorithms
+   - Machine learning pattern recognition
+   - Adaptive confidence scoring
 
 3. **Executor Agent**:
-   - Action optimization
+   - Move optimization
    - Error recovery
    - Performance monitoring
 
