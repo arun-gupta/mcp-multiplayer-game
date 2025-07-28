@@ -408,7 +408,7 @@ async def game_dashboard():
             }}
             .game-container {{
                 display: grid;
-                grid-template-columns: 1fr 300px;
+                grid-template-columns: 1fr 350px;
                 gap: 20px;
                 margin: 20px 0;
             }}
@@ -480,6 +480,7 @@ async def game_dashboard():
                 border-radius: 10px;
                 border: 1px solid #00ff00;
                 overflow: hidden;
+                min-height: 600px;
             }}
             .tab-container {{
                 height: 100%;
@@ -496,8 +497,8 @@ async def game_dashboard():
                 background: none;
                 border: none;
                 color: #aaa;
-                padding: 8px 4px;
-                font-size: 11px;
+                padding: 12px 8px;
+                font-size: 12px;
                 cursor: pointer;
                 transition: all 0.3s ease;
             }}
@@ -512,8 +513,8 @@ async def game_dashboard():
             }}
             .tab-content {{
                 flex: 1;
-                padding: 15px;
-                max-height: 450px;
+                padding: 20px;
+                max-height: 550px;
                 overflow-y: auto;
             }}
             .tab-panel {{
@@ -529,7 +530,7 @@ async def game_dashboard():
                 font-weight: bold;
             }}
             .moves-list {{
-                max-height: 400px;
+                max-height: 500px;
                 overflow-y: auto;
                 padding-right: 5px;
                 word-wrap: break-word;
