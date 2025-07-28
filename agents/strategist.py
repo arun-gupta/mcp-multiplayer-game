@@ -1,316 +1,266 @@
 """
-Strategist Agent
-Analyzes scout observations and creates strategic plans
-Uses Mistral for strategic planning and decision making
+Strategist Agent Module
+Analyzes scout observations and creates strategic plans for Rock-Paper-Scissors
 """
+import os
 from crewai import Agent
 from langchain_anthropic import ChatAnthropic
 from schemas.observation import Observation
-from schemas.plan import Plan, Action, ActionType, Direction
-from typing import List, Dict, Any
-import os
-
+from schemas.plan import Plan, Strategy
 
 class StrategistAgent:
-    """
-    Strategist Agent responsible for analyzing observations and creating plans
-    Uses Mistral for strategic planning and decision making
-    """
+    """Strategist agent that creates strategic plans based on observations"""
     
     def __init__(self):
-        self.agent = self._create_agent()
-    
-    def _create_agent(self) -> Agent:
-        """Create the CrewAI strategist agent with Claude"""
-        # Use Claude for strategic planning
-        llm = ChatAnthropic(
+        # Initialize LLM (Claude 3 Sonnet)
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY environment variable is required")
+            
+        self.llm = ChatAnthropic(
             model="claude-3-sonnet-20240229",
-            temperature=0.3,
-            api_key=os.getenv("ANTHROPIC_API_KEY")
+            temperature=0.2,
+            api_key=api_key
         )
         
-        return Agent(
-            role="Strategist",
-            goal="Analyze scout observations and create optimal strategic plans for the current situation",
-            backstory="""You are a brilliant military strategist with decades of experience in tactical planning.
-            Your expertise includes:
-            - Threat assessment and prioritization
-            - Resource optimization
-            - Risk management
-            - Tactical positioning
-            - Combat strategy
+        # Create CrewAI agent
+        self.agent = Agent(
+            role="Game Strategist",
+            goal="Analyze game observations and create optimal strategies for Rock-Paper-Scissors",
+            backstory="""You are an expert Rock-Paper-Scissors strategist with deep understanding of:
+            - Pattern recognition and opponent behavior analysis
+            - Probability and game theory
+            - Psychological aspects of the game
+            - Strategic timing and move selection
             
-            You excel at creating detailed, actionable plans that maximize success probability while minimizing risk.
-            You always consider multiple scenarios and provide backup strategies.""",
+            Your job is to analyze the scout's observations and create the best possible strategy
+            for the next move, considering the opponent's patterns, current score, and game context.""",
             verbose=True,
             allow_delegation=False,
-            llm=llm
+            llm=self.llm
         )
     
     def create_strategic_plan(self, observation: Observation) -> Plan:
-        """
-        Analyze the observation and create a strategic plan
-        """
-        # Create a detailed prompt for strategic analysis
-        prompt = self._create_strategic_prompt(observation)
-        
-        # Get strategic analysis from the agent
+        """Create a strategic plan based on the scout's observation"""
         try:
-            strategy_analysis = self.agent.execute(prompt)
-            plan = self._parse_strategy_to_plan(observation, strategy_analysis)
+            # Analyze opponent patterns
+            pattern_analysis = self._analyze_opponent_patterns(observation)
+            
+            # Create primary strategy
+            primary_strategy = self._create_primary_strategy(observation, pattern_analysis)
+            
+            # Create alternative strategies
+            alternative_strategies = self._create_alternative_strategies(observation, pattern_analysis)
+            
+            # Assess risk level
+            risk_assessment = self._assess_risk(observation)
+            
+            # Create the plan
+            plan = Plan(
+                plan_id=f"round_{observation.current_round}_plan",
+                round_number=observation.current_round,
+                primary_strategy=primary_strategy,
+                alternative_strategies=alternative_strategies,
+                pattern_analysis=pattern_analysis,
+                risk_assessment=risk_assessment,
+                expected_opponent_move=self._predict_opponent_move(observation),
+                confidence_level=self._calculate_confidence(observation),
+                reasoning=self._generate_reasoning(observation, pattern_analysis)
+            )
+            
+            return plan
+            
         except Exception as e:
-            # Fallback to basic plan if agent fails
-            plan = self._create_fallback_plan(observation)
-        
-        # Log the plan for MCP protocol tracking
-        self._log_plan(plan, observation)
-        
-        return plan
+            print(f"Error in StrategistAgent.create_strategic_plan: {e}")
+            # Return a fallback plan
+            return self._create_fallback_plan(observation)
     
-    def _create_strategic_prompt(self, observation: Observation) -> str:
-        """Create a detailed prompt for strategic analysis"""
-        return f"""
-        Analyze the current game situation and create a strategic plan:
+    def _analyze_opponent_patterns(self, observation: Observation) -> str:
+        """Analyze patterns in opponent's moves"""
+        if not observation.last_opponent_moves:
+            return "No opponent history available"
         
-        CURRENT SITUATION:
-        - Turn: {observation.turn_number}
-        - Player Health: {observation.player_health}/{observation.player_max_health}
-        - Player Position: {observation.player_position}
-        - Map Size: {observation.map_size}
+        moves = observation.last_opponent_moves
+        rock_count = moves.count("rock")
+        paper_count = moves.count("paper")
+        scissors_count = moves.count("scissors")
         
-        ENEMIES DETECTED ({len(observation.enemies_in_range)}):
-        {self._format_enemies_for_strategy(observation.enemies_in_range)}
+        total = len(moves)
+        if total == 0:
+            return "No moves to analyze"
         
-        ITEMS AVAILABLE ({len(observation.items_in_range)}):
-        {self._format_items_for_strategy(observation.items_in_range)}
+        analysis = f"Opponent's last {total} moves: "
+        analysis += f"Rock: {rock_count}/{total} ({rock_count/total*100:.1f}%), "
+        analysis += f"Paper: {paper_count}/{total} ({paper_count/total*100:.1f}%), "
+        analysis += f"Scissors: {scissors_count}/{total} ({scissors_count/total*100:.1f}%)"
         
-        VISIBLE TERRAIN:
-        - Visible tiles: {len(observation.visible_tiles)}
-        - Fog of war: {observation.fog_of_war}
-        - Visibility range: {observation.visibility_range}
+        # Identify patterns
+        if rock_count > total * 0.6:
+            analysis += " - HEAVY ROCK BIAS"
+        elif paper_count > total * 0.6:
+            analysis += " - HEAVY PAPER BIAS"
+        elif scissors_count > total * 0.6:
+            analysis += " - HEAVY SCISSORS BIAS"
+        elif len(set(moves)) == 1:
+            analysis += " - REPEATING SAME MOVE"
+        elif len(set(moves)) == 3:
+            analysis += " - RANDOM PATTERN"
         
-        STRATEGIC ANALYSIS REQUIRED:
-        1. Assess immediate threats and their priority
-        2. Identify opportunities (items, positioning, etc.)
-        3. Determine optimal action sequence
-        4. Calculate risk vs reward for each action
-        5. Consider multiple scenarios and contingencies
-        
-        Create a detailed strategic plan including:
-        - Primary objective for this turn
-        - Prioritized list of actions
-        - Risk assessment
-        - Expected outcomes
-        - Alternative strategies if primary plan fails
-        
-        Format your response as a structured plan with clear action items.
-        """
+        return analysis
     
-    def _format_enemies_for_strategy(self, enemies) -> str:
-        """Format enemies for strategic analysis"""
-        if not enemies:
-            return "No enemies detected"
+    def _create_primary_strategy(self, observation: Observation, pattern_analysis: str) -> Strategy:
+        """Create the primary strategy based on analysis"""
+        # Simple strategy logic
+        if "HEAVY ROCK BIAS" in pattern_analysis:
+            move = "paper"
+            reasoning = "Opponent heavily favors rock, paper will win"
+            confidence = 0.8
+        elif "HEAVY PAPER BIAS" in pattern_analysis:
+            move = "scissors"
+            reasoning = "Opponent heavily favors paper, scissors will win"
+            confidence = 0.8
+        elif "HEAVY SCISSORS BIAS" in pattern_analysis:
+            move = "rock"
+            reasoning = "Opponent heavily favors scissors, rock will win"
+            confidence = 0.8
+        elif "REPEATING SAME MOVE" in pattern_analysis:
+            last_move = observation.last_opponent_moves[-1] if observation.last_opponent_moves else "rock"
+            if last_move == "rock":
+                move = "paper"
+            elif last_move == "paper":
+                move = "scissors"
+            else:
+                move = "rock"
+            reasoning = f"Opponent repeating {last_move}, counter with {move}"
+            confidence = 0.7
+        else:
+            # Default to rock (most common first move)
+            move = "rock"
+            reasoning = "No clear pattern, defaulting to rock"
+            confidence = 0.5
         
-        formatted = []
-        for enemy in enemies:
-            distance = abs(enemy.position[0] - (0, 0)[0]) + abs(enemy.position[1] - (0, 0)[1])
-            formatted.append(f"- {enemy.entity_id}: {enemy.entity_type} at {enemy.position} (distance: {distance})")
-            if enemy.health:
-                formatted.append(f"  Health: {enemy.health}")
-            if enemy.attack_power:
-                formatted.append(f"  Attack Power: {enemy.attack_power}")
-        
-        return "\n".join(formatted)
+        return Strategy(
+            move=move,
+            confidence=confidence,
+            reasoning=reasoning,
+            expected_outcome="win" if confidence > 0.6 else "uncertain"
+        )
     
-    def _format_items_for_strategy(self, items) -> str:
-        """Format items for strategic analysis"""
-        if not items:
-            return "No items available"
+    def _create_alternative_strategies(self, observation: Observation, pattern_analysis: str) -> list[Strategy]:
+        """Create alternative strategies as backups"""
+        alternatives = []
         
-        formatted = []
-        for item in items:
-            distance = abs(item.position[0] - (0, 0)[0]) + abs(item.position[1] - (0, 0)[1])
-            formatted.append(f"- {item.entity_id}: {item.entity_type} at {item.position} (distance: {distance})")
-        
-        return "\n".join(formatted)
-    
-    def _parse_strategy_to_plan(self, observation: Observation, strategy_analysis: str) -> Plan:
-        """
-        Parse the strategy analysis into a structured plan
-        This is a simplified parser - in a real implementation, you'd want more sophisticated parsing
-        """
-        # Create a basic plan based on the current situation
-        actions = []
-        
-        # Check if there are enemies in range
-        if observation.enemies_in_range:
-            # Prioritize attacking if enemies are close
-            for enemy in observation.enemies_in_range:
-                distance = abs(enemy.position[0] - observation.player_position[0]) + abs(enemy.position[1] - observation.player_position[1])
-                if distance <= 1:  # In attack range
-                    actions.append(Action(
-                        action_type=ActionType.ATTACK,
-                        target_entity_id=enemy.entity_id,
-                        target_position=enemy.position,
-                        priority=1,
-                        reasoning=f"Attack enemy {enemy.entity_id} at close range"
-                    ))
-                else:
-                    # Move towards enemy
-                    direction = self._calculate_direction_to_target(observation.player_position, enemy.position)
-                    actions.append(Action(
-                        action_type=ActionType.MOVE,
-                        direction=direction,
-                        target_position=enemy.position,
-                        priority=2,
-                        reasoning=f"Move towards enemy {enemy.entity_id}"
-                    ))
-        
-        # Check for items to collect
-        if observation.items_in_range:
-            for item in observation.items_in_range:
-                distance = abs(item.position[0] - observation.player_position[0]) + abs(item.position[1] - observation.player_position[1])
-                if distance == 0:  # On same tile
-                    actions.append(Action(
-                        action_type=ActionType.PICKUP,
-                        target_entity_id=item.entity_id,
-                        target_position=item.position,
-                        priority=3,
-                        reasoning=f"Pick up {item.entity_id}"
-                    ))
-                else:
-                    # Move towards item
-                    direction = self._calculate_direction_to_target(observation.player_position, item.position)
-                    actions.append(Action(
-                        action_type=ActionType.MOVE,
-                        direction=direction,
-                        target_position=item.position,
-                        priority=4,
-                        reasoning=f"Move towards {item.entity_id}"
-                    ))
-        
-        # If no specific actions, wait
-        if not actions:
-            actions.append(Action(
-                action_type=ActionType.WAIT,
-                priority=5,
-                reasoning="No immediate actions required"
+        # Alternative 1: Counter the most recent move
+        if observation.last_opponent_moves:
+            last_move = observation.last_opponent_moves[-1]
+            if last_move == "rock":
+                alt_move = "paper"
+            elif last_move == "paper":
+                alt_move = "scissors"
+            else:
+                alt_move = "rock"
+            
+            alternatives.append(Strategy(
+                move=alt_move,
+                confidence=0.6,
+                reasoning=f"Counter opponent's last move ({last_move})",
+                expected_outcome="win"
             ))
         
-        # Create the plan
-        primary_objective = self._determine_primary_objective(observation, actions)
-        risk_assessment = self._assess_risk(observation, actions)
-        expected_outcome = self._predict_outcome(observation, actions)
+        # Alternative 2: Random move
+        alternatives.append(Strategy(
+            move="scissors",
+            confidence=0.3,
+            reasoning="Random move to break patterns",
+            expected_outcome="uncertain"
+        ))
         
-        return Plan(
-            plan_id=f"turn_{observation.turn_number}_plan",
-            turn_number=observation.turn_number,
-            primary_objective=primary_objective,
-            actions=actions,
-            risk_assessment=risk_assessment,
-            expected_outcome=expected_outcome,
-            confidence_level=0.8,
-            alternative_plans=["Retreat if health drops below 50%", "Focus on item collection if enemies are too strong"]
-        )
+        return alternatives
+    
+    def _assess_risk(self, observation: Observation) -> str:
+        """Assess the risk level of the current situation"""
+        if observation.player_score > observation.opponent_score + 2:
+            return "low"  # We're ahead
+        elif observation.opponent_score > observation.player_score + 2:
+            return "high"  # We're behind
+        else:
+            return "medium"  # Close game
+    
+    def _predict_opponent_move(self, observation: Observation) -> str:
+        """Predict what the opponent will do next"""
+        if not observation.last_opponent_moves:
+            return "rock"  # Most common first move
+        
+        # Simple prediction based on most common recent move
+        moves = observation.last_opponent_moves
+        rock_count = moves.count("rock")
+        paper_count = moves.count("paper")
+        scissors_count = moves.count("scissors")
+        
+        if rock_count >= paper_count and rock_count >= scissors_count:
+            return "rock"
+        elif paper_count >= scissors_count:
+            return "paper"
+        else:
+            return "scissors"
+    
+    def _calculate_confidence(self, observation: Observation) -> float:
+        """Calculate confidence level in the strategy"""
+        if not observation.last_opponent_moves:
+            return 0.3  # Low confidence with no history
+        
+        # Higher confidence if we have more data
+        history_length = len(observation.last_opponent_moves)
+        base_confidence = min(0.8, 0.3 + (history_length * 0.1))
+        
+        # Adjust based on pattern strength
+        moves = observation.last_opponent_moves
+        if len(set(moves)) == 1:
+            base_confidence += 0.2  # Strong pattern
+        elif len(set(moves)) == 2:
+            base_confidence += 0.1  # Moderate pattern
+        
+        return min(1.0, base_confidence)
+    
+    def _generate_reasoning(self, observation: Observation, pattern_analysis: str) -> str:
+        """Generate reasoning for the strategy"""
+        reasoning = f"Round {observation.current_round} strategy: "
+        reasoning += f"Score is {observation.player_score}-{observation.opponent_score}. "
+        reasoning += f"Pattern analysis: {pattern_analysis}. "
+        
+        if observation.current_streak == "winning":
+            reasoning += "We're on a winning streak, maintain momentum. "
+        elif observation.current_streak == "losing":
+            reasoning += "We're on a losing streak, need to change approach. "
+        
+        reasoning += f"Confidence level: {self._calculate_confidence(observation):.1f}"
+        
+        return reasoning
     
     def _create_fallback_plan(self, observation: Observation) -> Plan:
-        """Create a basic fallback plan if agent analysis fails"""
-        actions = [Action(
-            action_type=ActionType.WAIT,
-            priority=1,
-            reasoning="Fallback plan - waiting for better intelligence"
-        )]
-        
+        """Create a fallback plan if strategy creation fails"""
         return Plan(
-            plan_id=f"turn_{observation.turn_number}_fallback_plan",
-            turn_number=observation.turn_number,
-            primary_objective="Maintain current position and assess situation",
-            actions=actions,
-            risk_assessment="Low risk - defensive stance",
-            expected_outcome="No immediate changes to game state",
-            confidence_level=0.5,
-            alternative_plans=["Move randomly if threatened"]
+            plan_id=f"round_{observation.current_round}_fallback",
+            round_number=observation.current_round,
+            primary_strategy=Strategy(
+                move="rock",
+                confidence=0.3,
+                reasoning="Fallback strategy - default to rock",
+                expected_outcome="uncertain"
+            ),
+            alternative_strategies=[],
+            pattern_analysis="Fallback - no analysis available",
+            risk_assessment="medium",
+            confidence_level=0.3,
+            reasoning="Fallback plan due to error in strategy creation"
         )
     
-    def _calculate_direction_to_target(self, current_pos: tuple[int, int], target_pos: tuple[int, int]) -> Direction:
-        """Calculate the direction to move towards a target"""
-        dx = target_pos[0] - current_pos[0]
-        dy = target_pos[1] - current_pos[1]
-        
-        if abs(dx) > abs(dy):
-            if dx > 0:
-                return Direction.EAST
-            else:
-                return Direction.WEST
-        else:
-            if dy > 0:
-                return Direction.SOUTH
-            else:
-                return Direction.NORTH
-    
-    def _determine_primary_objective(self, observation: Observation, actions: List[Action]) -> str:
-        """Determine the primary objective based on the situation"""
-        if any(action.action_type == ActionType.ATTACK for action in actions):
-            return "Engage and defeat enemies"
-        elif any(action.action_type == ActionType.PICKUP for action in actions):
-            return "Collect valuable items"
-        elif any(action.action_type == ActionType.MOVE for action in actions):
-            return "Advance towards objectives"
-        else:
-            return "Maintain defensive position"
-    
-    def _assess_risk(self, observation: Observation, actions: List[Action]) -> str:
-        """Assess the risk level of the planned actions"""
-        if observation.player_health < 50:
-            return "High risk - low health"
-        elif len(observation.enemies_in_range) > 2:
-            return "High risk - multiple enemies"
-        elif len(observation.enemies_in_range) == 1:
-            return "Medium risk - single enemy"
-        else:
-            return "Low risk - no immediate threats"
-    
-    def _predict_outcome(self, observation: Observation, actions: List[Action]) -> str:
-        """Predict the expected outcome of the planned actions"""
-        if any(action.action_type == ActionType.ATTACK for action in actions):
-            return "Engage in combat with enemies"
-        elif any(action.action_type == ActionType.PICKUP for action in actions):
-            return "Collect items to improve capabilities"
-        elif any(action.action_type == ActionType.MOVE for action in actions):
-            return "Reposition for better tactical advantage"
-        else:
-            return "Maintain current position"
-    
-    def _log_plan(self, plan: Plan, observation: Observation):
-        """Log the plan for MCP protocol tracking"""
-        log_entry = {
-            "agent": "Strategist",
-            "turn": observation.turn_number,
-            "plan": plan.dict(),
-            "observation_summary": {
-                "enemies": len(observation.enemies_in_range),
-                "items": len(observation.items_in_range),
-                "player_health": observation.player_health
-            },
-            "timestamp": "now"  # In real implementation, use actual timestamp
-        }
-        
-        # In a real implementation, this would be sent to a logging system
-        # For now, we'll just print it
-        print(f"[STRATEGIST] Turn {observation.turn_number} - Created plan with {len(plan.actions)} actions")
-        print(f"[STRATEGIST] Primary objective: {plan.primary_objective}")
-        print(f"[STRATEGIST] Risk assessment: {plan.risk_assessment}")
-    
-    def get_agent_info(self) -> Dict[str, Any]:
-        """Get information about the strategist agent"""
+    def get_agent_info(self) -> dict:
+        """Get information about this agent"""
         return {
-            "agent_type": "Strategist",
-            "model": "Claude 3 Sonnet (Anthropic)",
-            "capabilities": [
-                "Strategic analysis",
-                "Threat assessment",
-                "Resource optimization",
-                "Risk management",
-                "Tactical planning"
-            ]
+            "name": "Strategist Agent",
+            "role": "Strategy Creator",
+            "model": "Claude 3 Sonnet",
+            "description": "Analyzes patterns and creates strategic plans",
+            "capabilities": ["Pattern Analysis", "Strategy Creation", "Risk Assessment", "Move Prediction"]
         } 

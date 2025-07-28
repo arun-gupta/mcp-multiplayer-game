@@ -4,7 +4,8 @@ Multi-Agent Game Simulation with MCP-style Architecture
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import uvicorn
@@ -21,13 +22,13 @@ except ImportError:
     pass
 
 # Import our modules
-from game.state import GameStateManager
+from game.state import RPSGameState
 from agents.scout import ScoutAgent
 from agents.strategist import StrategistAgent
 from agents.executor import ExecutorAgent
 from schemas.observation import Observation
 from schemas.plan import Plan
-from schemas.action_result import TurnResult, GameStateUpdate
+from schemas.action_result import ActionResult
 
 
 # Initialize FastAPI app
@@ -46,8 +47,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global game state manager
-game_manager = GameStateManager()
+# Mount static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Global game state
+game_state = RPSGameState()
 
 # Global agents
 scout_agent = None
@@ -62,10 +66,9 @@ def initialize_agents():
     """Initialize all agents"""
     global scout_agent, strategist_agent, executor_agent
     
-    current_state = game_manager.get_current_state()
-    scout_agent = ScoutAgent(current_state)
+    scout_agent = ScoutAgent(game_state)
     strategist_agent = StrategistAgent()
-    executor_agent = ExecutorAgent(current_state)
+    executor_agent = ExecutorAgent(game_state)
 
 
 def log_mcp_message(agent: str, message_type: str, data: Dict[str, Any]):
@@ -89,9 +92,9 @@ class SimulateTurnRequest(BaseModel):
 class GameStateResponse(BaseModel):
     """Response model for game state"""
     game_state: Dict[str, Any]
-    map_ascii: str
-    turn_history: List[Dict[str, Any]]
-    action_logs: List[Dict[str, Any]]
+    game_history: List[Dict[str, Any]]
+    recent_moves: List[Dict[str, Any]]
+    statistics: Dict[str, Any]
 
 
 class TurnSimulationResponse(BaseModel):
@@ -118,101 +121,484 @@ async def startup_event():
 
 
 
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve the favicon"""
+    return FileResponse("static/favicon.ico")
+
 @app.get("/", response_class=HTMLResponse)
 async def game_dashboard():
     """Game dashboard with visualization"""
-    current_state = game_manager.get_state_for_api()
+    current_state = game_state.get_state_for_api()
     
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Multi-Agent Game Simulation</title>
+        <title>Rock-Paper-Scissors Multi-Agent Game</title>
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
         <style>
-            body {{ font-family: monospace; margin: 20px; background: #1a1a1a; color: #00ff00; }}
-            .container {{ max-width: 1200px; margin: 0 auto; }}
-            .header {{ text-align: center; margin-bottom: 30px; }}
-            .game-section {{ margin-bottom: 30px; }}
-            .map {{ background: #000; padding: 20px; border-radius: 5px; white-space: pre; font-size: 14px; }}
-            .controls {{ text-align: center; margin: 20px 0; }}
-            .btn {{ background: #00ff00; color: #000; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; border-radius: 3px; }}
-            .btn:hover {{ background: #00cc00; }}
-            .logs {{ background: #000; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; }}
-            .agent-info {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }}
-            .agent-card {{ background: #333; padding: 15px; border-radius: 5px; }}
+            body {{ 
+                font-family: 'Courier New', monospace; 
+                margin: 0; 
+                background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%); 
+                color: #00ff00; 
+                overflow-x: hidden;
+            }}
+            .container {{ max-width: 1200px; margin: 0 auto; padding: 20px; }}
+            .header {{ 
+                text-align: center; 
+                margin-bottom: 30px; 
+                animation: glow 2s ease-in-out infinite alternate;
+            }}
+            @keyframes glow {{
+                from {{ text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00; }}
+                to {{ text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00; }}
+            }}
+            .game-section {{ 
+                margin-bottom: 30px; 
+                animation: slideIn 0.5s ease-out;
+            }}
+            @keyframes slideIn {{
+                from {{ opacity: 0; transform: translateY(20px); }}
+                to {{ opacity: 1; transform: translateY(0); }}
+            }}
+            .score-board {{ 
+                background: linear-gradient(45deg, #000, #1a1a1a); 
+                padding: 30px; 
+                border-radius: 15px; 
+                text-align: center; 
+                font-size: 24px; 
+                border: 2px solid #00ff00;
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+                position: relative;
+                overflow: hidden;
+            }}
+            .score-board::before {{
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+                animation: shimmer 3s infinite;
+            }}
+            @keyframes shimmer {{
+                0% {{ transform: translateX(-100%) translateY(-100%) rotate(45deg); }}
+                100% {{ transform: translateX(100%) translateY(100%) rotate(45deg); }}
+            }}
+            .score-display {{
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                margin: 20px 0;
+            }}
+            .player-score, .opponent-score {{
+                padding: 15px 30px;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 28px;
+                transition: all 0.3s ease;
+            }}
+            .player-score {{
+                background: linear-gradient(45deg, #00ff00, #00cc00);
+                color: #000;
+                box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            }}
+            .opponent-score {{
+                background: linear-gradient(45deg, #ff4444, #cc0000);
+                color: #fff;
+                box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+            }}
+            .controls {{ 
+                text-align: center; 
+                margin: 30px 0; 
+            }}
+            .btn {{ 
+                background: linear-gradient(45deg, #00ff00, #00cc00); 
+                color: #000; 
+                border: none; 
+                padding: 15px 30px; 
+                margin: 10px; 
+                cursor: pointer; 
+                border-radius: 25px; 
+                font-size: 16px;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                transition: all 0.3s ease;
+                box-shadow: 0 5px 15px rgba(0, 255, 0, 0.3);
+                position: relative;
+                overflow: hidden;
+            }}
+            .btn:hover {{ 
+                background: linear-gradient(45deg, #00cc00, #009900); 
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 255, 0, 0.5);
+            }}
+            .btn:active {{ 
+                transform: translateY(0);
+            }}
+            .btn:disabled {{
+                background: #666;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }}
+            .btn::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
+            }}
+            .btn:hover::before {{
+                left: 100%;
+            }}
+            .agent-info {{ 
+                display: grid; 
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+                gap: 20px; 
+            }}
+            .agent-card {{ 
+                background: linear-gradient(135deg, #333, #222); 
+                padding: 20px; 
+                border-radius: 15px; 
+                border: 1px solid #00ff00;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }}
+            .agent-card:hover {{
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 255, 0, 0.2);
+            }}
+            .agent-card::before {{
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #00ff00, #00cc00, #00ff00);
+                animation: loading 2s infinite;
+            }}
+            @keyframes loading {{
+                0% {{ transform: translateX(-100%); }}
+                100% {{ transform: translateX(100%); }}
+            }}
+            .move-history {{ 
+                background: linear-gradient(135deg, #000, #1a1a1a); 
+                padding: 20px; 
+                border-radius: 15px; 
+                border: 1px solid #00ff00;
+                max-height: 400px;
+                overflow-y: auto;
+            }}
+            .move-entry {{ 
+                margin: 10px 0; 
+                padding: 15px; 
+                border-left: 4px solid #00ff00; 
+                background: rgba(0, 255, 0, 0.1);
+                border-radius: 5px;
+                transition: all 0.3s ease;
+                animation: fadeIn 0.5s ease-out;
+            }}
+            @keyframes fadeIn {{
+                from {{ opacity: 0; transform: translateX(-20px); }}
+                to {{ opacity: 1; transform: translateX(0); }}
+            }}
+            .move-entry:hover {{
+                background: rgba(0, 255, 0, 0.2);
+                transform: translateX(5px);
+            }}
+            .move-result {{
+                font-weight: bold;
+                padding: 5px 10px;
+                border-radius: 15px;
+                margin-left: 10px;
+            }}
+            .result-win {{ background: #00ff00; color: #000; }}
+            .result-lose {{ background: #ff4444; color: #fff; }}
+            .result-draw {{ background: #ffff00; color: #000; }}
+            .game-over {{
+                background: linear-gradient(45deg, #ff4444, #cc0000);
+                color: #fff;
+                padding: 20px;
+                border-radius: 15px;
+                text-align: center;
+                font-size: 24px;
+                font-weight: bold;
+                animation: pulse 1s infinite;
+            }}
+            @keyframes pulse {{
+                0%, 100% {{ transform: scale(1); }}
+                50% {{ transform: scale(1.05); }}
+            }}
+            .progress-bar {{
+                width: 100%;
+                height: 20px;
+                background: #333;
+                border-radius: 10px;
+                overflow: hidden;
+                margin: 10px 0;
+            }}
+            .progress-fill {{
+                height: 100%;
+                background: linear-gradient(90deg, #00ff00, #00cc00);
+                transition: width 0.5s ease;
+                border-radius: 10px;
+            }}
+            .thinking {{
+                display: inline-block;
+                animation: thinking 1.5s infinite;
+            }}
+            @keyframes thinking {{
+                0%, 20% {{ content: "🤔"; }}
+                40% {{ content: "💭"; }}
+                60% {{ content: "🧠"; }}
+                80%, 100% {{ content: "💡"; }}
+            }}
+            .emoji {{
+                font-size: 24px;
+                margin: 0 10px;
+            }}
+            .loading {{
+                display: none;
+                text-align: center;
+                padding: 20px;
+            }}
+            .spinner {{
+                border: 4px solid #333;
+                border-top: 4px solid #00ff00;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto;
+            }}
+            @keyframes spin {{
+                0% {{ transform: rotate(0deg); }}
+                100% {{ transform: rotate(360deg); }}
+            }}
         </style>
     </head>
     <body>
         <div class="container">
             <div class="header">
-                <h1>🎮 Multi-Agent Game Simulation</h1>
-                <p>MCP-style architecture with CrewAI agents</p>
+                <h1>🎮 <span class="emoji">✂️</span> Rock-Paper-Scissors <span class="emoji">🪨</span> Multi-Agent Battle <span class="emoji">📄</span></h1>
+                <p>Watch three AI agents work together using MCP protocol!</p>
             </div>
             
             <div class="game-section">
-                <h2>Current Game State</h2>
-                <div class="map">{current_state.get('map_ascii', 'No map available')}</div>
+                <h2>🏆 Live Battle Arena</h2>
+                <div class="score-board">
+                    <div class="score-display">
+                        <div class="player-score">
+                            <div class="emoji">👤</div>
+                            <div>PLAYER</div>
+                            <div>{current_state.get('game_state', {}).get('player_score', 0)}</div>
+                        </div>
+                        <div class="emoji">⚔️</div>
+                        <div class="opponent-score">
+                            <div class="emoji">🤖</div>
+                            <div>OPPONENT</div>
+                            <div>{current_state.get('game_state', {}).get('opponent_score', 0)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {(current_state.get('game_state', {}).get('current_round', 1) / current_state.get('game_state', {}).get('max_rounds', 10)) * 100}%"></div>
+                    </div>
+                    
+                    <p>Round: <strong>{current_state.get('game_state', {}).get('current_round', 1)}</strong> / {current_state.get('game_state', {}).get('max_rounds', 10)}</p>
+                    <p>Rounds Remaining: <strong>{current_state.get('game_state', {}).get('rounds_remaining', 10)}</strong></p>
+                    
+                    {f'<div class="game-over"><span class="emoji">🏁</span> GAME OVER! Winner: {current_state.get("game_state", {}).get("winner", "Unknown").title()} <span class="emoji">🏆</span></div>' if current_state.get('game_state', {}).get('game_over', False) else ""}
+                </div>
                 
                 <div class="controls">
-                    <button class="btn" onclick="simulateTurn()">Simulate Turn</button>
-                    <button class="btn" onclick="resetGame()">Reset Game</button>
-                    <button class="btn" onclick="refreshState()">Refresh State</button>
+                    <button class="btn" onclick="simulateTurn()" {"disabled" if current_state.get('game_state', {}).get('game_over', False) else ""}>
+                        <span class="emoji">🎯</span> PLAY ROUND
+                    </button>
+                    <button class="btn" onclick="resetGame()">
+                        <span class="emoji">🔄</span> NEW GAME
+                    </button>
+                    <button class="btn" onclick="refreshState()">
+                        <span class="emoji">🔄</span> REFRESH
+                    </button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>🤖 Agents are thinking...</p>
                 </div>
             </div>
             
             <div class="game-section">
-                <h2>Game Information</h2>
+                <h2>📊 Battle Statistics</h2>
                 <div class="agent-info">
                     <div class="agent-card">
-                        <h3>Player Status</h3>
-                        <p>Health: {current_state.get('game_state', {}).get('player_health', 0)}/{current_state.get('game_state', {}).get('player_max_health', 100)}</p>
-                        <p>Position: {current_state.get('game_state', {}).get('player_position', [0, 0])}</p>
-                        <p>Turn: {current_state.get('game_state', {}).get('turn_number', 1)}</p>
+                        <h3><span class="emoji">👤</span> Player Stats</h3>
+                        <p><span class="emoji">✅</span> Wins: <strong>{current_state.get('statistics', {}).get('player_wins', 0)}</strong></p>
+                        <p><span class="emoji">❌</span> Losses: <strong>{current_state.get('statistics', {}).get('opponent_wins', 0)}</strong></p>
+                        <p><span class="emoji">🤝</span> Draws: <strong>{current_state.get('statistics', {}).get('draws', 0)}</strong></p>
                     </div>
                     <div class="agent-card">
-                        <h3>Enemies</h3>
-                        <p>Remaining: {current_state.get('game_state', {}).get('enemies_remaining', 0)}</p>
+                        <h3><span class="emoji">📈</span> Game Progress</h3>
+                        <p><span class="emoji">🎯</span> Total Rounds: <strong>{current_state.get('statistics', {}).get('total_rounds', 0)}</strong></p>
+                        <p><span class="emoji">🏆</span> Win Rate: <strong>{(current_state.get('statistics', {}).get('player_wins', 0) / max(1, current_state.get('statistics', {}).get('total_rounds', 1)) * 100):.1f}%</strong></p>
                     </div>
                     <div class="agent-card">
-                        <h3>Items</h3>
-                        <p>Available: {current_state.get('game_state', {}).get('items_remaining', 0)}</p>
+                        <h3><span class="emoji">🤖</span> AI Agents</h3>
+                        <p><span class="emoji">🔍</span> Scout: <strong>OpenAI GPT-4</strong></p>
+                        <p><span class="emoji">🧠</span> Strategist: <strong>Claude 3 Sonnet</strong></p>
+                        <p><span class="emoji">⚡</span> Executor: <strong>Llama2:7B</strong></p>
                     </div>
                 </div>
             </div>
             
             <div class="game-section">
-                <h2>Recent Turn History</h2>
-                <div class="logs">
-                    {chr(10).join([f"Turn {turn.get('turn_number', 'N/A')}: {turn.get('summary', 'No summary')}" for turn in current_state.get('turn_history', [])[-5:]])}
+                <h2>📜 Battle History</h2>
+                <div class="move-history">
+                    {chr(10).join([f'<div class="move-entry">Round {move.get("round_number", "N/A")}: <span class="emoji">{"🪨" if move.get("player_move") == "rock" else "📄" if move.get("player_move") == "paper" else "✂️"}</span> Player {move.get("player_move", "?").upper()} <span class="emoji">⚔️</span> <span class="emoji">{"🪨" if move.get("opponent_move") == "rock" else "📄" if move.get("opponent_move") == "paper" else "✂️"}</span> Opponent {move.get("opponent_move", "?").upper()} <span class="move-result result-{move.get("result", "?").lower()}">{move.get("result", "?").upper()}</span></div>' for move in current_state.get('recent_moves', [])[-5:]])}
                 </div>
             </div>
         </div>
         
         <script>
             async function simulateTurn() {{
+                const loading = document.getElementById('loading');
+                const btn = event.target;
+                
                 try {{
+                    // Show loading animation
+                    loading.style.display = 'block';
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="emoji">🤔</span> THINKING...';
+                    
                     const response = await fetch('/simulate-turn', {{ method: 'POST' }});
                     const result = await response.json();
-                    alert('Turn simulated! Check the logs for details.');
-                    location.reload();
+                    
+                    // Show success message
+                    showNotification('🎯 Round completed! Check the battle history below.', 'success');
+                    
+                    // Reload after a short delay to show the animation
+                    setTimeout(() => {{
+                        location.reload();
+                    }}, 1000);
+                    
                 }} catch (error) {{
-                    alert('Error simulating turn: ' + error.message);
+                    showNotification('❌ Error: ' + error.message, 'error');
+                }} finally {{
+                    // Hide loading animation
+                    loading.style.display = 'none';
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="emoji">🎯</span> PLAY ROUND';
                 }}
             }}
             
             async function resetGame() {{
+                const btn = event.target;
+                
                 try {{
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="emoji">🔄</span> RESETTING...';
+                    
                     const response = await fetch('/reset-game', {{ method: 'POST' }});
-                    alert('Game reset!');
-                    location.reload();
+                    showNotification('🔄 New game started! Ready for battle!', 'success');
+                    
+                    setTimeout(() => {{
+                        location.reload();
+                    }}, 1000);
+                    
                 }} catch (error) {{
-                    alert('Error resetting game: ' + error.message);
+                    showNotification('❌ Error: ' + error.message, 'error');
+                }} finally {{
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="emoji">🔄</span> NEW GAME';
                 }}
             }}
             
             async function refreshState() {{
+                const btn = event.target;
+                btn.innerHTML = '<span class="emoji">🔄</span> REFRESHING...';
                 location.reload();
             }}
+            
+            function showNotification(message, type) {{
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    color: white;
+                    font-weight: bold;
+                    z-index: 1000;
+                    animation: slideInRight 0.5s ease-out;
+                    background: ${{type === 'success' ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'linear-gradient(45deg, #ff4444, #cc0000)'}};
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+                `;
+                notification.textContent = message;
+                
+                // Add to page
+                document.body.appendChild(notification);
+                
+                // Remove after 3 seconds
+                setTimeout(() => {{
+                    notification.style.animation = 'slideOutRight 0.5s ease-in';
+                    setTimeout(() => {{
+                        document.body.removeChild(notification);
+                    }}, 500);
+                }}, 3000);
+            }}
+            
+            // Add CSS animations for notifications
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {{
+                    from {{ transform: translateX(100%); opacity: 0; }}
+                    to {{ transform: translateX(0); opacity: 1; }}
+                }}
+                @keyframes slideOutRight {{
+                    from {{ transform: translateX(0); opacity: 1; }}
+                    to {{ transform: translateX(100%); opacity: 0; }}
+                }}
+            `;
+            document.head.appendChild(style);
+            
+            // Add some interactive effects
+            document.addEventListener('DOMContentLoaded', function() {{
+                // Add hover effects to move entries
+                const moveEntries = document.querySelectorAll('.move-entry');
+                moveEntries.forEach(entry => {{
+                    entry.addEventListener('mouseenter', function() {{
+                        this.style.transform = 'translateX(10px) scale(1.02)';
+                    }});
+                    entry.addEventListener('mouseleave', function() {{
+                        this.style.transform = 'translateX(0) scale(1)';
+                    }});
+                }});
+                
+                // Add click effects to buttons
+                const buttons = document.querySelectorAll('.btn');
+                buttons.forEach(btn => {{
+                    btn.addEventListener('click', function() {{
+                        this.style.transform = 'scale(0.95)';
+                        setTimeout(() => {{
+                            this.style.transform = '';
+                        }}, 150);
+                    }});
+                }});
+            }});
         </script>
     </body>
     </html>
@@ -225,27 +611,28 @@ async def game_dashboard():
 async def get_game_state():
     """Get current game state"""
     try:
-        state_data = game_manager.get_state_for_api()
+        state_data = game_state.get_state_for_api()
         return GameStateResponse(**state_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting game state: {str(e)}")
 
 
 @app.post("/simulate-turn", response_model=TurnSimulationResponse)
-async def simulate_turn(request: SimulateTurnRequest):
+async def simulate_turn(request: SimulateTurnRequest = SimulateTurnRequest()):
     """
-    Simulate a complete game turn using the three-agent system:
+    Simulate a complete game round using the three-agent system:
     1. Scout Agent observes the environment
     2. Strategist Agent creates a plan
     3. Executor Agent executes the plan
     """
     try:
-        # Get current game state
-        current_state = game_manager.get_current_state()
+        # Check if game is over
+        if game_state.game_over:
+            raise HTTPException(status_code=400, detail="Game is already over. Start a new game.")
         
         # Step 1: Scout Agent observes the environment
         print("\n" + "="*50)
-        print("TURN SIMULATION STARTED")
+        print("ROUND SIMULATION STARTED")
         print("="*50)
         
         observation = scout_agent.observe_environment()
@@ -256,31 +643,28 @@ async def simulate_turn(request: SimulateTurnRequest):
         log_mcp_message("Strategist", "Plan", plan.dict())
         
         # Step 3: Executor Agent executes the plan
-        turn_result = executor_agent.execute_plan(plan)
-        log_mcp_message("Executor", "ExecutionResult", turn_result.dict())
+        action_result = executor_agent.execute_plan(plan)
+        log_mcp_message("Executor", "ExecutionResult", action_result.dict())
         
         # Step 4: Update game state
-        game_state_update = game_manager.update_state_from_turn_result(turn_result)
-        log_mcp_message("GameEngine", "StateUpdate", game_state_update.dict())
-        
-        # Advance turn
-        current_state.advance_turn()
+        game_state_update = game_state.update_from_result(action_result)
+        log_mcp_message("GameEngine", "StateUpdate", game_state_update)
         
         print("="*50)
-        print("TURN SIMULATION COMPLETED")
+        print("ROUND SIMULATION COMPLETED")
         print("="*50)
         
         return TurnSimulationResponse(
-            turn_number=observation.turn_number,
+            turn_number=observation.current_round,
             observation=observation.dict(),
             plan=plan.dict(),
-            execution_result=turn_result.dict(),
-            game_state_update=game_state_update.dict(),
+            execution_result=action_result.dict(),
+            game_state_update=game_state_update,
             mcp_logs=mcp_logs[-10:]  # Last 10 MCP messages
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error simulating turn: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error simulating round: {str(e)}")
 
 
 @app.get("/agents", response_model=AgentInfoResponse)
@@ -310,10 +694,10 @@ async def get_mcp_logs():
 async def reset_game():
     """Reset the game to initial state"""
     try:
-        global game_manager, scout_agent, strategist_agent, executor_agent
+        global game_state, scout_agent, strategist_agent, executor_agent
         
         # Reset game state
-        game_manager.initialize_new_game()
+        game_state.initialize_new_game()
         
         # Reinitialize agents
         initialize_agents()
@@ -321,9 +705,9 @@ async def reset_game():
         # Clear MCP logs
         mcp_logs.clear()
         
-        return {"message": "Game reset successfully"}
+        return {"message": "New game started successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error resetting game: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error starting new game: {str(e)}")
 
 
 @app.get("/health")
