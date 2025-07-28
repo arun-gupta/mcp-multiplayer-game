@@ -1070,6 +1070,7 @@ async def game_dashboard():
                 }});
                 
                 // Load initial data
+                loadMoves();
                 loadAgents();
                 loadMCPLogs();
             }});
@@ -1104,11 +1105,6 @@ async def game_dashboard():
                     const response = await fetch('/agents');
                     const data = await response.json();
                     const agentsContent = document.getElementById('agents-content');
-                    const logsContent = document.getElementById('mcp-logs-content');
-                    
-                    // Hide logs, show agents
-                    logsContent.style.display = 'none';
-                    agentsContent.style.display = 'block';
                     
                     let html = '';
                     for (const [agentName, agentInfo] of Object.entries(data.agents)) {{
