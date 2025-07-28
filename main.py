@@ -1043,59 +1043,9 @@ async def game_dashboard():
                 }}
             }}
             
-            function showFullJSON(title, jsonData) {{
-                // Create modal overlay
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.8);
-                    z-index: 2000;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                `;
-                
-                // Create modal content
-                const modalContent = document.createElement('div');
-                modalContent.style.cssText = `
-                    background: #1a1a1a;
-                    border: 2px solid #00ff00;
-                    border-radius: 10px;
-                    padding: 20px;
-                    max-width: 80%;
-                    max-height: 80%;
-                    overflow: auto;
-                    position: relative;
-                `;
-                
-                modalContent.innerHTML = 
-                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">' +
-                        '<h3 style="color: #00ff00; margin: 0;">' + title + '</h3>' +
-                        '<button onclick="this.closest(\\'.modal-overlay\\').remove()" style="background: none; border: none; color: #00ff00; font-size: 20px; cursor: pointer;">×</button>' +
-                    '</div>' +
-                    '<pre style="background: #000; padding: 15px; border-radius: 5px; color: #ccc; font-size: 11px; overflow-x: auto; white-space: pre-wrap;">' + jsonData + '</pre>';
-                
-                modal.className = 'modal-overlay';
-                modal.appendChild(modalContent);
-                document.body.appendChild(modal);
-                
-                // Close modal when clicking outside
-                modal.addEventListener('click', function(e) {{
-                    if (e.target === modal) {{
-                        modal.remove();
-                    }}
-                }});
-            }}
+
             
-            function showFullJSONFromData(button) {{
-                const title = button.getAttribute('data-title');
-                const jsonData = button.getAttribute('data-json').replace(/&quot;/g, '"');
-                showFullJSON(title, jsonData);
-            }}
+
             
             function showNotification(message, type) {{
                 // Create notification element
@@ -1273,10 +1223,9 @@ async def game_dashboard():
                                     '<span style="color: #888;">' + timestamp + '</span>' +
                                 '</div>' +
                                 '<div style="color: #00ff00; font-size: 10px; margin-bottom: 4px; font-weight: bold;">' + log.message_type + '</div>' +
-                                '<details style="margin-top: 4px;">' +
+                                                                '<details style="margin-top: 4px;">' +
                                     '<summary style="color: #888; font-size: 9px; cursor: pointer;">📄 View JSON Data</summary>' +
-                                    '<pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; overflow-x: auto; white-space: pre-wrap;">' + shortData + '</pre>' +
-                                                                         '<button onclick="showFullJSONFromData(this)" data-title="' + agentEmoji + ' ' + log.agent + ' - ' + log.message_type + '" data-json="' + jsonData.replace(/"/g, "&quot;") + '" style="background: rgba(0, 255, 0, 0.1); border: 1px solid #00ff00; color: #00ff00; padding: 2px 6px; border-radius: 2px; font-size: 8px; cursor: pointer; margin-top: 4px;">📋 Full JSON</button>' +
+                                    '<pre style="background: rgba(0, 0, 0, 0.3); padding: 6px; border-radius: 3px; font-size: 8px; color: #ccc; margin: 4px 0; max-height: 200px; overflow-y: auto; overflow-x: auto; white-space: pre-wrap;">' + jsonData + '</pre>' +
                                 '</details>' +
                             '</div>';
                         }});
