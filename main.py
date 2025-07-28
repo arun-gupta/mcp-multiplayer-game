@@ -784,7 +784,7 @@ async def game_dashboard():
                                         </div>
                                         <div class="metric-card">
                                             <div class="metric-title">💰 Total Cost</div>
-                                            <div class="metric-value" id="total-cost">$0.00</div>
+                                            <div class="metric-value" id="total-cost">$0.000000</div>
                                             <div class="metric-desc">Across all LLMs</div>
                                         </div>
                                         <div class="metric-card">
@@ -803,15 +803,15 @@ async def game_dashboard():
                                         <div class="llm-costs">
                                             <div class="llm-cost-item">
                                                 <span class="llm-name">🤖 GPT-4 (Scout)</span>
-                                                <span class="llm-cost" id="gpt4-cost">$0.00</span>
+                                                <span class="llm-cost" id="gpt4-cost">$0.000000</span>
                                             </div>
                                             <div class="llm-cost-item">
                                                 <span class="llm-name">🧠 Claude (Strategist)</span>
-                                                <span class="llm-cost" id="claude-cost">$0.00</span>
+                                                <span class="llm-cost" id="claude-cost">$0.000000</span>
                                             </div>
                                             <div class="llm-cost-item">
                                                 <span class="llm-name">⚡ Llama2 (Executor)</span>
-                                                <span class="llm-cost" id="llama-cost">$0.00</span>
+                                                <span class="llm-cost" id="llama-cost">$0.000000</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1101,7 +1101,7 @@ async def game_dashboard():
                     
                     // Update metric values
                     document.getElementById('mcp-count').textContent = data.mcp_message_count || 0;
-                    document.getElementById('total-cost').textContent = '$' + (data.total_cost || 0).toFixed(4);
+                    document.getElementById('total-cost').textContent = '$' + parseFloat(data.total_cost || 0).toFixed(6);
                     document.getElementById('game-duration').textContent = Math.round(data.game_duration_seconds || 0) + 's';
                     
                     // Calculate average response time
@@ -1111,9 +1111,9 @@ async def game_dashboard():
                     
                     // Update LLM costs
                     const costs = data.llm_costs || {{}};
-                    document.getElementById('gpt4-cost').textContent = '$' + (costs.gpt4 || 0).toFixed(4);
-                    document.getElementById('claude-cost').textContent = '$' + (costs.claude || 0).toFixed(4);
-                    document.getElementById('llama-cost').textContent = '$' + (costs.llama || 0).toFixed(4);
+                    document.getElementById('gpt4-cost').textContent = '$' + parseFloat(costs.gpt4 || 0).toFixed(6);
+                    document.getElementById('claude-cost').textContent = '$' + parseFloat(costs.claude || 0).toFixed(6);
+                    document.getElementById('llama-cost').textContent = '$' + parseFloat(costs.llama || 0).toFixed(6);
                     
                 }} catch (error) {{
                     console.error('Error loading metrics:', error);
