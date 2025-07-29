@@ -68,9 +68,26 @@ def initialize_agents():
     """Initialize all agents"""
     global scout_agent, strategist_agent, executor_agent
     
-    scout_agent = ScoutAgent(game_state)
-    strategist_agent = StrategistAgent()
-    executor_agent = ExecutorAgent(game_state)
+    try:
+        scout_agent = ScoutAgent(game_state)
+        print("✅ Scout agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Scout agent: {e}")
+        scout_agent = None
+    
+    try:
+        strategist_agent = StrategistAgent(game_state)
+        print("✅ Strategist agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Strategist agent: {e}")
+        strategist_agent = None
+    
+    try:
+        executor_agent = ExecutorAgent(game_state)
+        print("✅ Executor agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Executor agent: {e}")
+        executor_agent = None
 
 
 def log_mcp_message(agent: str, message_type: str, data: Dict[str, Any]):
@@ -1456,11 +1473,25 @@ async def game_dashboard():
                     const result = await response.json();
                     
                     if (result.success) {{
-                        showNotification('✅ ' + result.message, 'success');
-                        // Reload models to show updated state
-                        setTimeout(() => loadModels(), 500);
-                        // Also reload agents to show new model info
-                        setTimeout(() => loadAgents(), 500);
+                        // Update the game state with the model change (deduplication handled in game state)
+                        game_state.set_agent_model(agent, modelName)
+                        
+                        // Log the model switch to MCP logs (only if models are different)
+                        if (old_model !== model_name) {{
+                            log_mcp_message("GameEngine", "ModelSwitch", {
+                                "agent": agent,
+                                "old_model": old_model,
+                                "new_model": model_name,
+                                "timestamp": datetime.now().isoformat(),
+                                "move_number": game_state.move_number
+                            })
+                            game_state.increment_total_messages()
+                        
+                        return {
+                            "success": True,
+                            "message": f"Successfully switched {agent} to {model_name}",
+                            "current_models": game_state.get_current_models()
+                        }
                     }} else {{
                         showNotification('❌ ' + result.error, 'error');
                     }}
@@ -1516,6 +1547,7 @@ async def make_move(request: dict):
             "col": col,
             "symbol": game_state.player_symbol
         })
+        game_state.increment_total_messages()
         
         return {"success": True, "message": "Move made successfully"}
         
@@ -1545,6 +1577,10 @@ async def simulate_turn(request: SimulateTurnRequest = SimulateTurnRequest()):
         print("AI TURN SIMULATION STARTED")
         print("="*50)
         
+        # Log the start of AI turn
+        log_mcp_message("GameEngine", "AITurnStart", {"move_number": game_state.move_number})
+        game_state.increment_total_messages()
+        
         observation = scout_agent.observe_environment()
         log_mcp_message("Scout", "Observation", observation.dict())
         
@@ -1556,8 +1592,13 @@ async def simulate_turn(request: SimulateTurnRequest = SimulateTurnRequest()):
         action_result = executor_agent.execute_plan(plan)
         log_mcp_message("Executor", "ExecutionResult", action_result.dict())
         
+        # Log the completion of AI turn
+        log_mcp_message("GameEngine", "AITurnComplete", {"move_number": game_state.move_number})
+        game_state.increment_total_messages()
+        
         print("="*50)
         print("AI TURN SIMULATION COMPLETED")
+        print(f"Total MCP Messages: {game_state.mcp_message_count}")
         print("="*50)
         
         return TurnSimulationResponse(
@@ -1577,13 +1618,98 @@ async def simulate_turn(request: SimulateTurnRequest = SimulateTurnRequest()):
 async def get_agent_info():
     """Get information about all agents"""
     try:
-        agent_info = {
-            "scout": scout_agent.get_agent_info() if scout_agent else {},
-            "strategist": strategist_agent.get_agent_info() if strategist_agent else {},
-            "executor": executor_agent.get_agent_info() if executor_agent else {}
-        }
+        agent_info = {}
+        
+        # Scout agent
+        if scout_agent:
+            try:
+                agent_info["scout"] = scout_agent.get_agent_info()
+            except Exception as e:
+                agent_info["scout"] = {
+                    "name": "Scout Agent",
+                    "role": "Game Observer",
+                    "model": "Unknown",
+                    "model_name": "unknown",
+                    "provider": "Unknown",
+                    "provider_type": "❓ Unknown",
+                    "provider_icon": "❓",
+                    "description": "Agent initialization failed",
+                    "capabilities": ["Error: Agent not properly initialized"]
+                }
+        else:
+            agent_info["scout"] = {
+                "name": "Scout Agent",
+                "role": "Game Observer",
+                "model": "Not Initialized",
+                "model_name": "not_initialized",
+                "provider": "Unknown",
+                "provider_type": "❓ Unknown",
+                "provider_icon": "❓",
+                "description": "Agent failed to initialize",
+                "capabilities": ["Error: Agent initialization failed"]
+            }
+        
+        # Strategist agent
+        if strategist_agent:
+            try:
+                agent_info["strategist"] = strategist_agent.get_agent_info()
+            except Exception as e:
+                agent_info["strategist"] = {
+                    "name": "Strategist Agent",
+                    "role": "Strategy Creator",
+                    "model": "Unknown",
+                    "model_name": "unknown",
+                    "provider": "Unknown",
+                    "provider_type": "❓ Unknown",
+                    "provider_icon": "❓",
+                    "description": "Agent initialization failed",
+                    "capabilities": ["Error: Agent not properly initialized"]
+                }
+        else:
+            agent_info["strategist"] = {
+                "name": "Strategist Agent",
+                "role": "Strategy Creator",
+                "model": "Not Initialized",
+                "model_name": "not_initialized",
+                "provider": "Unknown",
+                "provider_type": "❓ Unknown",
+                "provider_icon": "❓",
+                "description": "Agent failed to initialize",
+                "capabilities": ["Error: Agent initialization failed"]
+            }
+        
+        # Executor agent
+        if executor_agent:
+            try:
+                agent_info["executor"] = executor_agent.get_agent_info()
+            except Exception as e:
+                agent_info["executor"] = {
+                    "name": "Executor Agent",
+                    "role": "Move Executor",
+                    "model": "Unknown",
+                    "model_name": "unknown",
+                    "provider": "Unknown",
+                    "provider_type": "❓ Unknown",
+                    "provider_icon": "❓",
+                    "description": "Agent initialization failed",
+                    "capabilities": ["Error: Agent not properly initialized"]
+                }
+        else:
+            agent_info["executor"] = {
+                "name": "Executor Agent",
+                "role": "Move Executor",
+                "model": "Not Initialized",
+                "model_name": "not_initialized",
+                "provider": "Unknown",
+                "provider_type": "❓ Unknown",
+                "provider_icon": "❓",
+                "description": "Agent failed to initialize",
+                "capabilities": ["Error: Agent initialization failed"]
+            }
+        
         return AgentInfoResponse(agents=agent_info)
     except Exception as e:
+        print(f"Error in get_agent_info: {e}")
         raise HTTPException(status_code=500, detail=f"Error getting agent info: {str(e)}")
 
 
@@ -1603,6 +1729,20 @@ async def get_metrics():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting metrics: {str(e)}")
 
+@app.get("/debug-metrics")
+async def debug_metrics():
+    """Debug endpoint to check metrics discrepancy"""
+    try:
+        return {
+            "mcp_message_count": game_state.mcp_message_count,
+            "game_log_count": len(mcp_logs),
+            "agent_response_times": game_state.agent_response_times,
+            "message_flow_patterns": game_state.message_flow_patterns,
+            "recent_logs": mcp_logs[-5:] if mcp_logs else []
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting debug metrics: {str(e)}")
+
 
 @app.post("/reset-game")
 async def reset_game():
@@ -1618,6 +1758,10 @@ async def reset_game():
         
         # Clear MCP logs
         mcp_logs.clear()
+        
+        # Log the game reset
+        log_mcp_message("GameEngine", "GameReset", {"timestamp": datetime.now().isoformat()})
+        game_state.increment_total_messages()
         
         return {"message": "New game started successfully"}
     except Exception as e:
@@ -1651,6 +1795,9 @@ async def switch_agent_model(request: dict):
         if not ModelFactory.validate_model_availability(model_name):
             return {"error": f"Model {model_name} is not available"}
         
+        # Get the old model before switching
+        old_model = game_state.get_current_models().get(agent, "unknown")
+        
         success = False
         
         if agent == "scout" and scout_agent:
@@ -1663,6 +1810,20 @@ async def switch_agent_model(request: dict):
             return {"error": f"Unknown agent: {agent}"}
         
         if success:
+            # Update the game state with the model change (deduplication handled in game state)
+            game_state.set_agent_model(agent, model_name)
+            
+            # Log the model switch to MCP logs (only if models are different)
+            if old_model != model_name:
+                log_mcp_message("GameEngine", "ModelSwitch", {
+                    "agent": agent,
+                    "old_model": old_model,
+                    "new_model": model_name,
+                    "timestamp": datetime.now().isoformat(),
+                    "move_number": game_state.move_number
+                })
+                game_state.increment_total_messages()
+            
             return {
                 "success": True,
                 "message": f"Successfully switched {agent} to {model_name}",

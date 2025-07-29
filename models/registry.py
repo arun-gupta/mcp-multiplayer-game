@@ -31,12 +31,44 @@ class ModelConfig:
         elif self.provider == ModelProvider.ANTHROPIC:
             self.is_available = bool(os.getenv("ANTHROPIC_API_KEY"))
         elif self.provider == ModelProvider.OLLAMA:
-            # For Ollama, we'll assume it's available if we can import it
-            try:
-                from langchain_community.llms import Ollama
-                self.is_available = True
-            except ImportError:
-                self.is_available = False
+            # For Ollama, check if the specific model is installed
+            self.is_available = self._check_ollama_model_availability()
+    
+    def _check_ollama_model_availability(self) -> bool:
+        """Check if a specific Ollama model is available"""
+        try:
+            import subprocess
+            import json
+            
+            # Run 'ollama list' to get installed models
+            result = subprocess.run(['ollama', 'list', '--format', 'json'], 
+                                  capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                try:
+                    models_data = json.loads(result.stdout)
+                    installed_models = [model.get('name', '') for model in models_data.get('models', [])]
+                    
+                    # Check if this specific model is installed
+                    return self.model_id in installed_models
+                except json.JSONDecodeError:
+                    # Fallback: check if ollama is running
+                    return self._check_ollama_running()
+            else:
+                return self._check_ollama_running()
+                
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            return self._check_ollama_running()
+    
+    def _check_ollama_running(self) -> bool:
+        """Fallback check to see if Ollama is running"""
+        try:
+            import subprocess
+            result = subprocess.run(['ollama', '--version'], 
+                                  capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            return False
 
 
 class ModelRegistry:
@@ -137,6 +169,28 @@ class ModelRegistry:
                 temperature=0.1,
                 requires_api_key=False
             ),
+            ModelConfig(
+                name="mistral-latest",
+                provider=ModelProvider.OLLAMA,
+                model_id="mistral:latest",
+                display_name="Mistral Latest",
+                description="Latest Mistral model, high quality",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
+            ModelConfig(
+                name="llama3-latest",
+                provider=ModelProvider.OLLAMA,
+                model_id="llama3:latest",
+                display_name="Llama3 Latest",
+                description="Latest Llama3 model, excellent performance",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
         ]
         
         for model in default_models:
@@ -161,8 +215,15 @@ class ModelRegistry:
     
     def get_model_info(self) -> Dict[str, Dict]:
         """Get information about all models for API response"""
-        return {
-            name: {
+        model_info = {}
+        for name, model in self.models.items():
+            # For Ollama models, check availability dynamically
+            if model.provider == ModelProvider.OLLAMA:
+                is_available = self._check_ollama_model_availability(model.model_id)
+            else:
+                is_available = model.is_available
+            
+            model_info[name] = {
                 "name": model.name,
                 "provider": model.provider.value,
                 "display_name": model.display_name,
@@ -170,11 +231,56 @@ class ModelRegistry:
                 "estimated_cost_per_1k_tokens": model.estimated_cost_per_1k_tokens,
                 "max_tokens": model.max_tokens,
                 "temperature": model.temperature,
-                "is_available": model.is_available,
-                "requires_api_key": model.requires_api_key
+                "is_available": is_available,
+                "requires_api_key": model.requires_api_key,
+                "unavailable_reason": self._get_unavailable_reason(model, is_available)
             }
-            for name, model in self.models.items()
-        }
+        return model_info
+    
+    def _check_ollama_model_availability(self, model_id: str) -> bool:
+        """Check if a specific Ollama model is available"""
+        try:
+            import subprocess
+            
+            # Run 'ollama list' to get installed models
+            result = subprocess.run(['ollama', 'list'], 
+                                  capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                # Parse the output line by line
+                lines = result.stdout.strip().split('\n')
+                installed_models = []
+                
+                # Skip the header line and parse model names
+                for line in lines[1:]:  # Skip the "NAME ID SIZE MODIFIED" header
+                    if line.strip():
+                        # Extract the model name (first column)
+                        parts = line.split()
+                        if parts:
+                            model_name = parts[0]
+                            installed_models.append(model_name)
+                
+                # Check if this specific model is installed
+                return model_id in installed_models
+            else:
+                return False
+                
+        except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            return False
+    
+    def _get_unavailable_reason(self, model, is_available: bool) -> str:
+        """Get the reason why a model is unavailable"""
+        if is_available:
+            return ""
+        
+        if model.provider == ModelProvider.OPENAI:
+            return "OpenAI API key not found in environment variables"
+        elif model.provider == ModelProvider.ANTHROPIC:
+            return "Anthropic API key not found in environment variables"
+        elif model.provider == ModelProvider.OLLAMA:
+            return f"Model '{model.model_id}' not installed in Ollama"
+        else:
+            return "Unknown error"
 
 
 # Global registry instance

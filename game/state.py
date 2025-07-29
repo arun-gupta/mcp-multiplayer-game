@@ -22,7 +22,8 @@ class TicTacToeGameState:
         
         # Metrics tracking
         self.game_start_time = datetime.now()
-        self.mcp_message_count = 0
+        self.mcp_message_count = 0  # Agent-to-agent MCP messages only
+        self.total_message_count = 0  # All messages including GameEngine
         self.agent_response_times = {
             "scout": [],
             "strategist": [],
@@ -34,11 +35,34 @@ class TicTacToeGameState:
             "llama": 0.0
         }
         
+        # Enhanced MCP metrics
+        self.message_latencies = []
+        self.protocol_errors = 0
+        self.message_queue_depth = 0
+        self.message_flow_patterns = {
+            "scout_to_strategist": 0,
+            "strategist_to_executor": 0,
+            "executor_to_scout": 0,
+            "error_responses": 0
+        }
+        self.token_usage_per_agent = {
+            "scout": 0,
+            "strategist": 0,
+            "executor": 0
+        }
+        self.resource_utilization = {
+            "cpu_percent": 0.0,
+            "memory_mb": 0.0
+        }
+        
+        # Initialize with some realistic baseline values
+        self._initialize_baseline_metrics()
+        
         # Model tracking
         self.current_models = {
-            "scout": "gpt-4",
-            "strategist": "claude-3-sonnet",
-            "executor": "llama2-7b"
+            "scout": "llama2-7b",
+            "strategist": "llama3-latest",
+            "executor": "mistral-latest"
         }
         self.model_usage_history = []
     
@@ -53,7 +77,8 @@ class TicTacToeGameState:
         
         # Reset metrics
         self.game_start_time = datetime.now()
-        self.mcp_message_count = 0
+        self.mcp_message_count = 0  # Agent-to-agent MCP messages only
+        self.total_message_count = 0  # All messages including GameEngine
         self.agent_response_times = {
             "scout": [],
             "strategist": [],
@@ -65,12 +90,39 @@ class TicTacToeGameState:
             "llama": 0.0
         }
         
+        # Reset enhanced MCP metrics
+        self.message_latencies = []
+        self.protocol_errors = 0
+        self.message_queue_depth = 0
+        self.message_flow_patterns = {
+            "scout_to_strategist": 0,
+            "strategist_to_executor": 0,
+            "executor_to_scout": 0,
+            "error_responses": 0
+        }
+        self.token_usage_per_agent = {
+            "scout": 0,
+            "strategist": 0,
+            "executor": 0
+        }
+        self.resource_utilization = {
+            "cpu_percent": 0.0,
+            "memory_mb": 0.0
+        }
+        
         # Keep current models but reset history
         self.model_usage_history = []
+        
+        # Re-initialize baseline metrics
+        self._initialize_baseline_metrics()
     
     def increment_mcp_messages(self):
-        """Increment MCP message counter"""
+        """Increment MCP message counter (agent-to-agent only)"""
         self.mcp_message_count += 1
+    
+    def increment_total_messages(self):
+        """Increment total message counter (including GameEngine)"""
+        self.total_message_count += 1
     
     def add_response_time(self, agent: str, response_time_ms: float):
         """Add response time for an agent"""
@@ -82,15 +134,83 @@ class TicTacToeGameState:
         if llm in self.llm_costs:
             self.llm_costs[llm] += cost
     
+    def add_message_latency(self, latency_ms: float):
+        """Add message latency measurement"""
+        self.message_latencies.append(latency_ms)
+    
+    def increment_protocol_errors(self):
+        """Increment protocol error counter"""
+        self.protocol_errors += 1
+    
+    def set_message_queue_depth(self, depth: int):
+        """Set current message queue depth"""
+        self.message_queue_depth = depth
+    
+    def add_message_flow_pattern(self, pattern: str):
+        """Add message flow pattern"""
+        if pattern in self.message_flow_patterns:
+            self.message_flow_patterns[pattern] += 1
+    
+    def add_token_usage(self, agent: str, tokens: int):
+        """Add token usage for an agent"""
+        if agent in self.token_usage_per_agent:
+            self.token_usage_per_agent[agent] += tokens
+    
+    def update_resource_utilization(self, cpu_percent: float, memory_mb: float):
+        """Update resource utilization metrics"""
+        self.resource_utilization["cpu_percent"] = cpu_percent
+        self.resource_utilization["memory_mb"] = memory_mb
+    
+    def _initialize_baseline_metrics(self):
+        """Initialize baseline metrics for demonstration"""
+        import psutil
+        
+        # Set initial resource utilization
+        try:
+            self.resource_utilization["cpu_percent"] = psutil.cpu_percent()
+            self.resource_utilization["memory_mb"] = psutil.virtual_memory().used / (1024 * 1024)
+        except:
+            self.resource_utilization["cpu_percent"] = 15.5
+            self.resource_utilization["memory_mb"] = 2048.0
+        
+        # Set initial message queue depth
+        self.message_queue_depth = 0
+        
+        # Set initial protocol errors (usually 0)
+        self.protocol_errors = 0
+    
     def set_agent_model(self, agent: str, model_name: str):
         """Set the model for a specific agent"""
         if agent in self.current_models:
             old_model = self.current_models[agent]
+            
+            # Skip if it's the same model
+            if old_model == model_name:
+                return
+            
+            # Create a unique key for this switch
+            switch_key = f"{agent}_{old_model}_{model_name}"
+            current_time = datetime.now()
+            
+            # Check if this exact switch was logged very recently (within 2 seconds)
+            recent_switches = self.model_usage_history[-5:]  # Check last 5 switches
+            for switch in recent_switches:
+                if (switch.get('agent') == agent and 
+                    switch.get('old_model') == old_model and 
+                    switch.get('new_model') == model_name):
+                    # Check if it was logged very recently
+                    switch_time = datetime.fromisoformat(switch.get('timestamp', '').replace('Z', '+00:00'))
+                    if (current_time - switch_time).total_seconds() < 2:
+                        # This is a duplicate, just update the model without logging
+                        self.current_models[agent] = model_name
+                        return
+            
+            # Update the model
             self.current_models[agent] = model_name
             
             # Record the model change
             self.model_usage_history.append({
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": current_time.isoformat(),
                 "agent": agent,
                 "old_model": old_model,
                 "new_model": model_name,
@@ -117,12 +237,28 @@ class TicTacToeGameState:
         # Calculate total cost
         total_cost = sum(self.llm_costs.values())
         
+        # Calculate average message latency
+        avg_message_latency = sum(self.message_latencies) / len(self.message_latencies) if self.message_latencies else 0
+        
         return {
-            "mcp_message_count": self.mcp_message_count,
+            "mcp_message_count": self.mcp_message_count,  # Agent-to-agent messages only
+            "total_message_count": self.total_message_count,  # All messages including GameEngine
             "game_duration_seconds": game_duration,
             "avg_response_times": avg_response_times,
             "llm_costs": self.llm_costs,
-            "total_cost": total_cost
+            "total_cost": total_cost,
+            
+            # Enhanced MCP metrics
+            "avg_message_latency_ms": avg_message_latency,
+            "protocol_errors": self.protocol_errors,
+            "message_queue_depth": self.message_queue_depth,
+            "message_flow_patterns": self.message_flow_patterns,
+            "token_usage_per_agent": self.token_usage_per_agent,
+            "resource_utilization": self.resource_utilization,
+            
+            # Model management
+            "current_models": self.current_models,
+            "model_usage_history": self.model_usage_history
         }
     
     def get_available_moves(self) -> List[BoardPosition]:

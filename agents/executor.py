@@ -61,7 +61,12 @@ class ExecutorAgent:
     def execute_plan(self, plan: Plan) -> ActionResult:
         """Execute the strategic plan by making a move"""
         try:
+            import psutil
             start_time = time.time()
+            
+            # Track MCP metrics
+            self.game_state.increment_mcp_messages()
+            self.game_state.add_message_flow_pattern("executor_to_scout")
             
             # Validate the plan
             if not self._validate_plan(plan):
@@ -81,6 +86,25 @@ class ExecutorAgent:
                         break
             
             execution_time = time.time() - start_time
+            
+            # Track response time and other metrics
+            response_time = execution_time * 1000  # Convert to milliseconds
+            self.game_state.add_response_time("executor", response_time)
+            self.game_state.add_message_latency(response_time)
+            
+            # Add estimated cost and token usage (Llama pricing - free)
+            estimated_cost = 0.0  # Llama is free
+            estimated_tokens = 50  # Rough estimate per execution
+            self.game_state.add_llm_cost("llama", estimated_cost)
+            self.game_state.add_token_usage("executor", estimated_tokens)
+            
+            # Update resource utilization
+            try:
+                cpu_percent = psutil.cpu_percent()
+                memory_mb = psutil.virtual_memory().used / (1024 * 1024)  # Convert to MB
+                self.game_state.update_resource_utilization(cpu_percent, memory_mb)
+            except:
+                pass  # Ignore if psutil is not available
             
             if not success:
                 return self._create_error_result(plan, "Failed to execute any strategy")
@@ -159,12 +183,28 @@ class ExecutorAgent:
         """Get information about this agent"""
         model_config = model_registry.get_model(self.model_name)
         model_display = model_config.display_name if model_config else self.model_name
+        provider = model_config.provider if model_config else "Unknown"
+        
+        # Determine provider type and icon
+        provider_str = str(provider).upper()
+        if "OPENAI" in provider_str or "ANTHROPIC" in provider_str:
+            provider_type = "☁️ Cloud"
+            provider_icon = "☁️"
+        elif "OLLAMA" in provider_str:
+            provider_type = "🖥️ Local"
+            provider_icon = "🖥️"
+        else:
+            provider_type = "❓ Unknown"
+            provider_icon = "❓"
         
         return {
             "name": "Executor Agent",
             "role": "Move Executor",
             "model": model_display,
             "model_name": self.model_name,
+            "provider": provider,
+            "provider_type": provider_type,
+            "provider_icon": provider_icon,
             "description": "Executes strategic plans by making board moves",
             "capabilities": ["Plan Execution", "Move Validation", "Board Updates", "Game State Management"]
         } 

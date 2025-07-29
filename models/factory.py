@@ -58,9 +58,9 @@ class ModelFactory:
     def get_default_models() -> dict:
         """Get default model assignments for agents"""
         return {
-            "scout": "gpt-4",
-            "strategist": "claude-3-sonnet", 
-            "executor": "llama2-7b"
+            "scout": "llama2-7b",  # Use locally available model
+            "strategist": "llama3-latest",  # Use locally available model
+            "executor": "mistral-latest"  # Use locally available model
         }
     
     @staticmethod
