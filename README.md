@@ -1,4 +1,4 @@
-# 🎮 Multi-Agent Tic Tac Toe with MCP Protocol
+# 🎮 Agentic Tic-Tac-Toe: MCP Protocol Showcase
 
 A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** as the agentic framework. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs on different models and communicates only through standardized JSON schemas.
 
