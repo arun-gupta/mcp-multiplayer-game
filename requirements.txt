@@ -9,4 +9,5 @@ python-dotenv==1.0.0
 langchain>=0.1.0,<0.2.0
 langchain-openai>=0.0.2
 langchain-anthropic>=0.0.1
-langchain-community>=0.0.10 
+langchain-community>=0.0.10
+requests>=2.31.0 

@@ -132,8 +132,20 @@ def main():
             
             # Check if processes are still running
             if backend_process.poll() is not None:
-                print("❌ Backend server stopped unexpectedly")
-                break
+                # Check if backend is actually down by testing the health endpoint
+                import requests
+                try:
+                    response = requests.get("http://localhost:8000/health", timeout=2)
+                    if response.status_code == 200:
+                        print("🔄 Backend server auto-reloaded (normal behavior)")
+                        # Continue monitoring - server is still running
+                        continue
+                    else:
+                        print("❌ Backend server stopped unexpectedly")
+                        break
+                except requests.exceptions.RequestException:
+                    print("❌ Backend server stopped unexpectedly")
+                    break
                 
             if frontend_process.poll() is not None:
                 print("❌ Frontend stopped unexpectedly")

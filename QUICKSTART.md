@@ -110,35 +110,53 @@ python test_installation.py
 ```
 
 ### 7. Run the Application
+
+**Option 1: Quick Start (Recommended)**
 ```bash
+./start.sh
+```
+This script will:
+- Kill any existing processes on ports 8000 and 8501
+- Verify your virtual environment is active
+- Start both backend and frontend servers
+- Open the application in your browser
+
+**Option 2: Manual Start**
+```bash
+# Start backend only
 python main.py
+
+# Or use the Python launcher (starts both servers)
+python run_app.py
 ```
 
 ### 8. Open in Browser
-- **Dashboard**: http://localhost:8000
+- **Frontend**: http://localhost:8501 (Streamlit)
+- **Backend**: http://localhost:8000 (FastAPI)
 - **API Docs**: http://localhost:8000/docs
 
 ## 🎮 How to Play
 
-1. **View the Game**: Open http://localhost:8000
-2. **Simulate a Turn**: Click "Simulate Turn" button
+1. **View the Game**: Open http://localhost:8501 (Streamlit Frontend)
+2. **Play Tic-Tac-Toe**: You play as X against the AI team (Double-O-AI)
 3. **Watch the Agents**: See the three agents work together:
-   - **Scout** observes the environment
-   - **Strategist** creates a plan
-   - **Executor** carries out the plan
-4. **Monitor Progress**: Check turn history and game state
-5. **Reset**: Start over with "Reset Game"
+   - **Scout** analyzes the game state
+   - **Strategist** creates a strategy
+   - **Executor** makes the move
+4. **Monitor Progress**: Check game history, metrics, and MCP logs
+5. **Switch Models**: Try different AI models for each agent
+6. **New Game**: Start over with "New Game" button
 
 ## 🔍 Understanding the Flow
 
-Each turn follows this sequence:
+Each AI move follows this sequence:
 
 ```
 Scout Agent (OpenAI GPT-4) → Strategist Agent (Claude 3) → Executor Agent (Llama2:7B)
      ↓                        ↓                        ↓
-  Observes              Creates Plan              Executes Actions
-  Environment           Based on                  Updates Game State
-  (Limited View)        Observations
+  Analyzes              Creates Strategy           Makes the Move
+  Game State            Based on                  Updates Board
+  (Current Board)       Analysis
 ```
 
 ## 📡 API Quick Test
@@ -174,6 +192,14 @@ curl http://localhost:8000/mcp-logs
 
 4. **"Connection refused"**
    - Make sure Ollama is running: `ollama serve`
+
+5. **"Address already in use"**
+   - Use the start script: `./start.sh` (automatically kills existing processes)
+   - Or manually kill processes: `lsof -ti:8000 | xargs kill -9`
+
+6. **"Virtual environment not detected"**
+   - Activate your virtual environment: `source venv/bin/activate`
+   - Then run: `./start.sh`
 
 ### Test Your Setup
 
