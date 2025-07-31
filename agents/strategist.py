@@ -14,7 +14,7 @@ import uuid
 class StrategistAgent:
     """Strategist agent that creates plans based on game observations"""
     
-    def __init__(self, game_state=None, model_name: str = "llama3-latest"):
+    def __init__(self, game_state=None, model_name: str = "claude-3-sonnet"):
         self.game_state = game_state
         self.model_name = model_name
         self.llm = self._create_llm(model_name)
@@ -41,8 +41,8 @@ class StrategistAgent:
         llm = ModelFactory.create_llm(model_name)
         if llm is None:
             # Fallback to default model
-            print(f"Warning: Could not create LLM for {model_name}, falling back to llama3-latest")
-            llm = ModelFactory.create_llm("llama3-latest")
+            print(f"Warning: Could not create LLM for {model_name}, falling back to claude-3-sonnet")
+            llm = ModelFactory.create_llm("claude-3-sonnet")
         return llm
     
     def switch_model(self, model_name: str):

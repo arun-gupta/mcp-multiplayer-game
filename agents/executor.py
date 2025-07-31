@@ -14,7 +14,7 @@ from schemas.observation import BoardPosition
 class ExecutorAgent:
     """Executor agent that executes strategic plans"""
     
-    def __init__(self, game_state, model_name: str = "llama2-7b"):
+    def __init__(self, game_state, model_name: str = "mistral-latest"):
         self.game_state = game_state
         self.model_name = model_name
         self.llm = self._create_llm(model_name)
@@ -41,8 +41,8 @@ class ExecutorAgent:
         llm = ModelFactory.create_llm(model_name)
         if llm is None:
             # Fallback to default model
-            print(f"Warning: Could not create LLM for {model_name}, falling back to llama2-7b")
-            llm = ModelFactory.create_llm("llama2-7b")
+            print(f"Warning: Could not create LLM for {model_name}, falling back to mistral-latest")
+            llm = ModelFactory.create_llm("mistral-latest")
         return llm
     
     def switch_model(self, model_name: str):

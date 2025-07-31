@@ -58,12 +58,9 @@ class TicTacToeGameState:
         # Initialize with some realistic baseline values
         self._initialize_baseline_metrics()
         
-        # Model tracking
-        self.current_models = {
-            "scout": "llama2-7b",
-            "strategist": "llama3-latest",
-            "executor": "mistral-latest"
-        }
+        # Model tracking - dynamically assign available models
+        from models.factory import ModelFactory
+        self.current_models = ModelFactory.get_default_models()
         self.model_usage_history = []
     
     def initialize_new_game(self):

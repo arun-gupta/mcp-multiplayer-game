@@ -56,12 +56,51 @@ class ModelFactory:
     
     @staticmethod
     def get_default_models() -> dict:
-        """Get default model assignments for agents"""
-        return {
-            "scout": "llama2-7b",  # Use locally available model
-            "strategist": "llama3-latest",  # Use locally available model
-            "executor": "mistral-latest"  # Use locally available model
+        """Dynamically assign available models to agents"""
+        # Get all available models
+        available_models = model_registry.get_available_models()
+        
+        # Separate models by provider type
+        cloud_models = [model for model in available_models if model.provider in [ModelProvider.OPENAI, ModelProvider.ANTHROPIC]]
+        local_models = [model for model in available_models if model.provider == ModelProvider.OLLAMA]
+        
+        # Assign models based on availability and preferences
+        assignments = {}
+        
+        # Scout: Prefer cloud models for reliability, fallback to local
+        if cloud_models:
+            # Prefer GPT-4 if available, otherwise first available cloud model
+            scout_model = next((model.name for model in cloud_models if "gpt-4" in model.name), cloud_models[0].name)
+        elif local_models:
+            scout_model = local_models[0].name
+        else:
+            scout_model = "gpt-4"  # Fallback if no models available
+        
+        # Strategist: Prefer Claude for strategy, fallback to other cloud, then local
+        if any("claude" in model.name for model in cloud_models):
+            strategist_model = next(model.name for model in cloud_models if "claude" in model.name)
+        elif cloud_models:
+            strategist_model = cloud_models[0].name
+        elif local_models:
+            strategist_model = local_models[0].name
+        else:
+            strategist_model = "claude-3-sonnet"  # Fallback
+        
+        # Executor: Prefer local models for execution, fallback to cloud
+        if local_models:
+            executor_model = local_models[0].name
+        elif cloud_models:
+            executor_model = cloud_models[0].name
+        else:
+            executor_model = "mistral-latest"  # Fallback
+        
+        assignments = {
+            "scout": scout_model,
+            "strategist": strategist_model,
+            "executor": executor_model
         }
+        
+        return assignments
     
     @staticmethod
     def validate_model_availability(model_name: str) -> bool:

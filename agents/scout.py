@@ -11,7 +11,7 @@ from schemas.observation import Observation
 class ScoutAgent:
     """Scout agent that observes the Tic Tac Toe game state"""
     
-    def __init__(self, game_state, model_name: str = "llama2-7b"):
+    def __init__(self, game_state, model_name: str = "gpt-4"):
         self.game_state = game_state
         self.model_name = model_name
         self.llm = self._create_llm(model_name)
@@ -39,8 +39,8 @@ class ScoutAgent:
         llm = ModelFactory.create_llm(model_name)
         if llm is None:
             # Fallback to default model
-            print(f"Warning: Could not create LLM for {model_name}, falling back to llama2-7b")
-            llm = ModelFactory.create_llm("llama2-7b")
+            print(f"Warning: Could not create LLM for {model_name}, falling back to gpt-4")
+            llm = ModelFactory.create_llm("gpt-4")
         return llm
     
     def switch_model(self, model_name: str):
