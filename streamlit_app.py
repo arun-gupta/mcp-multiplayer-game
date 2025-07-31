@@ -836,14 +836,30 @@ def main():
                     else:
                         st.error(f"❌ Failed: {result.get('error', 'Unknown error')}")
             
-            # Available models legend (simplified)
+            # Available models section
             st.markdown("---")
             st.markdown("**Available Models:**")
-            for model_name, model_info in available_models.items():
-                if model_info.get('is_available', False):
-                    provider = model_info.get('provider', 'Unknown')
-                    provider_icon = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}.get(provider, "❓")
-                    st.markdown(f"✅ **{model_name}** {provider_icon}")
+            
+            # Provider icons legend
+            st.markdown("**Provider Icons:** 🤖 OpenAI | 🧠 Anthropic | 🦙 Ollama")
+            
+            st.markdown("---")
+            
+            # Sort available models alphabetically
+            sorted_models = sorted(
+                [(model_name, model_info) for model_name, model_info in available_models.items() 
+                 if model_info.get('is_available', False)],
+                key=lambda x: x[0].lower()  # Case-insensitive sorting
+            )
+            
+            for model_name, model_info in sorted_models:
+                provider = model_info.get('provider', 'Unknown')
+                provider_icon = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}.get(provider, "❓")
+                
+                # Determine if it's cloud or local
+                model_type = "☁️ Cloud" if provider in ["openai", "anthropic"] else "🖥️ Local"
+                
+                st.markdown(f"✅ **{model_name}** {provider_icon} ({model_type})")
                     
         else:
             st.error("❌ Failed to load model information")

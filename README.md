@@ -87,6 +87,10 @@ python run_app.py
 
 ### 🌐 Supported Models
 
+**Legend:**
+- ☁️ **Cloud**: Hosted models requiring API keys and internet connection
+- 🖥️ **Local**: Models running on your machine via Ollama (offline capable)
+
 | Provider | Models | Type |
 |----------|--------|------|
 | **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 Turbo | ☁️ Cloud |
