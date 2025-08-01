@@ -658,10 +658,65 @@ def main():
         col1, col2 = st.columns([1, 1])
         
         with col1:
+            # Add improved board styling
+            st.markdown("""
+            <style>
+            .game-board-container {
+                background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+                border: 2px solid #333;
+                border-radius: 15px;
+                padding: 20px;
+                margin: 10px 0;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            .board-cell {
+                background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+                border: 2px solid #444;
+                border-radius: 12px;
+                padding: 25px 15px;
+                text-align: center;
+                font-size: 2.5rem;
+                font-weight: bold;
+                margin: 3px;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                min-height: 80px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .cell-x {
+                background: linear-gradient(145deg, #1a2a1a, #0a1a0a);
+                border: 2px solid #00ff88;
+                color: #00ff88;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+                text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            }
+            .cell-o {
+                background: linear-gradient(145deg, #2a1a1a, #1a0a0a);
+                border: 2px solid #ff6b6b;
+                color: #ff6b6b;
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+                text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            }
+            .cell-empty {
+                background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+                border: 2px solid #444;
+                color: #888;
+            }
+            .cell-empty:hover {
+                border-color: #00ff88;
+                box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
             # Game board
             board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
             
-            # Create 3x3 grid using Streamlit columns
+            # Create 3x3 grid using Streamlit columns with improved styling
+            st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
+            
             for i in range(3):
                 cols = st.columns(3)
                 for j in range(3):
@@ -670,49 +725,55 @@ def main():
                         if cell_value == '':
                             # Empty cell - make it clickable
                             if not game_state.get('game_over', False) and current_player == 'player':
-                                if st.button("⬜", key=f"cell_{i}_{j}", 
+                                if st.button("+", key=f"cell_{i}_{j}", 
                                            use_container_width=True,
                                            help=f"Click to place your move at ({i}, {j})"):
                                     st.session_state.pending_move = (i, j)
                                     st.rerun()
                             else:
                                 # Disabled cell
-                                st.button("⬜", key=f"cell_{i}_{j}_disabled", 
+                                st.button("·", key=f"cell_{i}_{j}_disabled", 
                                         disabled=True, use_container_width=True)
                         else:
                             # Filled cell with custom colors
                             if cell_value == 'X':
                                 st.markdown(f"""
-                                <div style="
-                                    background-color: #2d2d2d; 
-                                    border: 2px solid #00ff88; 
-                                    border-radius: 8px; 
-                                    padding: 20px; 
-                                    text-align: center; 
-                                    font-size: 2.5rem; 
-                                    font-weight: bold; 
-                                    color: #00ff88;
-                                    margin: 4px;
-                                    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
-                                ">❌</div>
+                                <div class="board-cell cell-x">
+                                    ❌
+                                </div>
                                 """, unsafe_allow_html=True)
                             else:
                                 st.markdown(f"""
-                                <div style="
-                                    background-color: #2d2d2d; 
-                                    border: 2px solid #ff6b6b; 
-                                    border-radius: 8px; 
-                                    padding: 20px; 
-                                    text-align: center; 
-                                    font-size: 2.5rem; 
-                                    font-weight: bold; 
-                                    color: #ff6b6b;
-                                    margin: 4px;
-                                    box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
-                                ">⭕</div>
+                                <div class="board-cell cell-o">
+                                    ⭕
+                                </div>
                                 """, unsafe_allow_html=True)
             
-            # Game controls
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Game controls with improved styling
+            st.markdown("""
+            <style>
+            .new-game-btn {
+                background: linear-gradient(135deg, #00ff88, #00cc6a);
+                border: none;
+                border-radius: 10px;
+                padding: 12px 24px;
+                color: #000;
+                font-weight: bold;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+                margin-top: 15px;
+            }
+            .new-game-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+            }
+            </style>
+            """, unsafe_allow_html=True)
+            
             if st.button("🔄 New Game", use_container_width=True):
                 if reset_game():
                     # Clear session state and refresh game state
