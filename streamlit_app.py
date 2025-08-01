@@ -855,32 +855,32 @@ def main():
                         if available_model_names:
                             st.markdown("**Select Model:**")
                             
+                            # Use session state to track the previous selection
+                            prev_model_key = f"prev_model_{agent_name}"
+                            if prev_model_key not in st.session_state:
+                                st.session_state[prev_model_key] = current_model
+                            
                             # Show current model as default, with all available models as options
                             new_model = st.selectbox(
                                 f"Available Models:",
                                 available_model_names,
                                 index=available_model_names.index(current_model) if current_model in available_model_names else 0,
                                 key=f"switch_{agent_name}",
-                                help=f"Select a different model to switch to"
+                                help=f"Select a model to switch to (changes apply immediately)"
                             )
                             
-                            st.markdown("---")
-                            
-                            # Only show switch button if a different model is selected
-                            if new_model != current_model:
-                                st.markdown(f"""
-                                <div style="background: rgba(255, 152, 0, 0.1); border: 1px solid #FF9800; border-radius: 6px; padding: 10px; margin: 8px 0;">
-                                    <strong>🔄 Ready to switch to:</strong> <span style="color: #FF9800; font-weight: bold;">{new_model}</span>
-                                </div>
-                                """, unsafe_allow_html=True)
-                                
-                                if st.button(f"🚀 Switch to {new_model}", type="primary", key=f"btn_switch_{agent_name}"):
+                            # Auto-switch when a different model is selected
+                            if new_model != st.session_state[prev_model_key]:
+                                st.session_state[prev_model_key] = new_model
+                                if new_model != current_model:
                                     result = switch_model(agent_name, new_model)
                                     if result and result.get('success'):
-                                        st.success(f"✅ Successfully switched to {new_model}!")
+                                        st.success(f"✅ Switched to {new_model}")
                                         st.rerun()
                                     else:
                                         st.error(f"❌ Failed to switch: {result.get('error', 'Unknown error')}")
+                                else:
+                                    st.session_state[prev_model_key] = current_model
                             else:
                                 st.markdown(f"""
                                 <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 10px; margin: 8px 0;">
