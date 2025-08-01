@@ -12,7 +12,7 @@ Get the Multi-Agent Game Simulation running in 5 minutes!
 
 ### 2. Install Ollama
 
-Ollama is required for running the local Llama2:7B model used by the Executor Agent.
+Ollama is required for running local models (like Llama2, Llama3, Mistral) that can be used by any of the agents.
 
 #### **macOS:**
 
@@ -63,7 +63,7 @@ ollama serve
 
 ### 3. Install Ollama Models
 ```bash
-ollama pull llama2:7b
+ollama pull llama2:7b llama3:latest mistral:latest
 ```
 
 ### 4. Setup Python Environment
@@ -152,11 +152,11 @@ python run_app.py
 Each AI move follows this sequence:
 
 ```
-Scout Agent (OpenAI GPT-4) → Strategist Agent (Claude 3) → Executor Agent (Llama2:7B)
-     ↓                        ↓                        ↓
-  Analyzes              Creates Strategy           Makes the Move
-  Game State            Based on                  Updates Board
-  (Current Board)       Analysis
+Scout Agent (Available Model) → Strategist Agent (Available Model) → Executor Agent (Available Model)
+     ↓                              ↓                              ↓
+  Analyzes                    Creates Strategy                 Makes the Move
+  Game State                  Based on                        Updates Board
+  (Current Board)             Analysis
 ```
 
 ## 📡 API Quick Test
@@ -184,7 +184,7 @@ curl http://localhost:8000/mcp-logs
 
 2. **"Ollama not found"**
    - Install Ollama: https://ollama.ai/
-   - Pull models: `ollama pull mistral llama2:7b`
+   - Pull models: `ollama pull llama2:7b llama3:latest mistral:latest`
 
 3. **"Module not found"**
    - Activate virtual environment: `source venv/bin/activate`
