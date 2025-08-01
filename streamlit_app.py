@@ -613,8 +613,7 @@ def main():
             ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
             if not ai_team_status.get("team_ready", False):
-                st.error("🚫 **AI Team Not Ready** - Go to '🤖 Agents & Models' tab to configure")
-                return
+                st.warning("⚠️ **AI Team Not Ready** - Some agents may not work properly. Go to '🤖 Agents & Models' tab to configure.")
         except Exception as e:
             st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
