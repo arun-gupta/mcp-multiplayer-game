@@ -617,24 +617,6 @@ def main():
         except Exception as e:
             st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
-        # Show game result if game is over
-        if game_state.get('game_over'):
-            winner = game_state.get('winner')
-            if winner == 'player':
-                st.success("🎉 **You Won!**")
-            elif winner == 'ai':
-                st.error("🤖 **AI Won!**")
-            elif winner == 'draw':
-                st.warning("🤝 **Draw!**")
-        
-        # Show game result banner if game is over (only if not already shown above)
-        if game_state.get('game_over') and game_state.get('winner') != 'draw':
-            winner = game_state.get('winner')
-            if winner == 'player':
-                st.success("🎉 **Congratulations! You defeated Double-O-AI!** 🎉")
-            elif winner == 'ai':
-                st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
-        
         # Game board and move history side by side
         col1, col2 = st.columns([1, 1])
         
@@ -731,6 +713,18 @@ def main():
                     st.markdown(f"**{move['move_number']}.** {player} placed {value} at ({row}, {col})")
             else:
                 st.markdown("*No moves yet. Start the game by clicking any cell!*")
+        
+        # Show game result below the game board
+        if game_state.get('game_over'):
+            winner = game_state.get('winner')
+            if winner == 'player':
+                st.success("🎉 **You Won!**")
+                st.success("🎉 **Congratulations! You defeated Double-O-AI!** 🎉")
+            elif winner == 'ai':
+                st.error("🤖 **AI Won!**")
+                st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
+            elif winner == 'draw':
+                st.warning("🤝 **Draw!**")
         
         # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
