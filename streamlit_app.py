@@ -1103,9 +1103,9 @@ def main():
             # Model History tab
             with agent_tabs[-1]:
                 st.markdown("### 🔄 Model Switch History")
-                metrics = get_metrics()
-                if metrics:
-                    model_usage_history = metrics.get('model_usage_history', [])
+                models_data = get_models()
+                if models_data:
+                    model_usage_history = models_data.get('model_usage_history', [])
                     
                     if model_usage_history:
                         st.subheader("📋 Recent Model Switches")
