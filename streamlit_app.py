@@ -759,15 +759,11 @@ def main():
             
             # Make the move
             if make_move(row, col):
-                st.success(f"✅ Move made at ({row}, {col})! Double-O-AI is thinking...")
                 # Simulate AI turn
                 ai_result = simulate_ai_turn()
-                if ai_result:
-                    st.success("🕵️‍♂️ Double-O-AI has made its move!")
                 # Force refresh game state
                 st.session_state.game_state = get_game_state()
                 st.session_state.last_refresh = 0  # Force immediate refresh
-                st.rerun()
     
     with tab2:
         st.header("🤖 AI Agents & Models")
