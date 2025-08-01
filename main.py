@@ -90,38 +90,6 @@ def initialize_agents():
         executor_agent = None
 
 
-def initialize_agents_with_models(current_models: dict):
-    """Initialize all agents with specific model assignments"""
-    global scout_agent, strategist_agent, executor_agent
-    
-    try:
-        scout_agent = ScoutAgent(game_state)
-        if current_models.get('scout'):
-            scout_agent.switch_model(current_models['scout'])
-        print("✅ Scout agent initialized successfully")
-    except Exception as e:
-        print(f"❌ Error initializing Scout agent: {e}")
-        scout_agent = None
-    
-    try:
-        strategist_agent = StrategistAgent(game_state)
-        if current_models.get('strategist'):
-            strategist_agent.switch_model(current_models['strategist'])
-        print("✅ Strategist agent initialized successfully")
-    except Exception as e:
-        print(f"❌ Error initializing Strategist agent: {e}")
-        strategist_agent = None
-    
-    try:
-        executor_agent = ExecutorAgent(game_state)
-        if current_models.get('executor'):
-            executor_agent.switch_model(current_models['executor'])
-        print("✅ Executor agent initialized successfully")
-    except Exception as e:
-        print(f"❌ Error initializing Executor agent: {e}")
-        executor_agent = None
-
-
 def log_mcp_message(agent: str, message_type: str, data: Dict[str, Any]):
     """Log MCP protocol messages"""
     log_entry = {
@@ -868,7 +836,7 @@ async def game_dashboard():
     </head>
     <body>
         <div class="github-corner">
-            <a href="https://github.com/arungupta/mcp-multiplayer-game" target="_blank" title="View on GitHub">
+            <a href="https://github.com/arun-gupta/mcp-multiplayer-game" target="_blank" title="View on GitHub">
                 <svg class="github-icon" viewBox="0 0 24 24" width="20" height="20">
                     <path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
                 </svg>
@@ -1567,15 +1535,6 @@ async def make_move(request: dict):
         if game_state.game_over:
             return {"error": "Game is over"}
         
-        # Check AI team status before allowing moves
-        ai_team_status = game_state.get_ai_team_status()
-        if not ai_team_status["team_ready"]:
-            return {
-                "error": "AI team not ready",
-                "ai_team_status": ai_team_status,
-                "message": "All three AI agents must have working models configured before playing"
-            }
-        
         # Make the move
         success = game_state.make_move(row, col, "player")
         
@@ -1787,20 +1746,17 @@ async def debug_metrics():
 
 @app.post("/reset-game")
 async def reset_game():
-    """Reset the game to initial state while preserving model assignments"""
+    """Reset the game to initial state"""
     try:
         global game_state, scout_agent, strategist_agent, executor_agent
         
-        # Store current model assignments before reset
-        current_models = game_state.get_current_models()
-        
-        # Reset game state (this preserves current_models but clears history)
+        # Reset game state
         game_state.initialize_new_game()
         
-        # Reinitialize agents with preserved model assignments
-        initialize_agents_with_models(current_models)
+        # Reinitialize agents
+        initialize_agents()
         
-        # Clear MCP logs but preserve model usage history
+        # Clear MCP logs
         mcp_logs.clear()
         
         # Log the game reset
@@ -1879,15 +1835,6 @@ async def switch_agent_model(request: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error switching model: {str(e)}")
 
-
-@app.get("/ai-team-status")
-async def get_ai_team_status():
-    """Get the status of the AI team configuration"""
-    try:
-        status = game_state.get_ai_team_status()
-        return status
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error getting AI team status: {str(e)}")
 
 @app.get("/health")
 async def health_check():
