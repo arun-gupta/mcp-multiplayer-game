@@ -618,47 +618,42 @@ def main():
         except Exception as e:
             st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
-        # Game status - compact display with move counter
+        # Game status - simplified display
         current_player = game_state.get('current_player', 'player')
         move_number = game_state.get('move_number', 0)
         
-        col1, col2, col3 = st.columns([1, 1, 2])
-        with col1:
-            if current_player == 'player':
-                st.info("👤 Your Turn")
-            else:
-                st.info("🤖 AI Thinking")
-        with col2:
-            st.metric("Move", move_number)
-        with col3:
-            if game_state.get('game_over'):
-                winner = game_state.get('winner')
-                if winner == 'player':
-                    st.success("🎉 You Won!")
-                elif winner == 'ai':
-                    st.error("🤖 AI Won!")
-                elif winner == 'draw':
-                    st.warning("🤝 Draw!")
-            else:
-                st.info("Game in Progress")
-        
-        # Show game result banner if game is over
+        # Show game result if game is over, otherwise show turn status
         if game_state.get('game_over'):
+            winner = game_state.get('winner')
+            if winner == 'player':
+                st.success("🎉 **You Won!**")
+            elif winner == 'ai':
+                st.error("🤖 **AI Won!**")
+            elif winner == 'draw':
+                st.warning("🤝 **Draw!**")
+        else:
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if current_player == 'player':
+                    st.info("👤 Your Turn")
+                else:
+                    st.info("🤖 AI Thinking")
+            with col2:
+                st.metric("Move", move_number)
+        
+        # Show game result banner if game is over (only if not already shown above)
+        if game_state.get('game_over') and game_state.get('winner') != 'draw':
             winner = game_state.get('winner')
             if winner == 'player':
                 st.success("🎉 **Congratulations! You defeated Double-O-AI!** 🎉")
             elif winner == 'ai':
                 st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
-            elif winner == 'draw':
-                st.warning("🤝 **A strategic stalemate! Both minds proved equally matched!** 🤝")
-            else:
-                st.warning("🤝 **Game ended in a draw! Well played by both sides!** 🤝")
         
         # Game board and move history side by side
         col1, col2 = st.columns([1, 1])
         
         with col1:
-            # Add improved board styling
+            # Add improved board styling with inline styles
             st.markdown("""
             <style>
             .game-board-container {
@@ -686,27 +681,27 @@ def main():
                 justify-content: center;
             }
             .cell-x {
-                background: linear-gradient(145deg, #1a2a1a, #0a1a0a);
-                border: 2px solid #00ff88;
-                color: #00ff88;
-                box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-                text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+                background: linear-gradient(145deg, #1a2a1a, #0a1a0a) !important;
+                border: 2px solid #00ff88 !important;
+                color: #00ff88 !important;
+                box-shadow: 0 0 20px rgba(0, 255, 136, 0.4) !important;
+                text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
             }
             .cell-o {
-                background: linear-gradient(145deg, #2a1a1a, #1a0a0a);
-                border: 2px solid #ff6b6b;
-                color: #ff6b6b;
-                box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
-                text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+                background: linear-gradient(145deg, #2a1a1a, #1a0a0a) !important;
+                border: 2px solid #ff6b6b !important;
+                color: #ff6b6b !important;
+                box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+                text-shadow: 0 0 10px rgba(255, 107, 107, 0.5) !important;
             }
             .cell-empty {
-                background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-                border: 2px solid #444;
-                color: #888;
+                background: linear-gradient(145deg, #2a2a2a, #1a1a1a) !important;
+                border: 2px solid #444 !important;
+                color: #888 !important;
             }
             .cell-empty:hover {
-                border-color: #00ff88;
-                box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+                border-color: #00ff88 !important;
+                box-shadow: 0 0 15px rgba(0, 255, 136, 0.3) !important;
             }
             </style>
             """, unsafe_allow_html=True)
@@ -714,7 +709,7 @@ def main():
             # Game board
             board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
             
-            # Create 3x3 grid using Streamlit columns with improved styling
+            # Create 3x3 grid using Streamlit columns with better styling
             st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
             
             for i in range(3):
@@ -735,16 +730,48 @@ def main():
                                 st.button("·", key=f"cell_{i}_{j}_disabled", 
                                         disabled=True, use_container_width=True)
                         else:
-                            # Filled cell with custom colors
+                            # Filled cell with custom colors using inline styles
                             if cell_value == 'X':
                                 st.markdown(f"""
-                                <div class="board-cell cell-x">
+                                <div style="
+                                    background: linear-gradient(145deg, #1a2a1a, #0a1a0a);
+                                    border: 2px solid #00ff88;
+                                    border-radius: 12px;
+                                    padding: 25px 15px;
+                                    text-align: center;
+                                    font-size: 2.5rem;
+                                    font-weight: bold;
+                                    margin: 3px;
+                                    color: #00ff88;
+                                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+                                    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+                                    min-height: 80px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                ">
                                     ❌
                                 </div>
                                 """, unsafe_allow_html=True)
                             else:
                                 st.markdown(f"""
-                                <div class="board-cell cell-o">
+                                <div style="
+                                    background: linear-gradient(145deg, #2a1a1a, #1a0a0a);
+                                    border: 2px solid #ff6b6b;
+                                    border-radius: 12px;
+                                    padding: 25px 15px;
+                                    text-align: center;
+                                    font-size: 2.5rem;
+                                    font-weight: bold;
+                                    margin: 3px;
+                                    color: #ff6b6b;
+                                    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+                                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+                                    min-height: 80px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                ">
                                     ⭕
                                 </div>
                                 """, unsafe_allow_html=True)
