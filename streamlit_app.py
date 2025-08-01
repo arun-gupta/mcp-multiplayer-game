@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Configure page
 st.set_page_config(
-    page_title="🎯 X⚔️O Multi-Agent Battle",
+    page_title="X⚔️O Multi-Agent Battle",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed"
