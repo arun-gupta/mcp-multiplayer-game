@@ -610,6 +610,38 @@ def main():
     with tab1:
         st.header("🎯 X ⚔️ O Battle 🎯")
         
+        # Check AI team status
+        try:
+            ai_team_status = requests.get(f"{API_BASE_URL}/ai-team-status").json()
+            
+            if not ai_team_status.get("team_ready", False):
+                st.error("🚫 **AI Team Not Ready**")
+                st.markdown("""
+                **All three AI agents must have working models configured before you can play:**
+                """)
+                
+                # Show agent status
+                for agent, status in ai_team_status.get("agents", {}).items():
+                    agent_name = agent.title()
+                    if status.get("status") == "ready":
+                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
+                    else:
+                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
+                
+                # Show recommendations
+                if ai_team_status.get("recommendations"):
+                    st.markdown("**To fix this:**")
+                    for rec in ai_team_status["recommendations"]:
+                        st.markdown(f"• {rec}")
+                
+                st.markdown("---")
+                st.info("💡 **Go to the '🤖 Agents & Models' tab to configure your AI team**")
+                return
+            else:
+                st.success("✅ **AI Team Ready** - All agents have working models!")
+        except Exception as e:
+            st.warning("⚠️ **Unable to check AI team status** - Proceeding with game...")
+        
         # Game status
         current_player = game_state.get('current_player', 'player')
         if current_player == 'player':
@@ -737,6 +769,27 @@ def main():
     
     with tab2:
         st.header("🤖 AI Agents & Models")
+        
+        # AI Team Status Overview
+        try:
+            ai_team_status = requests.get(f"{API_BASE_URL}/ai-team-status").json()
+            
+            if ai_team_status.get("team_ready", False):
+                st.success("🎯 **AI Team Status: READY** - All agents have working models!")
+            else:
+                st.error("🚫 **AI Team Status: NOT READY** - Some agents need configuration")
+                
+                # Show detailed status
+                for agent, status in ai_team_status.get("agents", {}).items():
+                    agent_name = agent.title()
+                    if status.get("status") == "ready":
+                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
+                    else:
+                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
+                
+                st.markdown("---")
+        except Exception as e:
+            st.warning("⚠️ **Unable to check AI team status**")
         
         # Get metrics data for Model Switch History
         metrics = get_metrics()

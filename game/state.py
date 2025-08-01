@@ -272,6 +272,10 @@ class TicTacToeGameState:
         if self.game_over or self.board[row][col] != "":
             return False
         
+        # Validate AI team is ready before allowing player moves
+        if player == "player" and not self._validate_ai_team():
+            return False
+        
         symbol = self.player_symbol if player == "player" else self.ai_symbol
         self.board[row][col] = symbol
         self.move_number += 1
@@ -359,6 +363,92 @@ class TicTacToeGameState:
                         blocking.append(BoardPosition(row=row, col=col, value=""))
                     self.board[row][col] = ""
         return blocking
+    
+    def _validate_ai_team(self) -> bool:
+        """Validate that all three AI agents have working models configured"""
+        from models.factory import ModelFactory
+        
+        # Check if all three agents have valid models
+        required_agents = ["scout", "strategist", "executor"]
+        
+        for agent in required_agents:
+            if agent not in self.current_models:
+                return False
+            
+            model_name = self.current_models[agent]
+            if not ModelFactory.validate_model_availability(model_name):
+                return False
+            
+            # Try to create the LLM to ensure it actually works
+            llm = ModelFactory.create_llm(model_name)
+            if llm is None:
+                return False
+        
+        return True
+    
+    def get_ai_team_status(self) -> dict:
+        """Get the status of the AI team configuration"""
+        from models.factory import ModelFactory
+        
+        status = {
+            "team_ready": False,
+            "agents": {},
+            "missing_models": [],
+            "recommendations": []
+        }
+        
+        required_agents = ["scout", "strategist", "executor"]
+        all_ready = True
+        
+        for agent in required_agents:
+            agent_status = {
+                "configured": False,
+                "model_name": None,
+                "model_available": False,
+                "llm_created": False,
+                "status": "missing"
+            }
+            
+            if agent in self.current_models:
+                model_name = self.current_models[agent]
+                agent_status["configured"] = True
+                agent_status["model_name"] = model_name
+                
+                if ModelFactory.validate_model_availability(model_name):
+                    agent_status["model_available"] = True
+                    
+                    # Try to create the LLM
+                    llm = ModelFactory.create_llm(model_name)
+                    if llm is not None:
+                        agent_status["llm_created"] = True
+                        agent_status["status"] = "ready"
+                    else:
+                        agent_status["status"] = "llm_creation_failed"
+                        all_ready = False
+                        status["missing_models"].append(f"{agent}: {model_name} (LLM creation failed)")
+                else:
+                    agent_status["status"] = "model_unavailable"
+                    all_ready = False
+                    status["missing_models"].append(f"{agent}: {model_name} (unavailable)")
+            else:
+                agent_status["status"] = "not_configured"
+                all_ready = False
+                status["missing_models"].append(f"{agent}: not configured")
+            
+            status["agents"][agent] = agent_status
+        
+        status["team_ready"] = all_ready
+        
+        # Add recommendations based on what's missing
+        if not all_ready:
+            status["recommendations"] = [
+                "Ensure all three agents (Scout, Strategist, Executor) have working models",
+                "Check API keys for cloud models (OpenAI, Anthropic)",
+                "Verify Ollama is running for local models",
+                "Use the model switching interface to configure missing agents"
+            ]
+        
+        return status
     
     def get_observation(self) -> Observation:
         """Get the current game state as an observation for the Scout agent"""

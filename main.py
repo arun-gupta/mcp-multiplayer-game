@@ -1535,6 +1535,15 @@ async def make_move(request: dict):
         if game_state.game_over:
             return {"error": "Game is over"}
         
+        # Check AI team status before allowing moves
+        ai_team_status = game_state.get_ai_team_status()
+        if not ai_team_status["team_ready"]:
+            return {
+                "error": "AI team not ready",
+                "ai_team_status": ai_team_status,
+                "message": "All three AI agents must have working models configured before playing"
+            }
+        
         # Make the move
         success = game_state.make_move(row, col, "player")
         
@@ -1835,6 +1844,15 @@ async def switch_agent_model(request: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error switching model: {str(e)}")
 
+
+@app.get("/ai-team-status")
+async def get_ai_team_status():
+    """Get the status of the AI team configuration"""
+    try:
+        status = game_state.get_ai_team_status()
+        return status
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting AI team status: {str(e)}")
 
 @app.get("/health")
 async def health_check():
