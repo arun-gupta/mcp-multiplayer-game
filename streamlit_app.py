@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Configure page
 st.set_page_config(
-    page_title="🎮 X⚔️O Multi-Agent Battle",
+    page_title="🎯 X⚔️O Multi-Agent Battle",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -608,8 +608,6 @@ def main():
     tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
     
     with tab1:
-        st.header("🎯 X ⚔️ O Battle 🎯")
-        
         # Compact AI team status check
         try:
             ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
