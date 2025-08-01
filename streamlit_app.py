@@ -648,18 +648,20 @@ def main():
                 for j in range(3):
                     with cols[j]:
                         cell_value = board[i][j]
-                        if cell_value == '':
-                            # Empty cell - make it clickable
-                            if not game_state.get('game_over', False) and current_player == 'player':
-                                if st.button("+", key=f"cell_{i}_{j}", 
-                                           use_container_width=True,
-                                           help=f"Click to place your move at ({i}, {j})"):
-                                    st.session_state.pending_move = (i, j)
-                                    st.rerun()
-                            else:
-                                # Disabled cell
-                                st.button("·", key=f"cell_{i}_{j}_disabled", 
-                                        disabled=True, use_container_width=True)
+                                                    if cell_value == '':
+                                # Empty cell - make it clickable
+                                if not game_state.get('game_over', False) and current_player == 'player':
+                                    if st.button("+", key=f"cell_{i}_{j}", 
+                                               use_container_width=True,
+                                               help=f"Click to place your move at ({i}, {j})",
+                                               type="secondary"):
+                                        st.session_state.pending_move = (i, j)
+                                        st.rerun()
+                                else:
+                                    # Disabled cell
+                                    st.button("·", key=f"cell_{i}_{j}_disabled", 
+                                            disabled=True, use_container_width=True,
+                                            type="secondary")
                         else:
                             # Filled cell with custom colors using inline styles
                             if cell_value == 'X':
@@ -667,16 +669,16 @@ def main():
                                 <div style="
                                     background: linear-gradient(145deg, #1a2a1a, #0a1a0a);
                                     border: 2px solid #00ff88;
-                                    border-radius: 12px;
-                                    padding: 25px 15px;
+                                    border-radius: 8px;
+                                    padding: 8px 4px;
                                     text-align: center;
-                                    font-size: 2.5rem;
+                                    font-size: 1.2rem;
                                     font-weight: bold;
-                                    margin: 3px;
+                                    margin: 2px;
                                     color: #00ff88;
-                                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-                                    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-                                    min-height: 80px;
+                                    box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
+                                    text-shadow: 0 0 4px rgba(0, 255, 136, 0.4);
+                                    min-height: 40px;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
@@ -689,16 +691,16 @@ def main():
                                 <div style="
                                     background: linear-gradient(145deg, #2a1a1a, #1a0a0a);
                                     border: 2px solid #ff6b6b;
-                                    border-radius: 12px;
-                                    padding: 25px 15px;
+                                    border-radius: 8px;
+                                    padding: 8px 4px;
                                     text-align: center;
-                                    font-size: 2.5rem;
+                                    font-size: 1.2rem;
                                     font-weight: bold;
-                                    margin: 3px;
+                                    margin: 2px;
                                     color: #ff6b6b;
-                                    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
-                                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-                                    min-height: 80px;
+                                    box-shadow: 0 0 8px rgba(255, 107, 107, 0.3);
+                                    text-shadow: 0 0 4px rgba(255, 107, 107, 0.4);
+                                    min-height: 40px;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
