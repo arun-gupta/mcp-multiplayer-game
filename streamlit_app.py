@@ -608,14 +608,24 @@ def main():
     tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
     
     with tab1:
-        # Compact AI team status check
+        # AI Team Status Overview
         try:
             ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
-            if not ai_team_status.get("team_ready", False):
-                st.warning("⚠️ **AI Team Not Ready** - Some agents may not work properly. Go to '🤖 Agents & Models' tab to configure.")
+            if ai_team_status.get("team_ready", False):
+                st.success("🎯 **AI Team Status: READY** - All agents have working models!")
+            else:
+                st.error("🚫 **AI Team Status: NOT READY** - Some agents need configuration")
+                
+                # Show detailed status
+                for agent, status in ai_team_status.get("agents", {}).items():
+                    agent_name = agent.title()
+                    if status.get("status") == "ready":
+                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
+                    else:
+                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
         except Exception as e:
-            st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
+            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
         
         # Game board and move history side by side
         col1, col2 = st.columns([1, 1])
@@ -743,29 +753,6 @@ def main():
     
     with tab2:
         st.header("🤖 AI Agents & Models")
-        
-        # AI Team Status Overview
-        try:
-            ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
-            
-            if ai_team_status.get("team_ready", False):
-                st.success("🎯 **AI Team Status: READY** - All agents have working models!")
-            else:
-                st.error("🚫 **AI Team Status: NOT READY** - Some agents need configuration")
-                
-                # Show detailed status
-                for agent, status in ai_team_status.get("agents", {}).items():
-                    agent_name = agent.title()
-                    if status.get("status") == "ready":
-                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
-                    else:
-                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
-                
-                st.markdown("---")
-        except Exception as e:
-            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
-        
-
         
         # Tabbed Agents & Models Interface
         st.subheader("🤖 Agents & Models")
