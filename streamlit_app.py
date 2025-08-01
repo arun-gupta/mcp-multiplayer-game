@@ -728,11 +728,26 @@ def main():
         if game_state.get('game_over'):
             winner = game_state.get('winner')
             if winner == 'player':
-                st.success("🎉 **You Won!**")
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #4CAF50, #45a049); border: 2px solid #4CAF50; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);">
+                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🎉 You Won! 🎉</h2>
+                    <p style="color: #e8f5e8; margin: 10px 0 0 0; font-size: 1.1em;">Congratulations! You've defeated the AI!</p>
+                </div>
+                """, unsafe_allow_html=True)
             elif winner == 'ai':
-                st.error("🤖 **AI Won!**")
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #f44336, #d32f2f); border: 2px solid #f44336; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);">
+                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤖 AI Won! 🤖</h2>
+                    <p style="color: #ffebee; margin: 10px 0 0 0; font-size: 1.1em;">The AI has outsmarted you this time!</p>
+                </div>
+                """, unsafe_allow_html=True)
             elif winner == 'draw':
-                st.warning("🤝 **Draw!**")
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #ff9800, #f57c00); border: 2px solid #ff9800; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);">
+                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤝 It's a Draw! 🤝</h2>
+                    <p style="color: #fff3e0; margin: 10px 0 0 0; font-size: 1.1em;">A well-fought battle with no clear winner!</p>
+                </div>
+                """, unsafe_allow_html=True)
         
         # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
