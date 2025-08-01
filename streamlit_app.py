@@ -764,6 +764,7 @@ def main():
                 # Force refresh game state
                 st.session_state.game_state = get_game_state()
                 st.session_state.last_refresh = 0  # Force immediate refresh
+                st.rerun()  # Refresh the display to show the updated game state
     
     with tab2:
         st.header("🤖 AI Agents & Models")
