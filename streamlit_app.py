@@ -568,9 +568,9 @@ def main():
         5. **🔄 Models**: Switch between different LLM providers in the Models tab
         
         **What you'll see:**
-        - **Scout Agent** (Llama2 7B): Analyzes the board state
-        - **Strategist Agent** (Llama3 Latest): Creates strategic plans
-        - **Executor Agent** (Llama2 7B): Makes the actual moves
+        - **Scout Agent** (Available Model): Analyzes the board state
+        - **Strategist Agent** (Available Model): Creates strategic plans
+        - **Executor Agent** (Available Model): Makes the actual moves
         
         **Status Meanings:**
         - **🎯 Active**: Game is currently being played
