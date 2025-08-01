@@ -605,7 +605,7 @@ def main():
         return
     
     # Create tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics", "🔄 Model History"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
     
     with tab1:
         # Compact AI team status check
@@ -778,8 +778,8 @@ def main():
             current_models = models_data.get('current_models', {})
             available_models = models_data['models']
             
-            # Create tabs for each agent plus a models reference tab
-            agent_tabs = st.tabs([f"🤖 {agent['name']}" for agent in agents_data['agents'].values()] + ["📋 Models Reference"])
+            # Create tabs for each agent plus models reference and model history tabs
+            agent_tabs = st.tabs([f"🤖 {agent['name']}" for agent in agents_data['agents'].values()] + ["📋 Models Reference", "🔄 Model History"])
             
             # Agent tabs
             for i, (agent_name, agent) in enumerate(agents_data['agents'].items()):
@@ -902,7 +902,7 @@ def main():
                             """, unsafe_allow_html=True)
             
             # Models Reference tab with nested tabs
-            with agent_tabs[-1]:
+            with agent_tabs[-2]:
                 st.markdown("### 📋 Available Models Reference")
                 
                 # Dynamic provider icons legend based on available models
@@ -1097,7 +1097,29 @@ def main():
                             """, unsafe_allow_html=True)
                     else:
                         st.info("🖥️ **No local models available**")
-                
+            
+            # Model History tab
+            with agent_tabs[-1]:
+                st.markdown("### 🔄 Model Switch History")
+                metrics = get_metrics()
+                if metrics:
+                    model_usage_history = metrics.get('model_usage_history', [])
+                    
+                    if model_usage_history:
+                        st.subheader("📋 Recent Model Switches")
+                        for switch in model_usage_history:
+                            st.markdown(f"""
+                            <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin: 4px 0;">
+                                <strong>{switch.get('agent', 'Unknown').title()}</strong> switched from 
+                                <span style="color: #FF6B6B;">{switch.get('old_model', 'unknown')}</span> to 
+                                <span style="color: #4ECDC4;">{switch.get('new_model', 'unknown')}</span>
+                                <br><small>Move: {switch.get('move_number', 'N/A')} | Time: {switch.get('timestamp', 'N/A')}</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
+                else:
+                    st.info("🔄 **Model Switch Tracking Ready!** The system will track model switches as agents change between different LLMs during gameplay.")
 
         else:
             st.error("❌ Failed to load agent or model information")
@@ -1411,28 +1433,6 @@ def main():
                     st.info("💰 **Cost Tracking Ready!** The system will track costs across OpenAI, Anthropic, and Ollama models as you play.")
         else:
             st.info("📊 **Metrics System Ready!** Performance tracking is active. Play a game to see real-time metrics including MCP messages, costs, and response times.")
-    
-    with tab5:
-        st.header("🔄 Model Switch History")
-        metrics = get_metrics()
-        if metrics:
-            model_usage_history = metrics.get('model_usage_history', [])
-            
-            if model_usage_history:
-                st.subheader("📋 Recent Model Switches")
-                for switch in model_usage_history:
-                    st.markdown(f"""
-                    <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin: 4px 0;">
-                        <strong>{switch.get('agent', 'Unknown').title()}</strong> switched from 
-                        <span style="color: #FF6B6B;">{switch.get('old_model', 'unknown')}</span> to 
-                        <span style="color: #4ECDC4;">{switch.get('new_model', 'unknown')}</span>
-                        <br><small>Move: {switch.get('move_number', 'N/A')} | Time: {switch.get('timestamp', 'N/A')}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
-        else:
-            st.info("🔄 **Model Switch Tracking Ready!** The system will track model switches as agents change between different LLMs during gameplay.")
     
 if __name__ == "__main__":
     main() 
