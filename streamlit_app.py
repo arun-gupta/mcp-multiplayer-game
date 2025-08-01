@@ -600,12 +600,6 @@ def main():
     
     # Get current game state
     game_state = st.session_state.game_state or get_game_state()
-    
-    # Debug information
-    st.write("Debug: Checking game state...")
-    st.write(f"Game state from session: {st.session_state.game_state is not None}")
-    st.write(f"Game state after get_game_state: {game_state is not None}")
-    
     if game_state is None:
         st.error("❌ **Game State Unavailable**\n\nUnable to load the current game state. Please refresh the page or restart the API server.")
         return
@@ -642,7 +636,6 @@ def main():
                 st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
         
         # Game board and move history side by side
-        st.write("Debug: About to create game board...")
         col1, col2 = st.columns([1, 1])
         
         with col1:
