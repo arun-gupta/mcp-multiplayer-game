@@ -618,11 +618,7 @@ def main():
         except Exception as e:
             st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
-        # Game status - simplified display
-        current_player = game_state.get('current_player', 'player')
-        move_number = game_state.get('move_number', 0)
-        
-        # Show game result if game is over, otherwise show turn status
+        # Show game result if game is over
         if game_state.get('game_over'):
             winner = game_state.get('winner')
             if winner == 'player':
@@ -631,15 +627,6 @@ def main():
                 st.error("🤖 **AI Won!**")
             elif winner == 'draw':
                 st.warning("🤝 **Draw!**")
-        else:
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                if current_player == 'player':
-                    st.info("👤 Your Turn")
-                else:
-                    st.info("🤖 AI Thinking")
-            with col2:
-                st.metric("Move", move_number)
         
         # Show game result banner if game is over (only if not already shown above)
         if game_state.get('game_over') and game_state.get('winner') != 'draw':
