@@ -204,11 +204,44 @@ class ModelRegistry:
                 requires_api_key=False
             ),
             ModelConfig(
-                name="llama2-13b",
+                name="llama3.2-1b",
                 provider=ModelProvider.OLLAMA,
-                model_id="llama2:13b",
-                display_name="Llama2 13B",
-                description="Larger local model, better quality",
+                model_id="llama3.2:1b",
+                display_name="Llama3.2 1B",
+                description="Lightweight Llama3.2 model, very fast",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
+            ModelConfig(
+                name="phi-2",
+                provider=ModelProvider.OLLAMA,
+                model_id="phi:2.5",
+                display_name="Microsoft Phi 2.5",
+                description="Microsoft's Phi model, excellent reasoning",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
+            ModelConfig(
+                name="qwen2-7b",
+                provider=ModelProvider.OLLAMA,
+                model_id="qwen2:7b",
+                display_name="Qwen2 7B",
+                description="Alibaba's Qwen2 model, strong performance",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
+            ModelConfig(
+                name="deepseek-math-6.7b",
+                provider=ModelProvider.OLLAMA,
+                model_id="deepseek-math:6.7b",
+                display_name="DeepSeek Math 6.7B",
+                description="DeepSeek's math and reasoning model",
                 estimated_cost_per_1k_tokens=0.0,
                 max_tokens=4096,
                 temperature=0.1,
