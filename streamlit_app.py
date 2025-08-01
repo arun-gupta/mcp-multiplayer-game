@@ -420,7 +420,6 @@ if 'game_state' not in st.session_state:
 if 'pending_move' not in st.session_state:
     st.session_state.pending_move = None
 
-
 def get_game_state():
     """Fetch current game state from API"""
     try:
@@ -549,7 +548,7 @@ def main():
     with col2:
         st.markdown("""
         <div style="text-align: right; margin-top: 20px;">
-            <a href="https://github.com/arun-gupta/mcp-multiplayer-game" target="_blank" style="text-decoration: none;">
+            <a href="https://github.com/arungupta/mcp-multiplayer-game" target="_blank" style="text-decoration: none;">
                 <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" 
                      alt="GitHub" 
                      style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;">
@@ -601,6 +600,12 @@ def main():
     
     # Get current game state
     game_state = st.session_state.game_state or get_game_state()
+    
+    # Debug information
+    st.write("Debug: Checking game state...")
+    st.write(f"Game state from session: {st.session_state.game_state is not None}")
+    st.write(f"Game state after get_game_state: {game_state is not None}")
+    
     if game_state is None:
         st.error("❌ **Game State Unavailable**\n\nUnable to load the current game state. Please refresh the page or restart the API server.")
         return
@@ -608,29 +613,36 @@ def main():
     # Create tabs
     tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
     
-
-    
     with tab1:
-        # AI Team Status Overview
+        # Compact AI team status check
         try:
             ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
-            if ai_team_status.get("team_ready", False):
-                st.success("🎯 **AI Team Status: READY** - All agents have working models!")
-            else:
-                st.error("🚫 **AI Team Status: NOT READY** - Some agents need configuration")
-                
-                # Show detailed status
-                for agent, status in ai_team_status.get("agents", {}).items():
-                    agent_name = agent.title()
-                    if status.get("status") == "ready":
-                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
-                    else:
-                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
+            if not ai_team_status.get("team_ready", False):
+                st.warning("⚠️ **AI Team Not Ready** - Some agents may not work properly. Go to '🤖 Agents & Models' tab to configure.")
         except Exception as e:
-            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
+            st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
+        
+        # Show game result if game is over
+        if game_state.get('game_over'):
+            winner = game_state.get('winner')
+            if winner == 'player':
+                st.success("🎉 **You Won!**")
+            elif winner == 'ai':
+                st.error("🤖 **AI Won!**")
+            elif winner == 'draw':
+                st.warning("🤝 **Draw!**")
+        
+        # Show game result banner if game is over (only if not already shown above)
+        if game_state.get('game_over') and game_state.get('winner') != 'draw':
+            winner = game_state.get('winner')
+            if winner == 'player':
+                st.success("🎉 **Congratulations! You defeated Double-O-AI!** 🎉")
+            elif winner == 'ai':
+                st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
         
         # Game board and move history side by side
+        st.write("Debug: About to create game board...")
         col1, col2 = st.columns([1, 1])
         
         with col1:
@@ -648,15 +660,13 @@ def main():
                             if not game_state.get('game_over', False) and current_player == 'player':
                                 if st.button("+", key=f"cell_{i}_{j}", 
                                            use_container_width=True,
-                                           help=f"Click to place your move at ({i}, {j})",
-                                           type="secondary"):
+                                           help=f"Click to place your move at ({i}, {j})"):
                                     st.session_state.pending_move = (i, j)
                                     st.rerun()
                             else:
                                 # Disabled cell
                                 st.button("·", key=f"cell_{i}_{j}_disabled", 
-                                        disabled=True, use_container_width=True,
-                                        type="secondary")
+                                        disabled=True, use_container_width=True)
                         else:
                             # Filled cell with custom colors using inline styles
                             if cell_value == 'X':
@@ -664,16 +674,16 @@ def main():
                                 <div style="
                                     background: linear-gradient(145deg, #1a2a1a, #0a1a0a);
                                     border: 2px solid #00ff88;
-                                    border-radius: 8px;
-                                    padding: 8px 4px;
+                                    border-radius: 12px;
+                                    padding: 25px 15px;
                                     text-align: center;
-                                    font-size: 1.2rem;
+                                    font-size: 2.5rem;
                                     font-weight: bold;
-                                    margin: 2px;
+                                    margin: 3px;
                                     color: #00ff88;
-                                    box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
-                                    text-shadow: 0 0 4px rgba(0, 255, 136, 0.4);
-                                    min-height: 40px;
+                                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+                                    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+                                    min-height: 80px;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
@@ -686,16 +696,16 @@ def main():
                                 <div style="
                                     background: linear-gradient(145deg, #2a1a1a, #1a0a0a);
                                     border: 2px solid #ff6b6b;
-                                    border-radius: 8px;
-                                    padding: 8px 4px;
+                                    border-radius: 12px;
+                                    padding: 25px 15px;
                                     text-align: center;
-                                    font-size: 1.2rem;
+                                    font-size: 2.5rem;
                                     font-weight: bold;
-                                    margin: 2px;
+                                    margin: 3px;
                                     color: #ff6b6b;
-                                    box-shadow: 0 0 8px rgba(255, 107, 107, 0.3);
-                                    text-shadow: 0 0 4px rgba(255, 107, 107, 0.4);
-                                    min-height: 40px;
+                                    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+                                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+                                    min-height: 80px;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
@@ -727,31 +737,6 @@ def main():
             else:
                 st.markdown("*No moves yet. Start the game by clicking any cell!*")
         
-        # Show game result below the game board
-        if game_state.get('game_over'):
-            winner = game_state.get('winner')
-            if winner == 'player':
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #4CAF50, #45a049); border: 2px solid #4CAF50; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);">
-                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🎉 You Won! 🎉</h2>
-                    <p style="color: #e8f5e8; margin: 10px 0 0 0; font-size: 1.1em;">Congratulations! You've defeated Double-O-AI!</p>
-                </div>
-                """, unsafe_allow_html=True)
-            elif winner == 'ai':
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #f44336, #d32f2f); border: 2px solid #f44336; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);">
-                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤖 Double-O-AI Won! 🤖</h2>
-                    <p style="color: #ffebee; margin: 10px 0 0 0; font-size: 1.1em;">Double-O-AI has outsmarted you this time!</p>
-                </div>
-                """, unsafe_allow_html=True)
-            elif winner == 'draw':
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #ff9800, #f57c00); border: 2px solid #ff9800; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);">
-                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤝 It's a Draw! 🤝</h2>
-                    <p style="color: #fff3e0; margin: 10px 0 0 0; font-size: 1.1em;">A well-fought battle with no clear winner!</p>
-                </div>
-                """, unsafe_allow_html=True)
-        
         # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
             row, col = st.session_state.pending_move
@@ -759,14 +744,62 @@ def main():
             
             # Make the move
             if make_move(row, col):
+                st.success(f"✅ Move made at ({row}, {col})! Double-O-AI is thinking...")
                 # Simulate AI turn
                 ai_result = simulate_ai_turn()
+                if ai_result:
+                    st.success("🕵️‍♂️ Double-O-AI has made its move!")
                 # Force refresh game state
                 st.session_state.game_state = get_game_state()
                 st.session_state.last_refresh = 0  # Force immediate refresh
-                st.rerun()  # Refresh the display to show the updated game state
+                st.rerun()
     
     with tab2:
+        st.header("🤖 AI Agents & Models")
+        
+        # AI Team Status Overview
+        try:
+            ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
+            
+            if ai_team_status.get("team_ready", False):
+                st.success("🎯 **AI Team Status: READY** - All agents have working models!")
+            else:
+                st.error("🚫 **AI Team Status: NOT READY** - Some agents need configuration")
+                
+                # Show detailed status
+                for agent, status in ai_team_status.get("agents", {}).items():
+                    agent_name = agent.title()
+                    if status.get("status") == "ready":
+                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
+                    else:
+                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
+                
+                st.markdown("---")
+        except Exception as e:
+            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
+        
+        # Get metrics data for Model Switch History
+        metrics = get_metrics()
+        
+        # Model Switch History
+        st.subheader("🔄 Model Switch History")
+        model_usage_history = metrics.get('model_usage_history', [])
+        
+        if model_usage_history:
+            for switch in model_usage_history:
+                st.markdown(f"""
+                <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin: 4px 0;">
+                    <strong>{switch.get('agent', 'Unknown').title()}</strong> switched from 
+                    <span style="color: #FF6B6B;">{switch.get('old_model', 'unknown')}</span> to 
+                    <span style="color: #4ECDC4;">{switch.get('new_model', 'unknown')}</span>
+                    <br><small>Move: {switch.get('move_number', 'N/A')} | Time: {switch.get('timestamp', 'N/A')}</small>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
+        
+        st.markdown("---")
+        
         # Tabbed Agents & Models Interface
         st.subheader("🤖 Agents & Models")
         
@@ -778,8 +811,8 @@ def main():
             current_models = models_data.get('current_models', {})
             available_models = models_data['models']
             
-            # Create tabs for each agent plus models reference and model history tabs
-            agent_tabs = st.tabs([f"🤖 {agent['name']}" for agent in agents_data['agents'].values()] + ["📋 Models Reference", "🔄 Model History"])
+            # Create tabs for each agent plus a models reference tab
+            agent_tabs = st.tabs([f"🤖 {agent['name']}" for agent in agents_data['agents'].values()] + ["📋 Models Reference"])
             
             # Agent tabs
             for i, (agent_name, agent) in enumerate(agents_data['agents'].items()):
@@ -902,19 +935,20 @@ def main():
                             """, unsafe_allow_html=True)
             
             # Models Reference tab with nested tabs
-            with agent_tabs[-2]:
+            with agent_tabs[-1]:
                 st.markdown("### 📋 Available Models Reference")
                 
-                # Dynamic provider icons legend based on all models (not just available ones)
-                all_providers = set()
+                # Dynamic provider icons legend based on available models
+                available_providers = set()
                 for model_info in available_models.values():
-                    provider = model_info.get('provider', 'Unknown')
-                    all_providers.add(provider)
+                    if model_info.get('is_available', False):
+                        provider = model_info.get('provider', 'Unknown')
+                        available_providers.add(provider)
                 
                 # Create dynamic legend
                 provider_icons = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}
                 legend_parts = []
-                for provider in sorted(all_providers):
+                for provider in sorted(available_providers):
                     icon = provider_icons.get(provider, "❓")
                     provider_name = provider.title()
                     legend_parts.append(f"{icon} {provider_name}")
@@ -948,46 +982,72 @@ def main():
                     else:
                         local_models.append((model_name, provider_icon, provider))
                 
-                # Sort local models alphabetically by model name
-                local_models.sort(key=lambda x: x[0].lower())
+                # Create nested tabs for Cloud and Local models (Summary first)
+                summary_tab, cloud_tab, local_tab = st.tabs(["📊 Summary", "☁️ Cloud Models", "🖥️ Local Models"])
                 
-                # Create nested tabs for Cloud and Local models with counts in titles
-                cloud_tab, local_tab = st.tabs([f"☁️ Cloud Models ({len(cloud_models)})", f"🖥️ Local Models ({len(local_models)})"])
+                # Summary Tab (now first)
+                with summary_tab:
+                    total_models = len(cloud_models) + len(local_models)
+                    available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
+                    available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
+                    
+                    st.markdown("### 📊 Models Summary")
+                    
+                    # Summary cards
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                            <strong style="color: #2196F3; font-size: 1.5em;">{len(cloud_models)}</strong><br>
+                            <small>Cloud Models</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                            <strong style="color: #4CAF50; font-size: 1.5em;">{len(local_models)}</strong><br>
+                            <small>Local Models</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        st.markdown(f"""
+                        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #FFC107; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                            <strong style="color: #FFC107; font-size: 1.5em;">{total_models}</strong><br>
+                            <small>Total Models</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Availability breakdown
+                    st.markdown("### 📈 Availability Breakdown")
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0;">
+                            <strong>☁️ Cloud Models:</strong><br>
+                            <small>✅ Available: {available_cloud}</small><br>
+                            <small>❌ Unavailable: {len(cloud_models) - available_cloud}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0;">
+                            <strong>🖥️ Local Models:</strong><br>
+                            <small>✅ Available: {available_local}</small><br>
+                            <small>❌ Unavailable: {len(local_models) - available_local}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
                 
                 # Cloud Models Tab
                 with cloud_tab:
                     if cloud_models:
                         st.markdown("### ☁️ Cloud Models")
                         st.markdown("**Hosted models requiring API keys and internet connection**")
-                        
-                        # Cloud Models Summary
-                        available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
-                        unavailable_cloud = len(cloud_models) - available_cloud
-                        
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.markdown(f"""
-                            <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                                <strong style="color: #2196F3; font-size: 1.5em;">{len(cloud_models)}</strong><br>
-                                <small>Total Cloud Models</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        with col2:
-                            st.markdown(f"""
-                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                                <strong style="color: #4CAF50; font-size: 1.5em;">{available_cloud}</strong><br>
-                                <small>✅ Available</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        with col3:
-                            st.markdown(f"""
-                            <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                                <strong style="color: #F44336; font-size: 1.5em;">{unavailable_cloud}</strong><br>
-                                <small>❌ Unavailable</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        st.markdown("---")
                         
                         for model_name, provider_icon, provider in cloud_models:
                             # Get model info for availability details
@@ -1023,35 +1083,6 @@ def main():
                     if local_models:
                         st.markdown("### 🖥️ Local Models")
                         st.markdown("**Models running on your machine via Ollama (offline capable)**")
-                        
-                        # Local Models Summary
-                        available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
-                        unavailable_local = len(local_models) - available_local
-                        
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            st.markdown(f"""
-                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                                <strong style="color: #4CAF50; font-size: 1.5em;">{len(local_models)}</strong><br>
-                                <small>Total Local Models</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        with col2:
-                            st.markdown(f"""
-                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                                <strong style="color: #4CAF50; font-size: 1.5em;">{available_local}</strong><br>
-                                <small>✅ Available</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        with col3:
-                            st.markdown(f"""
-                            <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                                <strong style="color: #F44336; font-size: 1.5em;">{unavailable_local}</strong><br>
-                                <small>❌ Unavailable</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        
-                        st.markdown("---")
                         
                         for model_name, provider_icon, provider in local_models:
                             # Get model info for lifecycle details
@@ -1099,29 +1130,7 @@ def main():
                             """, unsafe_allow_html=True)
                     else:
                         st.info("🖥️ **No local models available**")
-            
-            # Model History tab
-            with agent_tabs[-1]:
-                st.markdown("### 🔄 Model Switch History")
-                models_data = get_models()
-                if models_data:
-                    model_usage_history = models_data.get('model_usage_history', [])
-                    
-                    if model_usage_history:
-                        st.subheader("📋 Recent Model Switches")
-                        for switch in model_usage_history:
-                            st.markdown(f"""
-                            <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin: 4px 0;">
-                                <strong>{switch.get('agent', 'Unknown').title()}</strong> switched from 
-                                <span style="color: #FF6B6B;">{switch.get('old_model', 'unknown')}</span> to 
-                                <span style="color: #4ECDC4;">{switch.get('new_model', 'unknown')}</span>
-                                <br><small>Move: {switch.get('move_number', 'N/A')} | Time: {switch.get('timestamp', 'N/A')}</small>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    else:
-                        st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
-                else:
-                    st.info("🔄 **Model Switch Tracking Ready!** The system will track model switches as agents change between different LLMs during gameplay.")
+                
 
         else:
             st.error("❌ Failed to load agent or model information")
@@ -1393,7 +1402,6 @@ def main():
                 # Performance Impact Analysis
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("**📊 Performance Impact Analysis:**")
-                model_usage_history = metrics.get('model_usage_history', [])
                 if model_usage_history and agent_response_times:
                     st.info("🔄 **Model Switch Impact Analysis:** Compare response times and token usage before/after model switches to see performance changes.")
                     
