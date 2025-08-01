@@ -20,6 +20,20 @@ A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Ta
 
 **Get started in 5 minutes!**
 
+### 🎯 **One-Command Setup (Recommended)**
+
+```bash
+# Clone and setup everything automatically
+git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
+cd mcp-multiplayer-game
+chmod +x launch.sh
+./launch.sh
+```
+
+**Access the game**: http://localhost:8501
+
+### 🔧 **Manual Setup (Alternative)**
+
 ```bash
 # Clone and setup
 git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
@@ -30,7 +44,7 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Install Ollama models
+# Install Ollama models (optional)
 ollama pull llama2:7b
 ollama pull llama3:latest
 
@@ -38,7 +52,33 @@ ollama pull llama3:latest
 python run_app.py
 ```
 
-**Access the game**: http://localhost:8501
+### 🎮 **What the Launch Script Does**
+
+The `launch.sh` script automatically:
+- ✅ **Process cleanup** - Kills existing processes on ports 8000/8501
+- ✅ **Environment setup** - Creates venv and installs dependencies
+- ✅ **Python version checking** - Validates Python 3.11+
+- ✅ **Dependency installation** - Installs all requirements with Python 3.13 compatibility
+- ✅ **Ollama model setup** - Optional local model installation
+- ✅ **File validation** - Checks for all required files
+- ✅ **Application startup** - Starts both backend and frontend services
+- ✅ **Error handling** - Comprehensive error checking and colored output
+
+### 🚀 **Advanced Usage**
+
+```bash
+# Full setup and launch (default)
+./launch.sh
+
+# Launch only (skip setup, venv must exist)
+./launch.sh --skip-setup
+
+# Setup and launch without cleanup
+./launch.sh --skip-cleanup
+
+# Show help
+./launch.sh --help
+```
 
 📖 **[Complete Setup Guide](QUICKSTART.md)** - Detailed instructions and troubleshooting
 
