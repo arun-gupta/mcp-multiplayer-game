@@ -1369,6 +1369,7 @@ def main():
                 # Performance Impact Analysis
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("**📊 Performance Impact Analysis:**")
+                model_usage_history = metrics.get('model_usage_history', [])
                 if model_usage_history and agent_response_times:
                     st.info("🔄 **Model Switch Impact Analysis:** Compare response times and token usage before/after model switches to see performance changes.")
                     
