@@ -34,27 +34,34 @@ class ModelConfig:
             # For Ollama, check if the specific model is installed
             self.is_available = self._check_ollama_model_availability()
     
-    def _check_ollama_model_availability(self) -> bool:
-        """Check if a specific Ollama model is available and running"""
+    def _check_ollama_model_status(self) -> str:
+        """Check Ollama model lifecycle status: 'available', 'downloaded', 'need_download'"""
         try:
             import subprocess
             import json
             
             # First check if Ollama is running
             if not self._check_ollama_running():
-                return False
+                return "need_download"  # Can't check if Ollama isn't running
             
             # Check if model is installed
             installed = self._check_ollama_model_installed()
             if not installed:
-                return False
+                return "need_download"
             
-            # For Ollama models, check if they're running
-            # Models need to be running to be available
-            return self._check_ollama_model_running()
+            # Check if model is running
+            running = self._check_ollama_model_running()
+            if running:
+                return "available"
+            else:
+                return "downloaded"
                 
         except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
-            return False
+            return "need_download"
+    
+    def _check_ollama_model_availability(self) -> bool:
+        """Check if a specific Ollama model is available and running"""
+        return self._check_ollama_model_status() == "available"
     
     def _check_ollama_model_installed(self) -> bool:
         """Check if a specific Ollama model is installed"""
@@ -266,10 +273,12 @@ class ModelRegistry:
         """Get information about all models for API response"""
         model_info = {}
         for name, model in self.models.items():
-            # For Ollama models, check availability dynamically
+            # For Ollama models, check lifecycle status dynamically
             if model.provider == ModelProvider.OLLAMA:
-                is_available = self._check_ollama_model_availability(model.model_id)
+                lifecycle_status = model._check_ollama_model_status()
+                is_available = lifecycle_status == "available"
             else:
+                lifecycle_status = "available" if model.is_available else "unavailable"
                 is_available = model.is_available
             
             model_info[name] = {
@@ -281,6 +290,7 @@ class ModelRegistry:
                 "max_tokens": model.max_tokens,
                 "temperature": model.temperature,
                 "is_available": is_available,
+                "lifecycle_status": lifecycle_status,
                 "requires_api_key": model.requires_api_key,
                 "unavailable_reason": self._get_unavailable_reason(model, is_available)
             }
@@ -355,55 +365,14 @@ class ModelRegistry:
         elif model.provider == ModelProvider.ANTHROPIC:
             return "Anthropic API key not found in environment variables"
         elif model.provider == ModelProvider.OLLAMA:
-            # Check specific Ollama issues
-            try:
-                import subprocess
-                
-                # Check if Ollama is running
-                result = subprocess.run(['ollama', '--version'], 
-                                      capture_output=True, text=True, timeout=5)
-                if result.returncode != 0:
-                    return "Ollama is not running or not installed"
-                
-                # Check if model is installed
-                result = subprocess.run(['ollama', 'list'], 
-                                      capture_output=True, text=True, timeout=10)
-                if result.returncode == 0:
-                    lines = result.stdout.strip().split('\n')
-                    installed_models = []
-                    for line in lines[1:]:  # Skip header line
-                        if line.strip():
-                            parts = line.split()
-                            if parts:
-                                model_name = parts[0]
-                                installed_models.append(model_name)
-                    
-                    if model.model_id not in installed_models:
-                        return f"Model '{model.model_id}' not installed in Ollama"
-                    else:
-                        # Check if model is running
-                        result = subprocess.run(['ollama', 'ps'], 
-                                              capture_output=True, text=True, timeout=10)
-                        if result.returncode == 0:
-                            lines = result.stdout.strip().split('\n')
-                            running_models = []
-                            for line in lines[1:]:  # Skip header line
-                                if line.strip():
-                                    parts = line.split()
-                                    if parts:
-                                        model_name = parts[0]
-                                        running_models.append(model_name)
-                            
-                            if model.model_id not in running_models:
-                                return f"Model '{model.model_id}' is installed but not running (use 'ollama run {model.model_id}' to start)"
-                            else:
-                                return f"Model '{model.model_id}' is installed and running"
-                        else:
-                            return f"Model '{model.model_id}' is installed but cannot check running status"
-                else:
-                    return "Cannot check Ollama model list"
-                    
-            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+            # Get lifecycle status for better hints
+            lifecycle_status = model._check_ollama_model_status()
+            
+            if lifecycle_status == "need_download":
+                return f"Download with: ollama pull {model.model_id}"
+            elif lifecycle_status == "downloaded":
+                return f"Start with: ollama run {model.model_id}"
+            else:
                 return "Ollama is not accessible"
         else:
             return "Unknown error"

@@ -542,7 +542,7 @@ def main():
     # Header with GitHub link in top right
     col1, col2 = st.columns([3, 1])
     with col1:
-        st.title("🎮 Tic Tac Toe 🎯 X ⚔️ O 🎯 Multi-Agent Battle 🎮")
+        st.title("🎮 Agentic Tic-Tac-Toe: MCP Protocol Showcase")
         st.markdown("🎲 Watch three AI agents work together using CrewAI and MCP protocol! 🚀")
     
     with col2:
@@ -760,112 +760,357 @@ def main():
         
         st.markdown("---")
         
-        # Agent Information
-        st.subheader("🤖 Agent Information")
+        # Tabbed Agents & Models Interface
+        st.subheader("🤖 Agents & Models")
+        
+        # Get data
         agents_data = get_agents()
-        if agents_data and 'agents' in agents_data:
-            for agent_name, agent in agents_data['agents'].items():
-                with st.expander(f"**{agent['name']}** - {agent['role']}", expanded=False):
-                    col1, col2 = st.columns([2, 1])
-                    with col1:
-                        st.markdown(f"**Model:** {agent['model']}")
-                        st.markdown(f"**Provider:** {agent['provider_type']} {agent['provider_icon']}")
-                        st.markdown(f"**Description:** {agent['description']}")
-                    with col2:
-                        st.markdown("**Capabilities:**")
-                        for capability in agent['capabilities']:
-                            st.markdown(f"• {capability}")
-        else:
-            st.error("❌ Failed to load agent information")
-        
-        st.markdown("---")
-        
-        # Hot-Swappable Models
-        st.subheader("🔄 Hot-Swappable Models")
-        st.markdown("**Switch any agent to a different LLM mid-game!**")
-        
-        # Get available models
         models_data = get_models()
-        if models_data and 'models' in models_data:
+        
+        if agents_data and 'agents' in agents_data and models_data and 'models' in models_data:
             current_models = models_data.get('current_models', {})
             available_models = models_data['models']
             
-            # Simple model switching interface
-            st.markdown("**Current Models:**")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f"**Scout:** {current_models.get('scout', 'Unknown')}")
-            with col2:
-                st.markdown(f"**Strategist:** {current_models.get('strategist', 'Unknown')}")
-            with col3:
-                st.markdown(f"**Executor:** {current_models.get('executor', 'Unknown')}")
+            # Create tabs for each agent plus a models reference tab
+            agent_tabs = st.tabs([f"🤖 {agent['name']}" for agent in agents_data['agents'].values()] + ["📋 Models Reference"])
             
-            st.markdown("---")
-            
-            # Model switching controls
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col1:
-                agent_choice = st.selectbox(
-                    "Select Agent:",
-                    ["scout", "strategist", "executor"],
-                    format_func=lambda x: x.title()
-                )
-            
-            with col2:
-                # Get available models for this agent
-                current_model = current_models.get(agent_choice, 'Unknown')
-                available_model_names = [name for name, info in available_models.items() if info.get('is_available', False)]
-                model_options = [name for name in available_model_names if name != current_model]
-                
-                if model_options:
-                    new_model = st.selectbox(
-                        f"Switch to:",
-                        model_options,
-                        help=f"Current: {current_model}"
-                    )
-                else:
-                    st.info("All models in use")
-                    new_model = None
-            
-            with col3:
-                if new_model and st.button(f"Switch", type="primary", key=f"switch_{agent_choice}_{new_model}"):
-                    result = switch_model(agent_choice, new_model)
-                    if result and result.get('success'):
-                        st.success(f"✅ Switched!")
-                        st.rerun()
-                    else:
-                        st.error(f"❌ Failed: {result.get('error', 'Unknown error')}")
-            
-            # Available models section
-            st.markdown("---")
-            st.markdown("**Available Models:**")
-            
-            # Provider icons legend
-            st.markdown("**Provider Icons:** 🤖 OpenAI | 🧠 Anthropic | 🦙 Ollama")
-            
-            st.markdown("---")
-            
-            # Sort available models alphabetically
-            sorted_models = sorted(
-                [(model_name, model_info) for model_name, model_info in available_models.items() 
-                 if model_info.get('is_available', False)],
-                key=lambda x: x[0].lower()  # Case-insensitive sorting
-            )
-            
-            for model_name, model_info in sorted_models:
-                provider = model_info.get('provider', 'Unknown')
-                provider_icon = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}.get(provider, "❓")
-                
-                # Determine if it's cloud or local
-                model_type = "☁️ Cloud" if provider in ["openai", "anthropic"] else "🖥️ Local"
-                
-                st.markdown(f"✅ **{model_name}** {provider_icon} ({model_type})")
+            # Agent tabs
+            for i, (agent_name, agent) in enumerate(agents_data['agents'].items()):
+                with agent_tabs[i]:
+                    current_model = current_models.get(agent_name, 'Unknown')
                     
+                    # Agent header with current model
+                    st.markdown(f"### {agent['name']} - {agent['role']}")
+                    
+                    # Check if current model is actually available
+                    current_model_available = False
+                    if current_model in available_models:
+                        current_model_available = available_models[current_model].get('is_available', False)
+                    
+                    # Current model display with availability status
+                    if current_model_available:
+                        status_icon = "✅"
+                        status_color = "#4CAF50"
+                        status_bg = "rgba(76, 175, 80, 0.1)"
+                        status_text = "Available"
+                    else:
+                        status_icon = "⚠️"
+                        status_color = "#FF9800"
+                        status_bg = "rgba(255, 152, 0, 0.1)"
+                        status_text = "Not Available"
+                    
+                    st.markdown(f"""
+                    <div style="background: {status_bg}; border: 1px solid {status_color}; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong>🔄 Currently using:</strong> <span style="color: {status_color}; font-weight: bold;">{current_model}</span> {agent['provider_icon']}
+                        <br><small>{status_icon} <strong>Status:</strong> {status_text}</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    
+                    # Warning if current model is not available
+                    if not current_model_available:
+                        st.warning(f"⚠️ **Warning:** The Executor agent is configured to use '{current_model}' but this model is not available. The agent may not be working properly.")
+                    
+                    # Agent information with better formatting
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("### 📋 Agent Details")
+                        
+                        # Provider info
+                        st.markdown(f"""
+                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                            <strong>🏢 Provider:</strong> {agent['provider_type']} {agent['provider_icon']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Description
+                        st.markdown(f"""
+                        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #FFC107; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                            <strong>📝 Description:</strong><br>
+                            {agent['description']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Capabilities
+                        st.markdown("**⚡ Capabilities:**")
+                        capabilities_text = ""
+                        for capability in agent['capabilities']:
+                            capabilities_text += f"• {capability}<br>"
+                        
+                        st.markdown(f"""
+                        <div style="background: rgba(156, 39, 176, 0.1); border: 1px solid #9C27B0; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                            {capabilities_text}
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        # Model switching for this agent
+                        st.markdown("### 🔄 Model Switching")
+                        
+                        # Get available models for this agent (including current model)
+                        available_model_names = [name for name, info in available_models.items() if info.get('is_available', False)]
+                        
+                        if available_model_names:
+                            st.markdown("**Select Model:**")
+                            
+                            # Show current model as default, with all available models as options
+                            new_model = st.selectbox(
+                                f"Available Models:",
+                                available_model_names,
+                                index=available_model_names.index(current_model) if current_model in available_model_names else 0,
+                                key=f"switch_{agent_name}",
+                                help=f"Select a different model to switch to"
+                            )
+                            
+                            st.markdown("---")
+                            
+                            # Only show switch button if a different model is selected
+                            if new_model != current_model:
+                                st.markdown(f"""
+                                <div style="background: rgba(255, 152, 0, 0.1); border: 1px solid #FF9800; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                                    <strong>🔄 Ready to switch to:</strong> <span style="color: #FF9800; font-weight: bold;">{new_model}</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                
+                                if st.button(f"🚀 Switch to {new_model}", type="primary", key=f"btn_switch_{agent_name}"):
+                                    result = switch_model(agent_name, new_model)
+                                    if result and result.get('success'):
+                                        st.success(f"✅ Successfully switched to {new_model}!")
+                                        st.rerun()
+                                    else:
+                                        st.error(f"❌ Failed to switch: {result.get('error', 'Unknown error')}")
+                            else:
+                                st.markdown(f"""
+                                <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                                    <strong>✅ Currently using:</strong> <span style="color: #4CAF50; font-weight: bold;">{current_model}</span>
+                                </div>
+                                """, unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"""
+                            <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                                <strong>❌ No models available</strong>
+                            </div>
+                            """, unsafe_allow_html=True)
+            
+            # Models Reference tab with nested tabs
+            with agent_tabs[-1]:
+                st.markdown("### 📋 Available Models Reference")
+                
+                # Dynamic provider icons legend based on available models
+                available_providers = set()
+                for model_info in available_models.values():
+                    if model_info.get('is_available', False):
+                        provider = model_info.get('provider', 'Unknown')
+                        available_providers.add(provider)
+                
+                # Create dynamic legend
+                provider_icons = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}
+                legend_parts = []
+                for provider in sorted(available_providers):
+                    icon = provider_icons.get(provider, "❓")
+                    provider_name = provider.title()
+                    legend_parts.append(f"{icon} {provider_name}")
+                
+                if legend_parts:
+                    st.markdown(f"**Provider Icons:** {' | '.join(legend_parts)}")
+                else:
+                    st.markdown("**Provider Icons:** No models available")
+                
+                st.markdown("---")
+                
+                # Sort all models alphabetically (including unavailable ones)
+                sorted_models = sorted(
+                    [(model_name, model_info) for model_name, model_info in available_models.items()],
+                    key=lambda x: x[0].lower()  # Case-insensitive sorting
+                )
+                
+                # Group models by provider for better organization
+                cloud_models = []
+                local_models = []
+                
+                for model_name, model_info in sorted_models:
+                    provider = model_info.get('provider', 'Unknown')
+                    provider_icon = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}.get(provider, "❓")
+                    
+                    # Determine if it's cloud or local
+                    model_type = "☁️ Cloud" if provider in ["openai", "anthropic"] else "🖥️ Local"
+                    
+                    if model_type == "☁️ Cloud":
+                        cloud_models.append((model_name, provider_icon, provider))
+                    else:
+                        local_models.append((model_name, provider_icon, provider))
+                
+                # Create nested tabs for Cloud and Local models (Summary first)
+                summary_tab, cloud_tab, local_tab = st.tabs(["📊 Summary", "☁️ Cloud Models", "🖥️ Local Models"])
+                
+                # Summary Tab (now first)
+                with summary_tab:
+                    total_models = len(cloud_models) + len(local_models)
+                    available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
+                    available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
+                    
+                    st.markdown("### 📊 Models Summary")
+                    
+                    # Summary cards
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                            <strong style="color: #2196F3; font-size: 1.5em;">{len(cloud_models)}</strong><br>
+                            <small>Cloud Models</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                            <strong style="color: #4CAF50; font-size: 1.5em;">{len(local_models)}</strong><br>
+                            <small>Local Models</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        st.markdown(f"""
+                        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #FFC107; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                            <strong style="color: #FFC107; font-size: 1.5em;">{total_models}</strong><br>
+                            <small>Total Models</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Availability breakdown
+                    st.markdown("### 📈 Availability Breakdown")
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0;">
+                            <strong>☁️ Cloud Models:</strong><br>
+                            <small>✅ Available: {available_cloud}</small><br>
+                            <small>❌ Unavailable: {len(cloud_models) - available_cloud}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0;">
+                            <strong>🖥️ Local Models:</strong><br>
+                            <small>✅ Available: {available_local}</small><br>
+                            <small>❌ Unavailable: {len(local_models) - available_local}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Cloud Models Tab
+                with cloud_tab:
+                    if cloud_models:
+                        st.markdown("### ☁️ Cloud Models")
+                        st.markdown("**Hosted models requiring API keys and internet connection**")
+                        
+                        for model_name, provider_icon, provider in cloud_models:
+                            # Get model info for availability details
+                            model_info = available_models.get(model_name, {})
+                            is_available = model_info.get('is_available', False)
+                            unavailable_reason = model_info.get('unavailable_reason', '')
+                            
+                            if is_available:
+                                status_icon = "✅"
+                                status_text = "Available"
+                                status_color = "#4CAF50"
+                                border_color = "#2196F3"
+                                bg_color = "rgba(33, 150, 243, 0.1)"
+                            else:
+                                status_icon = "❌"
+                                status_text = "Not Available"
+                                status_color = "#F44336"
+                                border_color = "#F44336"
+                                bg_color = "rgba(244, 67, 54, 0.1)"
+                            
+                            st.markdown(f"""
+                            <div style="background: {bg_color}; border: 1px solid {border_color}; border-radius: 6px; padding: 12px; margin: 8px 0;">
+                                <strong>{status_icon} {model_name}</strong> {provider_icon} <span style="color: #2196F3;">(☁️ Cloud)</span>
+                                <br><small style="color: {status_color};"><strong>Status:</strong> {status_text}</small>
+                                {f'<br><small style="color: #FF9800;"><strong>Reason:</strong> {unavailable_reason}</small>' if not is_available and unavailable_reason else ''}
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("☁️ **No cloud models available**")
+                
+                # Local Models Tab
+                with local_tab:
+                    if local_models:
+                        st.markdown("### 🖥️ Local Models")
+                        st.markdown("**Models running on your machine via Ollama (offline capable)**")
+                        
+                        for model_name, provider_icon, provider in local_models:
+                            # Get model info for lifecycle details
+                            model_info = available_models.get(model_name, {})
+                            lifecycle_status = model_info.get('lifecycle_status', 'unknown')
+                            unavailable_reason = model_info.get('unavailable_reason', '')
+                            
+                            # Set status based on lifecycle
+                            if lifecycle_status == "available":
+                                status_icon = "✅"
+                                status_text = "Available"
+                                status_color = "#4CAF50"
+                                border_color = "#4CAF50"
+                                bg_color = "rgba(76, 175, 80, 0.1)"
+                                lifecycle_badge = "🟢 Running"
+                            elif lifecycle_status == "downloaded":
+                                status_icon = "📦"
+                                status_text = "Downloaded"
+                                status_color = "#FF9800"
+                                border_color = "#FF9800"
+                                bg_color = "rgba(255, 152, 0, 0.1)"
+                                lifecycle_badge = "🟡 Installed"
+                            elif lifecycle_status == "need_download":
+                                status_icon = "⬇️"
+                                status_text = "Need Download"
+                                status_color = "#2196F3"
+                                border_color = "#2196F3"
+                                bg_color = "rgba(33, 150, 243, 0.1)"
+                                lifecycle_badge = "🔵 Not Installed"
+                            else:
+                                status_icon = "❓"
+                                status_text = "Unknown"
+                                status_color = "#9E9E9E"
+                                border_color = "#9E9E9E"
+                                bg_color = "rgba(158, 158, 158, 0.1)"
+                                lifecycle_badge = "⚪ Unknown"
+                            
+                            st.markdown(f"""
+                            <div style="background: {bg_color}; border: 1px solid {border_color}; border-radius: 6px; padding: 12px; margin: 8px 0;">
+                                <strong>{status_icon} {model_name}</strong> {provider_icon} <span style="color: #4CAF50;">(🖥️ Local)</span>
+                                <br><small style="color: {status_color};"><strong>Status:</strong> {status_text}</small>
+                                <br><small style="color: #666;"><strong>Lifecycle:</strong> {lifecycle_badge}</small>
+                                {f'<br><small style="color: #FF9800;"><strong>Action:</strong> {unavailable_reason}</small>' if lifecycle_status != "available" and unavailable_reason else ''}
+                            </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("🖥️ **No local models available**")
+                
+
         else:
-            st.error("❌ Failed to load model information")
+            st.error("❌ Failed to load agent or model information")
     
     with tab3:
         st.header("📡 MCP Protocol Logs")
+        
+        # Legend for message types
+        st.markdown("**Message Type Legend:**")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.markdown("👤 **Player Move**")
+        with col2:
+            st.markdown("🤖 **AI Agent**")
+        with col3:
+            st.markdown("🎮 **Game State**")
+        with col4:
+            st.markdown("🔄 **Model Switch**")
+        
+        st.markdown("---")
         
         # JSON display toggle
         show_json = st.checkbox("🔍 Show JSON for each message", value=False, help="Toggle to see the raw JSON structure of each MCP message")
@@ -908,11 +1153,37 @@ def main():
                                 st.markdown("**Raw JSON:**")
                                 st.json(log)
                     else:
-                        # Regular message styling
-                        with st.expander(f"📡 {agent} - {timestamp}", expanded=False):
-                            st.markdown(f"**Agent:** {agent}")
-                            st.markdown(f"**Message Type:** {message_type}")
-                            st.markdown(f"**Timestamp:** {timestamp}")
+                        # Determine icon based on agent type
+                        if agent == "GameEngine":
+                            # GameEngine messages are usually player moves or game state changes
+                            if message_type == "PlayerMove":
+                                icon = "👤"  # Player move
+                                color = "#4CAF50"  # Green
+                                bg_color = "rgba(76, 175, 80, 0.1)"
+                            else:
+                                icon = "🎮"  # Game state change
+                                color = "#2196F3"  # Blue
+                                bg_color = "rgba(33, 150, 243, 0.1)"
+                        elif agent in ["Scout", "Strategist", "Executor"]:
+                            # AI agent messages
+                            icon = "🤖"  # AI agent
+                            color = "#FF9800"  # Orange
+                            bg_color = "rgba(255, 152, 0, 0.1)"
+                        else:
+                            # Unknown agent type
+                            icon = "📡"  # Default
+                            color = "#9C27B0"  # Purple
+                            bg_color = "rgba(156, 39, 176, 0.1)"
+                        
+                        # Regular message styling with dynamic icons
+                        with st.expander(f"{icon} {agent} - {timestamp}", expanded=False):
+                            st.markdown(f"""
+                            <div style="background: {bg_color}; border: 1px solid {color}; border-radius: 6px; padding: 10px; margin: 8px 0;">
+                                <strong>Agent:</strong> {agent}<br>
+                                <strong>Message Type:</strong> {message_type}<br>
+                                <strong>Timestamp:</strong> {timestamp}
+                            </div>
+                            """, unsafe_allow_html=True)
                             
                             # Show message data in a more readable format
                             if data:

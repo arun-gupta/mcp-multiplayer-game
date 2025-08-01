@@ -56,13 +56,25 @@ class ModelFactory:
     
     @staticmethod
     def get_default_models() -> dict:
-        """Dynamically assign available models to agents"""
-        # Get all available models
-        available_models = model_registry.get_available_models()
+        """Dynamically assign only truly available models to agents"""
+        # Get all models and check their actual availability
+        all_models = list(model_registry.models.values())
         
-        # Separate models by provider type
-        cloud_models = [model for model in available_models if model.provider in [ModelProvider.OPENAI, ModelProvider.ANTHROPIC]]
-        local_models = [model for model in available_models if model.provider == ModelProvider.OLLAMA]
+        # Filter for truly available models (running for Ollama, API keys for cloud)
+        truly_available_models = []
+        for model in all_models:
+            if model.provider in [ModelProvider.OPENAI, ModelProvider.ANTHROPIC]:
+                # Cloud models are available if API keys are set
+                if model.is_available:
+                    truly_available_models.append(model)
+            elif model.provider == ModelProvider.OLLAMA:
+                # Ollama models are available only if running
+                if model._check_ollama_model_status() == "available":
+                    truly_available_models.append(model)
+        
+        # Separate by provider type
+        cloud_models = [model for model in truly_available_models if model.provider in [ModelProvider.OPENAI, ModelProvider.ANTHROPIC]]
+        local_models = [model for model in truly_available_models if model.provider == ModelProvider.OLLAMA]
         
         # Assign models based on availability and preferences
         assignments = {}
@@ -92,7 +104,7 @@ class ModelFactory:
         elif cloud_models:
             executor_model = cloud_models[0].name
         else:
-            executor_model = "mistral-latest"  # Fallback
+            executor_model = "gpt-4"  # Fallback to cloud model
         
         assignments = {
             "scout": scout_model,
