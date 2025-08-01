@@ -935,6 +935,9 @@ def main():
                     else:
                         local_models.append((model_name, provider_icon, provider))
                 
+                # Sort local models alphabetically by model name
+                local_models.sort(key=lambda x: x[0].lower())
+                
                 # Create nested tabs for Cloud and Local models (Summary first)
                 summary_tab, cloud_tab, local_tab = st.tabs(["📊 Summary", "☁️ Cloud Models", "🖥️ Local Models"])
                 
