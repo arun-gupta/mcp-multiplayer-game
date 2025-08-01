@@ -107,8 +107,8 @@ class TicTacToeGameState:
             "memory_mb": 0.0
         }
         
-        # Keep current models but reset history
-        self.model_usage_history = []
+        # Keep current models and preserve history across games
+        # self.model_usage_history = []  # Don't clear history - preserve across games
         
         # Re-initialize baseline metrics
         self._initialize_baseline_metrics()

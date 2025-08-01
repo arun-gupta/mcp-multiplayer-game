@@ -90,6 +90,38 @@ def initialize_agents():
         executor_agent = None
 
 
+def initialize_agents_with_models(current_models: dict):
+    """Initialize all agents with specific model assignments"""
+    global scout_agent, strategist_agent, executor_agent
+    
+    try:
+        scout_agent = ScoutAgent(game_state)
+        if current_models.get('scout'):
+            scout_agent.switch_model(current_models['scout'])
+        print("✅ Scout agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Scout agent: {e}")
+        scout_agent = None
+    
+    try:
+        strategist_agent = StrategistAgent(game_state)
+        if current_models.get('strategist'):
+            strategist_agent.switch_model(current_models['strategist'])
+        print("✅ Strategist agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Strategist agent: {e}")
+        strategist_agent = None
+    
+    try:
+        executor_agent = ExecutorAgent(game_state)
+        if current_models.get('executor'):
+            executor_agent.switch_model(current_models['executor'])
+        print("✅ Executor agent initialized successfully")
+    except Exception as e:
+        print(f"❌ Error initializing Executor agent: {e}")
+        executor_agent = None
+
+
 def log_mcp_message(agent: str, message_type: str, data: Dict[str, Any]):
     """Log MCP protocol messages"""
     log_entry = {
@@ -1755,17 +1787,20 @@ async def debug_metrics():
 
 @app.post("/reset-game")
 async def reset_game():
-    """Reset the game to initial state"""
+    """Reset the game to initial state while preserving model assignments"""
     try:
         global game_state, scout_agent, strategist_agent, executor_agent
         
-        # Reset game state
+        # Store current model assignments before reset
+        current_models = game_state.get_current_models()
+        
+        # Reset game state (this preserves current_models but clears history)
         game_state.initialize_new_game()
         
-        # Reinitialize agents
-        initialize_agents()
+        # Reinitialize agents with preserved model assignments
+        initialize_agents_with_models(current_models)
         
-        # Clear MCP logs
+        # Clear MCP logs but preserve model usage history
         mcp_logs.clear()
         
         # Log the game reset
