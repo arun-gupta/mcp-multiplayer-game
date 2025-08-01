@@ -892,17 +892,16 @@ def main():
             with agent_tabs[-2]:
                 st.markdown("### 📋 Available Models Reference")
                 
-                # Dynamic provider icons legend based on available models
-                available_providers = set()
+                # Dynamic provider icons legend based on all models (not just available ones)
+                all_providers = set()
                 for model_info in available_models.values():
-                    if model_info.get('is_available', False):
-                        provider = model_info.get('provider', 'Unknown')
-                        available_providers.add(provider)
+                    provider = model_info.get('provider', 'Unknown')
+                    all_providers.add(provider)
                 
                 # Create dynamic legend
                 provider_icons = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}
                 legend_parts = []
-                for provider in sorted(available_providers):
+                for provider in sorted(all_providers):
                     icon = provider_icons.get(provider, "❓")
                     provider_name = provider.title()
                     legend_parts.append(f"{icon} {provider_name}")
