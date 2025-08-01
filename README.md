@@ -100,9 +100,9 @@ The `launch.sh` script automatically:
 
 | Agent | Model | Role | Capabilities |
 |-------|-------|------|--------------|
-| **Scout** | GPT-4 | Observer | Board analysis, threat detection, pattern recognition |
-| **Strategist** | Claude 3 Sonnet | Planner | Strategic planning, move selection, confidence assessment |
-| **Executor** | Mistral Latest | Executor | Move execution, validation, state updates |
+| **Scout** | Available Model | Observer | Board analysis, threat detection, pattern recognition |
+| **Strategist** | Available Model | Planner | Strategic planning, move selection, confidence assessment |
+| **Executor** | Available Model | Executor | Move execution, validation, state updates |
 
 ### Victory Conditions
 
@@ -173,7 +173,7 @@ Built on **CrewAI** for sophisticated multi-agent orchestration:
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Scout Agent   │    │ Strategist Agent│    │ Executor Agent  │
-│    (GPT-4)      │───▶│ (Claude 3 Sonnet)│───▶│ (Mistral Latest)│
+│ (Available Model)│───▶│ (Available Model)│───▶│ (Available Model)│
 │                 │    │                 │    │                 │
 │ • Observes      │    │ • Analyzes      │    │ • Executes      │
 │ • Reports       │    │ • Plans         │    │ • Updates       │
