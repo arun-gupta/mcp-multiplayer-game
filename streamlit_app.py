@@ -648,20 +648,20 @@ def main():
                 for j in range(3):
                     with cols[j]:
                         cell_value = board[i][j]
-                                                    if cell_value == '':
-                                # Empty cell - make it clickable
-                                if not game_state.get('game_over', False) and current_player == 'player':
-                                    if st.button("+", key=f"cell_{i}_{j}", 
-                                               use_container_width=True,
-                                               help=f"Click to place your move at ({i}, {j})",
-                                               type="secondary"):
-                                        st.session_state.pending_move = (i, j)
-                                        st.rerun()
-                                else:
-                                    # Disabled cell
-                                    st.button("·", key=f"cell_{i}_{j}_disabled", 
-                                            disabled=True, use_container_width=True,
-                                            type="secondary")
+                        if cell_value == '':
+                            # Empty cell - make it clickable
+                            if not game_state.get('game_over', False) and current_player == 'player':
+                                if st.button("+", key=f"cell_{i}_{j}", 
+                                           use_container_width=True,
+                                           help=f"Click to place your move at ({i}, {j})",
+                                           type="secondary"):
+                                    st.session_state.pending_move = (i, j)
+                                    st.rerun()
+                            else:
+                                # Disabled cell
+                                st.button("·", key=f"cell_{i}_{j}_disabled", 
+                                        disabled=True, use_container_width=True,
+                                        type="secondary")
                         else:
                             # Filled cell with custom colors using inline styles
                             if cell_value == 'X':
