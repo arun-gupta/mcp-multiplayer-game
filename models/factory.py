@@ -118,4 +118,12 @@ class ModelFactory:
     def validate_model_availability(model_name: str) -> bool:
         """Check if a model is available"""
         model_config = model_registry.get_model(model_name)
-        return model_config is not None and model_config.is_available 
+        if model_config is None:
+            return False
+        
+        # For Ollama models, check dynamic availability (running status)
+        if model_config.provider == ModelProvider.OLLAMA:
+            return model_config._check_ollama_model_status() == "available"
+        else:
+            # For cloud models, use the static availability check
+            return model_config.is_available 
