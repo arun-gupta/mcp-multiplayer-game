@@ -610,53 +610,30 @@ def main():
     with tab1:
         st.header("🎯 X ⚔️ O Battle 🎯")
         
-        # Check AI team status
+        # Compact AI team status check
         try:
             ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
             if not ai_team_status.get("team_ready", False):
-                st.error("🚫 **AI Team Not Ready**")
-                st.markdown("""
-                **All three AI agents must have working models configured before you can play:**
-                """)
-                
-                # Show agent status
-                for agent, status in ai_team_status.get("agents", {}).items():
-                    agent_name = agent.title()
-                    if status.get("status") == "ready":
-                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
-                    else:
-                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
-                
-                # Show recommendations
-                if ai_team_status.get("recommendations"):
-                    st.markdown("**To fix this:**")
-                    for rec in ai_team_status["recommendations"]:
-                        st.markdown(f"• {rec}")
-                
-                st.markdown("---")
-                st.info("💡 **Go to the '🤖 Agents & Models' tab to configure your AI team**")
+                st.error("🚫 **AI Team Not Ready** - Go to '🤖 Agents & Models' tab to configure")
                 return
-            else:
-                st.success("✅ **AI Team Ready** - All agents have working models!")
         except Exception as e:
-            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)} - Proceeding with game...")
+            st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
-        # Game status
+        # Game status - compact display
         current_player = game_state.get('current_player', 'player')
-        if current_player == 'player':
-            st.info("👤 Your Turn")
-        else:
-            st.info("🕵️‍♂️ Double-O-AI Thinking")
-        
-        # Debug info (temporary)
-        with st.expander("🔍 Debug Info"):
-            st.write(f"Current Player: {current_player}")
-            st.write(f"Game Over: {game_state.get('game_over', False)}")
-            st.write(f"Winner: {game_state.get('winner', 'None')}")
-            st.write(f"Move Number: {game_state.get('move_number', 0)}")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
+        col1, col2 = st.columns([1, 3])
+        with col1:
+            if current_player == 'player':
+                st.info("👤 Your Turn")
+            else:
+                st.info("🤖 AI Thinking")
+        with col2:
+            # Compact debug info in expander
+            with st.expander("🔍 Game Info"):
+                st.write(f"Player: {current_player} | Move: {game_state.get('move_number', 0)} | Game Over: {game_state.get('game_over', False)}")
+                if game_state.get('winner'):
+                    st.write(f"Winner: {game_state.get('winner')}")
         
         # Show game result banner if game is over
         if game_state.get('game_over'):
@@ -672,9 +649,6 @@ def main():
         
         # Game board
         board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
-        
-        # Create game board using pure Streamlit
-        st.subheader("🎮 Tic Tac Toe Board")
         
         # Create 3x3 grid using Streamlit columns
         for i in range(3):
