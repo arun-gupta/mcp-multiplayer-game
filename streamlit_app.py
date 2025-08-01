@@ -743,14 +743,14 @@ def main():
                 st.markdown("""
                 <div style="background: linear-gradient(135deg, #4CAF50, #45a049); border: 2px solid #4CAF50; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);">
                     <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🎉 You Won! 🎉</h2>
-                    <p style="color: #e8f5e8; margin: 10px 0 0 0; font-size: 1.1em;">Congratulations! You've defeated the AI!</p>
+                    <p style="color: #e8f5e8; margin: 10px 0 0 0; font-size: 1.1em;">Congratulations! You've defeated Double-O-AI!</p>
                 </div>
                 """, unsafe_allow_html=True)
             elif winner == 'ai':
                 st.markdown("""
                 <div style="background: linear-gradient(135deg, #f44336, #d32f2f); border: 2px solid #f44336; border-radius: 10px; padding: 20px; margin: 15px 0; text-align: center; box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);">
-                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤖 AI Won! 🤖</h2>
-                    <p style="color: #ffebee; margin: 10px 0 0 0; font-size: 1.1em;">The AI has outsmarted you this time!</p>
+                    <h2 style="color: white; margin: 0; font-size: 2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">🤖 Double-O-AI Won! 🤖</h2>
+                    <p style="color: #ffebee; margin: 10px 0 0 0; font-size: 1.1em;">Double-O-AI has outsmarted you this time!</p>
                 </div>
                 """, unsafe_allow_html=True)
             elif winner == 'draw':
