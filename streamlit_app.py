@@ -612,7 +612,7 @@ def main():
         
         # Check AI team status
         try:
-            ai_team_status = requests.get(f"{API_BASE_URL}/ai-team-status").json()
+            ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
             if not ai_team_status.get("team_ready", False):
                 st.error("🚫 **AI Team Not Ready**")
@@ -640,7 +640,7 @@ def main():
             else:
                 st.success("✅ **AI Team Ready** - All agents have working models!")
         except Exception as e:
-            st.warning("⚠️ **Unable to check AI team status** - Proceeding with game...")
+            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)} - Proceeding with game...")
         
         # Game status
         current_player = game_state.get('current_player', 'player')
@@ -772,7 +772,7 @@ def main():
         
         # AI Team Status Overview
         try:
-            ai_team_status = requests.get(f"{API_BASE_URL}/ai-team-status").json()
+            ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
             if ai_team_status.get("team_ready", False):
                 st.success("🎯 **AI Team Status: READY** - All agents have working models!")
@@ -789,7 +789,7 @@ def main():
                 
                 st.markdown("---")
         except Exception as e:
-            st.warning("⚠️ **Unable to check AI team status**")
+            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
         
         # Get metrics data for Model Switch History
         metrics = get_metrics()
