@@ -718,13 +718,88 @@ def main():
         if game_state.get('game_over'):
             winner = game_state.get('winner')
             if winner == 'player':
-                st.success("🎉 **You Won!**")
-                st.success("🎉 **Congratulations! You defeated Double-O-AI!** 🎉")
+                st.markdown("""
+                <div style="
+                    background: linear-gradient(145deg, #00ff88, #00cc6a);
+                    color: #000;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 1.2rem;
+                    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+                    border: 2px solid #00ff88;
+                ">
+                    🎉 <strong>You Won!</strong>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("""
+                <div style="
+                    background: linear-gradient(145deg, #00ff88, #00cc6a);
+                    color: #000;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 1.1rem;
+                    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+                    border: 2px solid #00ff88;
+                ">
+                    🎉 <strong>Congratulations! You defeated Double-O-AI!</strong> 🎉
+                </div>
+                """, unsafe_allow_html=True)
             elif winner == 'ai':
-                st.error("🤖 **AI Won!**")
-                st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
+                st.markdown("""
+                <div style="
+                    background: linear-gradient(145deg, #ff6b6b, #ff4757);
+                    color: #fff;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 1.2rem;
+                    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+                    border: 2px solid #ff6b6b;
+                ">
+                    🤖 <strong>AI Won!</strong>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("""
+                <div style="
+                    background: linear-gradient(145deg, #ff6b6b, #ff4757);
+                    color: #fff;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 1.1rem;
+                    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+                    border: 2px solid #ff6b6b;
+                ">
+                    🕵️‍♂️ <strong>Double-O-AI has achieved victory! The secret agent prevails!</strong> 🕵️‍♂️
+                </div>
+                """, unsafe_allow_html=True)
             elif winner == 'draw':
-                st.warning("🤝 **Draw!**")
+                st.markdown("""
+                <div style="
+                    background: linear-gradient(145deg, #ffa726, #ff9800);
+                    color: #000;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                    text-align: center;
+                    font-weight: bold;
+                    font-size: 1.2rem;
+                    box-shadow: 0 0 15px rgba(255, 167, 38, 0.5);
+                    border: 2px solid #ffa726;
+                ">
+                    🤝 <strong>Draw!</strong>
+                </div>
+                """, unsafe_allow_html=True)
         
         # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
