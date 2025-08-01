@@ -654,61 +654,88 @@ def main():
             else:
                 st.warning("🤝 **Game ended in a draw! Well played by both sides!** 🤝")
         
-        # Game board
-        board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
+        # Game board and move history side by side
+        col1, col2 = st.columns([1, 1])
         
-        # Create 3x3 grid using Streamlit columns
-        for i in range(3):
-            cols = st.columns(3)
-            for j in range(3):
-                with cols[j]:
-                    cell_value = board[i][j]
-                    if cell_value == '':
-                        # Empty cell - make it clickable
-                        if not game_state.get('game_over', False) and current_player == 'player':
-                            if st.button("⬜", key=f"cell_{i}_{j}", 
-                                       use_container_width=True,
-                                       help=f"Click to place your move at ({i}, {j})"):
-                                st.session_state.pending_move = (i, j)
-                                st.rerun()
+        with col1:
+            # Game board
+            board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
+            
+            # Create 3x3 grid using Streamlit columns
+            for i in range(3):
+                cols = st.columns(3)
+                for j in range(3):
+                    with cols[j]:
+                        cell_value = board[i][j]
+                        if cell_value == '':
+                            # Empty cell - make it clickable
+                            if not game_state.get('game_over', False) and current_player == 'player':
+                                if st.button("⬜", key=f"cell_{i}_{j}", 
+                                           use_container_width=True,
+                                           help=f"Click to place your move at ({i}, {j})"):
+                                    st.session_state.pending_move = (i, j)
+                                    st.rerun()
+                            else:
+                                # Disabled cell
+                                st.button("⬜", key=f"cell_{i}_{j}_disabled", 
+                                        disabled=True, use_container_width=True)
                         else:
-                            # Disabled cell
-                            st.button("⬜", key=f"cell_{i}_{j}_disabled", 
-                                    disabled=True, use_container_width=True)
-                    else:
-                        # Filled cell with custom colors
-                        if cell_value == 'X':
-                            st.markdown(f"""
-                            <div style="
-                                background-color: #2d2d2d; 
-                                border: 2px solid #00ff88; 
-                                border-radius: 8px; 
-                                padding: 20px; 
-                                text-align: center; 
-                                font-size: 2.5rem; 
-                                font-weight: bold; 
-                                color: #00ff88;
-                                margin: 4px;
-                                box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
-                            ">❌</div>
-                            """, unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"""
-                            <div style="
-                                background-color: #2d2d2d; 
-                                border: 2px solid #ff6b6b; 
-                                border-radius: 8px; 
-                                padding: 20px; 
-                                text-align: center; 
-                                font-size: 2.5rem; 
-                                font-weight: bold; 
-                                color: #ff6b6b;
-                                margin: 4px;
-                                box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
-                            ">⭕</div>
-                            """, unsafe_allow_html=True)
+                            # Filled cell with custom colors
+                            if cell_value == 'X':
+                                st.markdown(f"""
+                                <div style="
+                                    background-color: #2d2d2d; 
+                                    border: 2px solid #00ff88; 
+                                    border-radius: 8px; 
+                                    padding: 20px; 
+                                    text-align: center; 
+                                    font-size: 2.5rem; 
+                                    font-weight: bold; 
+                                    color: #00ff88;
+                                    margin: 4px;
+                                    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+                                ">❌</div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"""
+                                <div style="
+                                    background-color: #2d2d2d; 
+                                    border: 2px solid #ff6b6b; 
+                                    border-radius: 8px; 
+                                    padding: 20px; 
+                                    text-align: center; 
+                                    font-size: 2.5rem; 
+                                    font-weight: bold; 
+                                    color: #ff6b6b;
+                                    margin: 4px;
+                                    box-shadow: 0 0 15px rgba(255, 107, 107, 0.3);
+                                ">⭕</div>
+                                """, unsafe_allow_html=True)
+            
+            # Game controls
+            if st.button("🔄 New Game", use_container_width=True):
+                if reset_game():
+                    # Clear session state and refresh game state
+                    st.session_state.game_state = None
+                    st.session_state.pending_move = None
+                    st.session_state.last_refresh = 0
+                    st.rerun()
         
-        # Handle pending move
+        with col2:
+            # Move history
+            st.subheader("📜 Move History")
+            moves = game_state.get('game_history', [])
+            if moves:
+                for i, move in enumerate(moves[-8:], 1):  # Show last 8 moves
+                    player = "👤 You" if move['player'] == 'player' else "🕵️‍♂️ Double-O-AI"
+                    position = move['position']
+                    row, col = position['row'], position['col']
+                    value = position['value']
+                    st.markdown(f"**{move['move_number']}.** {player} placed {value} at ({row}, {col})")
+            else:
+                st.markdown("*No moves yet. Start the game by clicking any cell!*")
+        
+        # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
             row, col = st.session_state.pending_move
             st.session_state.pending_move = None  # Reset to None instead of deleting
@@ -724,29 +751,6 @@ def main():
                 st.session_state.game_state = get_game_state()
                 st.session_state.last_refresh = 0  # Force immediate refresh
                 st.rerun()
-        
-        # Game controls
-        if st.button("🔄 New Game", use_container_width=True):
-            if reset_game():
-                # Clear session state and refresh game state
-                st.session_state.game_state = None
-                st.session_state.pending_move = None
-                st.session_state.last_refresh = 0
-                st.rerun()
-        
-        # Move history
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("📜 Move History")
-        moves = game_state.get('game_history', [])
-        if moves:
-            for i, move in enumerate(moves[-8:], 1):  # Show last 8 moves
-                player = "👤 You" if move['player'] == 'player' else "🕵️‍♂️ Double-O-AI"
-                position = move['position']
-                row, col = position['row'], position['col']
-                value = position['value']
-                st.markdown(f"**{move['move_number']}.** {player} placed {value} at ({row}, {col})")
-        else:
-            st.markdown("*No moves yet. Start the game by clicking any cell!*")
     
     with tab2:
         st.header("🤖 AI Agents & Models")
