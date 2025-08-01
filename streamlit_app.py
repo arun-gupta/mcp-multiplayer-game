@@ -605,7 +605,7 @@ def main():
         return
     
     # Create tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics", "🔄 Model History"])
     
     with tab1:
         # Compact AI team status check
@@ -718,88 +718,11 @@ def main():
         if game_state.get('game_over'):
             winner = game_state.get('winner')
             if winner == 'player':
-                st.markdown("""
-                <div style="
-                    background: linear-gradient(145deg, #00ff88, #00cc6a);
-                    color: #000;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 1.2rem;
-                    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
-                    border: 2px solid #00ff88;
-                ">
-                    🎉 <strong>You Won!</strong>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown("""
-                <div style="
-                    background: linear-gradient(145deg, #00ff88, #00cc6a);
-                    color: #000;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 1.1rem;
-                    box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
-                    border: 2px solid #00ff88;
-                ">
-                    🎉 <strong>Congratulations! You defeated Double-O-AI!</strong> 🎉
-                </div>
-                """, unsafe_allow_html=True)
+                st.success("🎉 **You Won!**")
             elif winner == 'ai':
-                st.markdown("""
-                <div style="
-                    background: linear-gradient(145deg, #ff6b6b, #ff4757);
-                    color: #fff;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 1.2rem;
-                    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
-                    border: 2px solid #ff6b6b;
-                ">
-                    🤖 <strong>AI Won!</strong>
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown("""
-                <div style="
-                    background: linear-gradient(145deg, #ff6b6b, #ff4757);
-                    color: #fff;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 1.1rem;
-                    box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
-                    border: 2px solid #ff6b6b;
-                ">
-                    🕵️‍♂️ <strong>Double-O-AI has achieved victory! The secret agent prevails!</strong> 🕵️‍♂️
-                </div>
-                """, unsafe_allow_html=True)
+                st.error("🤖 **AI Won!**")
             elif winner == 'draw':
-                st.markdown("""
-                <div style="
-                    background: linear-gradient(145deg, #ffa726, #ff9800);
-                    color: #000;
-                    padding: 15px 20px;
-                    border-radius: 10px;
-                    margin: 10px 0;
-                    text-align: center;
-                    font-weight: bold;
-                    font-size: 1.2rem;
-                    box-shadow: 0 0 15px rgba(255, 167, 38, 0.5);
-                    border: 2px solid #ffa726;
-                ">
-                    🤝 <strong>Draw!</strong>
-                </div>
-                """, unsafe_allow_html=True)
+                st.warning("🤝 **Draw!**")
         
         # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
@@ -842,27 +765,7 @@ def main():
         except Exception as e:
             st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
         
-        # Get metrics data for Model Switch History
-        metrics = get_metrics()
-        
-        # Model Switch History
-        st.subheader("🔄 Model Switch History")
-        model_usage_history = metrics.get('model_usage_history', [])
-        
-        if model_usage_history:
-            for switch in model_usage_history:
-                st.markdown(f"""
-                <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin: 4px 0;">
-                    <strong>{switch.get('agent', 'Unknown').title()}</strong> switched from 
-                    <span style="color: #FF6B6B;">{switch.get('old_model', 'unknown')}</span> to 
-                    <span style="color: #4ECDC4;">{switch.get('new_model', 'unknown')}</span>
-                    <br><small>Move: {switch.get('move_number', 'N/A')} | Time: {switch.get('timestamp', 'N/A')}</small>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
-        
-        st.markdown("---")
+
         
         # Tabbed Agents & Models Interface
         st.subheader("🤖 Agents & Models")
@@ -1507,6 +1410,28 @@ def main():
                     st.info("💰 **Cost Tracking Ready!** The system will track costs across OpenAI, Anthropic, and Ollama models as you play.")
         else:
             st.info("📊 **Metrics System Ready!** Performance tracking is active. Play a game to see real-time metrics including MCP messages, costs, and response times.")
+    
+    with tab5:
+        st.header("🔄 Model Switch History")
+        metrics = get_metrics()
+        if metrics:
+            model_usage_history = metrics.get('model_usage_history', [])
+            
+            if model_usage_history:
+                st.subheader("📋 Recent Model Switches")
+                for switch in model_usage_history:
+                    st.markdown(f"""
+                    <div style="background: rgba(255, 215, 0, 0.1); border: 1px solid #FFD700; border-radius: 4px; padding: 8px; margin: 4px 0;">
+                        <strong>{switch.get('agent', 'Unknown').title()}</strong> switched from 
+                        <span style="color: #FF6B6B;">{switch.get('old_model', 'unknown')}</span> to 
+                        <span style="color: #4ECDC4;">{switch.get('new_model', 'unknown')}</span>
+                        <br><small>Move: {switch.get('move_number', 'N/A')} | Time: {switch.get('timestamp', 'N/A')}</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
+        else:
+            st.info("🔄 **Model Switch Tracking Ready!** The system will track model switches as agents change between different LLMs during gameplay.")
     
 if __name__ == "__main__":
     main() 
