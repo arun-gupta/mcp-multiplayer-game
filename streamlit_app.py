@@ -618,20 +618,29 @@ def main():
         except Exception as e:
             st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
-        # Game status - compact display
+        # Game status - compact display with move counter
         current_player = game_state.get('current_player', 'player')
-        col1, col2 = st.columns([1, 3])
+        move_number = game_state.get('move_number', 0)
+        
+        col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
             if current_player == 'player':
                 st.info("👤 Your Turn")
             else:
                 st.info("🤖 AI Thinking")
         with col2:
-            # Compact debug info in expander
-            with st.expander("🔍 Game Info"):
-                st.write(f"Player: {current_player} | Move: {game_state.get('move_number', 0)} | Game Over: {game_state.get('game_over', False)}")
-                if game_state.get('winner'):
-                    st.write(f"Winner: {game_state.get('winner')}")
+            st.metric("Move", move_number)
+        with col3:
+            if game_state.get('game_over'):
+                winner = game_state.get('winner')
+                if winner == 'player':
+                    st.success("🎉 You Won!")
+                elif winner == 'ai':
+                    st.error("🤖 AI Won!")
+                elif winner == 'draw':
+                    st.warning("🤝 Draw!")
+            else:
+                st.info("Game in Progress")
         
         # Show game result banner if game is over
         if game_state.get('game_over'):
