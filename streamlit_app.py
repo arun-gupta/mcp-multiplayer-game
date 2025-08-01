@@ -419,8 +419,7 @@ if 'game_state' not in st.session_state:
     st.session_state.game_state = None
 if 'pending_move' not in st.session_state:
     st.session_state.pending_move = None
-if 'navigate_to_tab' not in st.session_state:
-    st.session_state.navigate_to_tab = None
+
 
 def get_game_state():
     """Fetch current game state from API"""
@@ -609,15 +608,7 @@ def main():
     # Create tabs
     tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
     
-    # Handle navigation from summary cards
-    if st.session_state.navigate_to_tab:
-        target_tab = st.session_state.navigate_to_tab
-        st.session_state.navigate_to_tab = None  # Reset after use
-        
-        if target_tab == "cloud":
-            st.info("💡 **Tip**: Click on the '☁️ Cloud Models' tab above to view cloud models")
-        elif target_tab == "local":
-            st.info("💡 **Tip**: Click on the '🖥️ Local Models' tab above to view local models")
+
     
     with tab1:
         # AI Team Status Overview
@@ -965,73 +956,8 @@ def main():
                 # Sort local models alphabetically by model name
                 local_models.sort(key=lambda x: x[0].lower())
                 
-                # Create nested tabs for Cloud and Local models (Summary first)
-                summary_tab, cloud_tab, local_tab = st.tabs(["📊 Summary", "☁️ Cloud Models", "🖥️ Local Models"])
-                
-                # Summary Tab (now first)
-                with summary_tab:
-                    total_models = len(cloud_models) + len(local_models)
-                    available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
-                    available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
-                    
-                    st.markdown("### 📊 Models Summary")
-                    
-                    # Summary cards - Clickable navigation
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        if st.button(f"☁️ **{len(cloud_models)}**\nCloud Models", key="nav_cloud", help="Click to view Cloud Models"):
-                            st.session_state.navigate_to_tab = "cloud"
-                        st.markdown(f"""
-                        <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 16px; margin: 8px 0; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);">
-                            <strong style="color: #2196F3; font-size: 1.8em;">{len(cloud_models)}</strong><br>
-                            <small style="color: #2196F3; font-weight: bold;">☁️ Cloud Models</small><br>
-                            <small style="color: #666; font-size: 0.8em;">Click to view details</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col2:
-                        if st.button(f"🖥️ **{len(local_models)}**\nLocal Models", key="nav_local", help="Click to view Local Models"):
-                            st.session_state.navigate_to_tab = "local"
-                        st.markdown(f"""
-                        <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 16px; margin: 8px 0; text-align: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">
-                            <strong style="color: #4CAF50; font-size: 1.8em;">{len(local_models)}</strong><br>
-                            <small style="color: #4CAF50; font-weight: bold;">🖥️ Local Models</small><br>
-                            <small style="color: #666; font-size: 0.8em;">Click to view details</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col3:
-                        st.markdown(f"""
-                        <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #FFC107; border-radius: 8px; padding: 16px; margin: 8px 0; text-align: center; box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);">
-                            <strong style="color: #FFC107; font-size: 1.8em;">{total_models}</strong><br>
-                            <small style="color: #FFC107; font-weight: bold;">📊 Total Models</small><br>
-                            <small style="color: #666; font-size: 0.8em;">Overview</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    # Availability breakdown
-                    st.markdown("### 📈 Availability Breakdown")
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown(f"""
-                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0;">
-                            <strong>☁️ Cloud Models:</strong><br>
-                            <small>✅ Available: {available_cloud}</small><br>
-                            <small>❌ Unavailable: {len(cloud_models) - available_cloud}</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col2:
-                        st.markdown(f"""
-                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0;">
-                            <strong>🖥️ Local Models:</strong><br>
-                            <small>✅ Available: {available_local}</small><br>
-                            <small>❌ Unavailable: {len(local_models) - available_local}</small>
-                        </div>
-                        """, unsafe_allow_html=True)
+                # Create nested tabs for Cloud and Local models with counts in titles
+                cloud_tab, local_tab = st.tabs([f"☁️ Cloud Models ({len(cloud_models)})", f"🖥️ Local Models ({len(local_models)})"])
                 
                 # Cloud Models Tab
                 with cloud_tab:
