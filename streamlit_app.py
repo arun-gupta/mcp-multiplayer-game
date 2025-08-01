@@ -1005,6 +1005,35 @@ def main():
                         st.markdown("### ☁️ Cloud Models")
                         st.markdown("**Hosted models requiring API keys and internet connection**")
                         
+                        # Cloud Models Summary
+                        available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
+                        unavailable_cloud = len(cloud_models) - available_cloud
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.markdown(f"""
+                            <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                                <strong style="color: #2196F3; font-size: 1.5em;">{len(cloud_models)}</strong><br>
+                                <small>Total Cloud Models</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col2:
+                            st.markdown(f"""
+                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                                <strong style="color: #4CAF50; font-size: 1.5em;">{available_cloud}</strong><br>
+                                <small>✅ Available</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col3:
+                            st.markdown(f"""
+                            <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                                <strong style="color: #F44336; font-size: 1.5em;">{unavailable_cloud}</strong><br>
+                                <small>❌ Unavailable</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown("---")
+                        
                         for model_name, provider_icon, provider in cloud_models:
                             # Get model info for availability details
                             model_info = available_models.get(model_name, {})
@@ -1039,6 +1068,35 @@ def main():
                     if local_models:
                         st.markdown("### 🖥️ Local Models")
                         st.markdown("**Models running on your machine via Ollama (offline capable)**")
+                        
+                        # Local Models Summary
+                        available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
+                        unavailable_local = len(local_models) - available_local
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.markdown(f"""
+                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                                <strong style="color: #4CAF50; font-size: 1.5em;">{len(local_models)}</strong><br>
+                                <small>Total Local Models</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col2:
+                            st.markdown(f"""
+                            <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                                <strong style="color: #4CAF50; font-size: 1.5em;">{available_local}</strong><br>
+                                <small>✅ Available</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        with col3:
+                            st.markdown(f"""
+                            <div style="background: rgba(244, 67, 54, 0.1); border: 1px solid #F44336; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
+                                <strong style="color: #F44336; font-size: 1.5em;">{unavailable_local}</strong><br>
+                                <small>❌ Unavailable</small>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown("---")
                         
                         for model_name, provider_icon, provider in local_models:
                             # Get model info for lifecycle details
