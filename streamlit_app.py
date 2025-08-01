@@ -549,7 +549,7 @@ def main():
     with col2:
         st.markdown("""
         <div style="text-align: right; margin-top: 20px;">
-            <a href="https://github.com/arungupta/mcp-multiplayer-game" target="_blank" style="text-decoration: none;">
+            <a href="https://github.com/arun-gupta/mcp-multiplayer-game" target="_blank" style="text-decoration: none;">
                 <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" 
                      alt="GitHub" 
                      style="width: 32px; height: 32px; vertical-align: middle; margin-right: 8px;">
