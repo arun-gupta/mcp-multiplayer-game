@@ -767,8 +767,6 @@ def main():
                 st.rerun()  # Refresh the display to show the updated game state
     
     with tab2:
-        st.header("🤖 AI Agents & Models")
-        
         # Tabbed Agents & Models Interface
         st.subheader("🤖 Agents & Models")
         
