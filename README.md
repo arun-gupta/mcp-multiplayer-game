@@ -167,6 +167,7 @@ Built on **CrewAI** for sophisticated multi-agent orchestration:
 | **LLM Integration** | [LangChain](https://langchain.com/) | LLM provider abstraction |
 | **Local Models** | [Ollama](https://ollama.ai/) | Local LLM deployment |
 | **Data Validation** | [Pydantic](https://pydantic.dev/) | Schema validation |
+| **Visualization** | [Streamlit-Agraph](https://github.com/ChrisDelClea/streamlit-agraph) | Interactive graph visualizations |
 
 ### MCP-Style Communication
 
@@ -243,9 +244,14 @@ curl http://localhost:8000/agents
 The Streamlit dashboard provides comprehensive monitoring:
 
 - **🎮 Game Tab**: Interactive game board and move history
-- **🤖 AI Agents & Models**: Agent information and model switching
+- **🤖 AI Agents & Models**: Agent information and model switching with enhanced status indicators
 - **📡 MCP Logs**: Real-time protocol communication logs
-- **📊 Metrics**: Performance analytics and system monitoring
+- **📊 Analytics**: Performance analytics and system monitoring with enhanced visualizations
+  - **📈 Overview**: Game statistics and summary metrics
+  - **📡 MCP Performance**: Protocol performance and message analysis
+  - **🤖 Agent Analytics**: Detailed agent performance with response time tracking
+  - **🔄 Message Flow**: Interactive visualization of agent communication patterns
+  - **⚡ Resources**: System resources and LLM cost tracking
 
 ### Key Metrics Tracked
 
@@ -254,9 +260,34 @@ The Streamlit dashboard provides comprehensive monitoring:
 | **Total Messages** | All system and agent messages |
 | **Agent Messages** | Inter-agent communication only |
 | **GameEngine Messages** | System events and state updates |
-| **Response Times** | Per-agent performance tracking |
+| **Response Times** | Per-agent performance tracking with 3-decimal precision |
+| **Message Latency** | Inter-agent communication latency with 3-decimal precision |
 | **Token Usage** | LLM consumption per agent |
 | **Model Switches** | History of model changes |
+| **Message Flow Patterns** | Visual communication flow between agents |
+| **Protocol Errors** | MCP communication error tracking |
+| **Resource Utilization** | System CPU and memory usage |
+| **LLM Costs** | Real-time cost tracking per model |
+
+### Enhanced UI Features
+
+#### 🎨 Modern Interface Design
+- **Dark Theme**: Professional dark interface with high contrast
+- **Responsive Layout**: Adapts to different screen sizes
+- **Interactive Elements**: Hover effects and smooth transitions
+- **Color-coded Status**: Visual indicators for different states
+
+#### 📊 Advanced Analytics Dashboard
+- **Performance Ratings**: Color-coded response times (Fast/Moderate/Slow)
+- **Interactive Graphs**: Visual message flow patterns between agents
+- **Real-time Updates**: Live metrics without page refresh
+- **Detailed Breakdowns**: Comprehensive performance analysis
+
+#### 🔍 Enhanced Monitoring
+- **AI Team Status**: Clear visibility of agent readiness
+- **Model Performance**: Real-time comparison of different LLMs
+- **Resource Tracking**: System utilization and cost monitoring
+- **Error Detection**: Protocol error tracking and alerts
 
 ### MCP Protocol Logging
 
@@ -348,11 +379,17 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 
 #### 📊 Monitoring & Analytics
 - ✅ MCP protocol message logging
-- ✅ Agent performance metrics
-- ✅ Response time tracking
-- ✅ Token usage monitoring
-- ✅ Model switch history
+- ✅ Agent performance metrics with 3-decimal precision
+- ✅ Response time tracking with performance ratings (Fast/Moderate/Slow)
+- ✅ Message latency tracking with 3-decimal precision
+- ✅ Token usage monitoring per agent
+- ✅ Model switch history and impact analysis
 - ✅ Real-time dashboard updates
+- ✅ Interactive message flow visualization (Scout → Strategist → Executor)
+- ✅ Protocol error tracking and monitoring
+- ✅ System resource utilization (CPU, Memory)
+- ✅ LLM cost tracking and breakdown
+- ✅ Enhanced AI team status indicators
 
 ### ⏳ In Progress
 
