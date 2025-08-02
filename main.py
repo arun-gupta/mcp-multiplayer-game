@@ -1781,6 +1781,15 @@ async def get_available_models():
         raise HTTPException(status_code=500, detail=f"Error getting models: {str(e)}")
 
 
+@app.get("/ai-team-status")
+async def get_ai_team_status():
+    """Get the status of the AI team configuration"""
+    try:
+        return game_state.get_ai_team_status()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting AI team status: {str(e)}")
+
+
 @app.post("/switch-model")
 async def switch_agent_model(request: dict):
     """Switch the model for a specific agent"""
