@@ -601,17 +601,12 @@ def main():
     # Get current game state
     game_state = st.session_state.game_state or get_game_state()
     
-    # Debug information
-    st.write("Debug: Checking game state...")
-    st.write(f"Game state from session: {st.session_state.game_state is not None}")
-    st.write(f"Game state after get_game_state: {game_state is not None}")
-    
     if game_state is None:
         st.error("❌ **Game State Unavailable**\n\nUnable to load the current game state. Please refresh the page or restart the API server.")
         return
     
     # Create tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Metrics"])
+    tab1, tab2, tab3, tab4 = st.tabs(["🎮 Game", "🤖 Agents & Models", "📡 MCP Logs", "📊 Analytics"])
     
     with tab1:
         # Compact AI team status check
@@ -623,96 +618,42 @@ def main():
         except Exception as e:
             st.warning(f"⚠️ **Connection issue** - Proceeding with game...")
         
-        # Show game result if game is over
-        if game_state.get('game_over'):
-            winner = game_state.get('winner')
-            if winner == 'player':
-                st.success("🎉 **You Won!**")
-            elif winner == 'ai':
-                st.error("🤖 **AI Won!**")
-            elif winner == 'draw':
-                st.warning("🤝 **Draw!**")
-        
-        # Show game result banner if game is over (only if not already shown above)
-        if game_state.get('game_over') and game_state.get('winner') != 'draw':
-            winner = game_state.get('winner')
-            if winner == 'player':
-                st.success("🎉 **Congratulations! You defeated Double-O-AI!** 🎉")
-            elif winner == 'ai':
-                st.error("🕵️‍♂️ **Double-O-AI has achieved victory! The secret agent prevails!** 🕵️‍♂️")
-        
         # Game board and move history side by side
-        st.write("Debug: About to create game board...")
         col1, col2 = st.columns([1, 1])
         
         with col1:
-            # Game board
+            # Game board with forced white styling
             board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
             current_player = game_state.get('current_player', 'player')
+            
+
             
             for i in range(3):
                 cols = st.columns(3)
                 for j in range(3):
                     with cols[j]:
                         cell_value = board[i][j]
+                        
+                        # All cells must stay WHITE - no color changes
                         if cell_value == '':
-                            # Empty cell - make it clickable
+                            # Empty cell - always white
                             if not game_state.get('game_over', False) and current_player == 'player':
-                                if st.button("+", key=f"cell_{i}_{j}", 
+                                # Clickable empty cell - white background
+                                if st.button(" ", key=f"cell_{i}_{j}", 
                                            use_container_width=True,
                                            help=f"Click to place your move at ({i}, {j})"):
                                     st.session_state.pending_move = (i, j)
                                     st.rerun()
                             else:
-                                # Disabled cell
-                                st.button("·", key=f"cell_{i}_{j}_disabled", 
+                                # Disabled empty cell - white background
+                                st.button(" ", key=f"cell_{i}_{j}_disabled", 
                                         disabled=True, use_container_width=True)
                         else:
-                            # Filled cell with custom colors using inline styles
-                            if cell_value == 'X':
-                                st.markdown(f"""
-                                <div style="
-                                    background: linear-gradient(145deg, #1a2a1a, #0a1a0a);
-                                    border: 2px solid #00ff88;
-                                    border-radius: 12px;
-                                    padding: 25px 15px;
-                                    text-align: center;
-                                    font-size: 2.5rem;
-                                    font-weight: bold;
-                                    margin: 3px;
-                                    color: #00ff88;
-                                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
-                                    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-                                    min-height: 80px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                ">
-                                    ❌
-                                </div>
-                                """, unsafe_allow_html=True)
-                            else:
-                                st.markdown(f"""
-                                <div style="
-                                    background: linear-gradient(145deg, #2a1a1a, #1a0a0a);
-                                    border: 2px solid #ff6b6b;
-                                    border-radius: 12px;
-                                    padding: 25px 15px;
-                                    text-align: center;
-                                    font-size: 2.5rem;
-                                    font-weight: bold;
-                                    margin: 3px;
-                                    color: #ff6b6b;
-                                    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
-                                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-                                    min-height: 80px;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                ">
-                                    ⭕
-                                </div>
-                                """, unsafe_allow_html=True)
+                            # Filled cell - use regular button (not disabled) to avoid dark styling
+                            symbol = "X" if cell_value == 'X' else "O"
+                            # Regular button (not disabled) to maintain white background
+                            st.button(symbol, key=f"cell_{i}_{j}_filled", 
+                                    use_container_width=True, disabled=False)
             
             # Game controls
             if st.button("🔄 New Game", use_container_width=True):
@@ -744,42 +685,138 @@ def main():
             
             # Make the move
             if make_move(row, col):
-                st.success(f"✅ Move made at ({row}, {col})! Double-O-AI is thinking...")
                 # Simulate AI turn
                 ai_result = simulate_ai_turn()
-                if ai_result:
-                    st.success("🕵️‍♂️ Double-O-AI has made its move!")
                 # Force refresh game state
                 st.session_state.game_state = get_game_state()
                 st.session_state.last_refresh = 0  # Force immediate refresh
                 st.rerun()
+        
+        # Show game result messages below the game board
+        if game_state.get('game_over'):
+            st.markdown("---")  # Add separator
+            winner = game_state.get('winner')
+            if winner == 'player':
+                st.markdown("""
+                <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                    <strong style="color: #4CAF50;">🎉 You Won!</strong>
+                </div>
+                """, unsafe_allow_html=True)
+            elif winner == 'ai':
+                st.markdown("""
+                <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                    <strong style="color: #4CAF50;">🤖 AI Won!</strong>
+                </div>
+                """, unsafe_allow_html=True)
+            elif winner == 'draw':
+                st.markdown("""
+                <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #FFC107; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                    <strong style="color: #FFC107;">🤝 Draw!</strong>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Show detailed victory message
+            if winner != 'draw':
+                if winner == 'player':
+                    st.markdown("""
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #4CAF50;">🎉 Congratulations! You defeated Double-O-AI! 🎉</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif winner == 'ai':
+                    st.markdown("""
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #4CAF50;">🕵️‍♂️ Double-O-AI has achieved victory! The secret agent prevails! 🕵️‍♂️</strong>
+                    </div>
+                    """, unsafe_allow_html=True)
     
     with tab2:
-        st.header("🤖 AI Agents & Models")
-        
         # AI Team Status Overview
         try:
             ai_team_status = requests.get(f"{API_BASE}/ai-team-status").json()
             
             if ai_team_status.get("team_ready", False):
-                st.success("🎯 **AI Team Status: READY** - All agents have working models!")
+                st.markdown("""
+                <div style="
+                    background: rgba(76, 175, 80, 0.1);
+                    border: 1px solid #4CAF50;
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin: 12px 0;
+                    color: #4CAF50;
+                    text-align: center;
+                ">
+                    <div style="font-size: 1.2rem; margin-bottom: 4px;">🎯</div>
+                    <div style="font-weight: 600; font-size: 1rem; margin-bottom: 2px;">AI Team Status: READY</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">All agents have working models!</div>
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.error("🚫 **AI Team Status: NOT READY** - Some agents need configuration")
+                st.markdown("""
+                <div style="
+                    background: rgba(244, 67, 54, 0.1);
+                    border: 1px solid #F44336;
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin: 12px 0;
+                    color: #F44336;
+                    text-align: center;
+                ">
+                    <div style="font-size: 1.2rem; margin-bottom: 4px;">🚫</div>
+                    <div style="font-weight: 600; font-size: 1rem; margin-bottom: 2px;">AI Team Status: NOT READY</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Some agents need configuration</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Show detailed status
                 for agent, status in ai_team_status.get("agents", {}).items():
                     agent_name = agent.title()
                     if status.get("status") == "ready":
-                        st.success(f"✅ **{agent_name}**: {status.get('model_name', 'Unknown')}")
+                        st.markdown(f"""
+                        <div style="
+                            background: rgba(76, 175, 80, 0.1);
+                            border: 2px solid #4CAF50;
+                            border-radius: 8px;
+                            padding: 12px;
+                            margin: 8px 0;
+                            color: white;
+                        ">
+                            <strong style="color: #4CAF50;">✅ {agent_name}:</strong> {status.get('model_name', 'Unknown')}
+                        </div>
+                        """, unsafe_allow_html=True)
                     else:
-                        st.error(f"❌ **{agent_name}**: {status.get('status', 'Unknown')}")
+                        st.markdown(f"""
+                        <div style="
+                            background: rgba(244, 67, 54, 0.1);
+                            border: 2px solid #F44336;
+                            border-radius: 8px;
+                            padding: 12px;
+                            margin: 8px 0;
+                            color: white;
+                        ">
+                            <strong style="color: #F44336;">❌ {agent_name}:</strong> {status.get('status', 'Unknown')}
+                        </div>
+                        """, unsafe_allow_html=True)
                 
                 st.markdown("---")
         except Exception as e:
-            st.warning(f"⚠️ **Unable to check AI team status** - Error: {str(e)}")
+            st.markdown(f"""
+            <div style="
+                background: rgba(255, 152, 0, 0.1);
+                border: 1px solid #FF9800;
+                border-radius: 8px;
+                padding: 12px;
+                margin: 12px 0;
+                color: #FF9800;
+                text-align: center;
+            ">
+                <div style="font-size: 1.2rem; margin-bottom: 4px;">⚠️</div>
+                <div style="font-weight: 600; font-size: 1rem; margin-bottom: 2px;">Unable to check AI team status</div>
+                <div style="font-size: 0.9rem; opacity: 0.8;">Error: {str(e)}</div>
+            </div>
+            """, unsafe_allow_html=True)
         
         # Tabbed Agents & Models Interface
-        st.subheader("🤖 Agents & Models")
         
         # Get data
         agents_data = get_agents()
@@ -913,20 +950,19 @@ def main():
                             """, unsafe_allow_html=True)
             
             # Models Reference tab with nested tabs
-            with agent_tabs[-1]:
+            with agent_tabs[-2]:
                 st.markdown("### 📋 Available Models Reference")
                 
-                # Dynamic provider icons legend based on available models
-                available_providers = set()
+                # Dynamic provider icons legend based on all configured models
+                configured_providers = set()
                 for model_info in available_models.values():
-                    if model_info.get('is_available', False):
-                        provider = model_info.get('provider', 'Unknown')
-                        available_providers.add(provider)
+                    provider = model_info.get('provider', 'Unknown')
+                    configured_providers.add(provider)
                 
                 # Create dynamic legend
                 provider_icons = {"openai": "🤖", "anthropic": "🧠", "ollama": "🦙"}
                 legend_parts = []
-                for provider in sorted(available_providers):
+                for provider in sorted(configured_providers):
                     icon = provider_icons.get(provider, "❓")
                     provider_name = provider.title()
                     legend_parts.append(f"{icon} {provider_name}")
@@ -934,9 +970,7 @@ def main():
                 if legend_parts:
                     st.markdown(f"**Provider Icons:** {' | '.join(legend_parts)}")
                 else:
-                    st.markdown("**Provider Icons:** No models available")
-                
-                st.markdown("---")
+                    st.markdown("**Provider Icons:** No models configured")
                 
                 # Sort all models alphabetically (including unavailable ones)
                 sorted_models = sorted(
@@ -960,66 +994,13 @@ def main():
                     else:
                         local_models.append((model_name, provider_icon, provider))
                 
-                # Create nested tabs for Cloud and Local models (Summary first)
-                summary_tab, cloud_tab, local_tab = st.tabs(["📊 Summary", "☁️ Cloud Models", "🖥️ Local Models"])
+                # Calculate counts for tab titles
+                total_models = len(cloud_models) + len(local_models)
+                available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
+                available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
                 
-                # Summary Tab (now first)
-                with summary_tab:
-                    total_models = len(cloud_models) + len(local_models)
-                    available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
-                    available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
-                    
-                    st.markdown("### 📊 Models Summary")
-                    
-                    # Summary cards
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        st.markdown(f"""
-                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                            <strong style="color: #2196F3; font-size: 1.5em;">{len(cloud_models)}</strong><br>
-                            <small>Cloud Models</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col2:
-                        st.markdown(f"""
-                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                            <strong style="color: #4CAF50; font-size: 1.5em;">{len(local_models)}</strong><br>
-                            <small>Local Models</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col3:
-                        st.markdown(f"""
-                        <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid #FFC107; border-radius: 6px; padding: 12px; margin: 8px 0; text-align: center;">
-                            <strong style="color: #FFC107; font-size: 1.5em;">{total_models}</strong><br>
-                            <small>Total Models</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    # Availability breakdown
-                    st.markdown("### 📈 Availability Breakdown")
-                    
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown(f"""
-                        <div style="background: rgba(33, 150, 243, 0.1); border: 1px solid #2196F3; border-radius: 6px; padding: 12px; margin: 8px 0;">
-                            <strong>☁️ Cloud Models:</strong><br>
-                            <small>✅ Available: {available_cloud}</small><br>
-                            <small>❌ Unavailable: {len(cloud_models) - available_cloud}</small>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    with col2:
-                        st.markdown(f"""
-                        <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid #4CAF50; border-radius: 6px; padding: 12px; margin: 8px 0;">
-                            <strong>🖥️ Local Models:</strong><br>
-                            <small>✅ Available: {available_local}</small><br>
-                            <small>❌ Unavailable: {len(local_models) - available_local}</small>
-                        </div>
-                        """, unsafe_allow_html=True)
+                # Create nested tabs with counts in titles
+                cloud_tab, local_tab = st.tabs([f"☁️ Cloud Models ({len(cloud_models)})", f"🖥️ Local Models ({len(local_models)})"])
                 
                 # Cloud Models Tab
                 with cloud_tab:
@@ -1128,9 +1109,19 @@ def main():
                             </div>
                             """, unsafe_allow_html=True)
                     else:
-                        st.info("🔄 **Model Switch Tracking Ready!** Model changes will be tracked here as agents switch between different LLMs.")
+                        st.markdown("""
+                        <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                            <strong style="color: #4CAF50;">🔄 Model Switch Tracking Ready!</strong><br>
+                            <span style="color: #E8F5E8;">Model changes will be tracked here as agents switch between different LLMs.</span>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
-                    st.info("🔄 **Model Switch Tracking Ready!** The system will track model switches as agents change between different LLMs during gameplay.")
+                    st.markdown("""
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #4CAF50;">🔄 Model Switch Tracking Ready!</strong><br>
+                        <span style="color: #E8F5E8;">The system will track model switches as agents change between different LLMs during gameplay.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
 
         else:
             st.error("❌ Failed to load agent or model information")
@@ -1138,17 +1129,16 @@ def main():
     with tab3:
         st.header("📡 MCP Protocol Logs")
         
-        # Legend for message types
+        # Legend for message types - compact and grouped
         st.markdown("**Message Type Legend:**")
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.markdown("👤 **Player Move**")
-        with col2:
-            st.markdown("🤖 **AI Agent**")
-        with col3:
-            st.markdown("🎮 **Game State**")
-        with col4:
-            st.markdown("🔄 **Model Switch**")
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid #444; border-radius: 6px; padding: 8px; margin: 8px 0; display: flex; justify-content: space-around; align-items: center;">
+            <span style="color: #E8F5E8;">👤 <strong>Player Move</strong></span>
+            <span style="color: #E8F5E8;">🤖 <strong>AI Agent</strong></span>
+            <span style="color: #E8F5E8;">🎮 <strong>Game State</strong></span>
+            <span style="color: #E8F5E8;">🔄 <strong>Model Switch</strong></span>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
         
@@ -1236,16 +1226,25 @@ def main():
                                 st.markdown("**Raw JSON:**")
                                 st.json(log)
             else:
-                st.info("📡 **MCP Protocol Ready!** No logs yet because no game has been played. Make a move in the Game tab to see the agents communicate using the Multi-Agent Communication Protocol!")
+                st.markdown("""
+                <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                    <strong style="color: #2196F3;">📡 MCP Protocol Ready!</strong><br>
+                    <span style="color: #E3F2FD;">No logs yet because no game has been played. Make a move in the Game tab to see the agents communicate using the Multi-Agent Communication Protocol!</span>
+                </div>
+                """, unsafe_allow_html=True)
         else:
-            st.info("📡 **MCP Protocol Ready!** The communication system is active. Start playing to see real-time protocol logs between the AI agents.")
+            st.markdown("""
+            <div style="background: rgba(33, 150, 243, 0.1); border: 2px solid #2196F3; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                <strong style="color: #2196F3;">📡 MCP Protocol Ready!</strong><br>
+                <span style="color: #E3F2FD;">The communication system is active. Start playing to see real-time protocol logs between the AI agents.</span>
+            </div>
+            """, unsafe_allow_html=True)
     
     with tab4:
-        st.header("📊 Game Metrics")
         metrics = get_metrics()
         if metrics:
             # Create nested tabs for different metric categories
-            overview_tab, mcp_tab, agent_tab, resource_tab = st.tabs(["📈 Overview", "📡 MCP Performance", "🤖 Agent Analytics", "⚡ Resources"])
+            overview_tab, mcp_tab, agent_tab, flow_tab, resource_tab = st.tabs(["📈 Overview", "📡 MCP Performance", "🤖 Agent Analytics", "🔄 Message Flow", "⚡ Resources"])
             
             with overview_tab:
                 st.subheader("📈 Game Overview")
@@ -1318,14 +1317,20 @@ def main():
                     """, unsafe_allow_html=True)
                 
                 # Explanation of message counts
-                st.info("💡 **Message Counts Explained:** Total Messages includes all system events (GameEngine) + agent communications. Message Flow Patterns below show only inter-agent communication.")
+                st.markdown("""
+                <div style="background: rgba(156, 39, 176, 0.1); border: 2px solid #9C27B0; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                    <strong style="color: #9C27B0;">💡 Message Counts Explained:</strong><br>
+                    <span style="color: #F3E5F5;">• <strong>Total Messages:</strong> Includes all system events (GameEngine) + agent communications</span><br>
+                    <span style="color: #F3E5F5;">• <strong>Message Flow Patterns:</strong> Shows only inter-agent communication</span>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 st.markdown("---")
                 col1, col2 = st.columns(2)
                 with col1:
                     # Message Latency
                     latency = metrics.get('avg_message_latency_ms', 0)
-                    latency_text = f"{latency:.2f}ms" if latency > 0 else "0ms"
+                    latency_text = f"{latency:.3f}ms" if latency > 0 else "0ms"
                     st.markdown(f"""
                     <div class="metric-card">
                         <div class="metric-value">{latency_text}</div>
@@ -1364,30 +1369,212 @@ def main():
                     </div>
                     """, unsafe_allow_html=True)
                 
+
+            
+            with flow_tab:
                 # Message Flow Patterns
-                st.markdown("<br>", unsafe_allow_html=True)
-                st.subheader("🔄 Message Flow Patterns")
                 message_patterns = metrics.get('message_flow_patterns', {})
                 if message_patterns:
-                    for pattern, count in message_patterns.items():
-                        st.markdown(f"**{pattern}:** {count} messages")
+                    # Simple linear flow: Scout → Strategist → Executor
+                    
+                    # Get message counts
+                    scout_to_strategist = message_patterns.get('scout_to_strategist', 0)
+                    strategist_to_executor = message_patterns.get('strategist_to_executor', 0)
+                    
+                    # Create a simple horizontal flow
+                    col1, col2, col3, col4, col5 = st.columns([1, 0.5, 1, 0.5, 1])
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #4CAF50, #45a049);
+                            border-radius: 15px;
+                            padding: 25px;
+                            margin: 10px 0;
+                            color: white;
+                            text-align: center;
+                            box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+                        ">
+                            <div style="font-size: 2.5rem; margin-bottom: 10px;">🕵️‍♂️</div>
+                            <div style="font-weight: bold; font-size: 1.3rem;">Scout</div>
+                            <div style="font-size: 1rem; opacity: 0.9; margin-top: 5px;">{scout_to_strategist} messages sent</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown("""
+                        <div style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 120px;
+                            font-size: 2.5rem;
+                            color: #666;
+                            margin: 0;
+                            padding: 0;
+                        ">
+                            →
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col3:
+                        st.markdown(f"""
+                        <div style="
+                            background: linear-gradient(135deg, #2196F3, #1976D2);
+                            border-radius: 15px;
+                            padding: 25px;
+                            margin: 10px 0;
+                            color: white;
+                            text-align: center;
+                            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+                        ">
+                            <div style="font-size: 2.5rem; margin-bottom: 10px;">🧠</div>
+                            <div style="font-weight: bold; font-size: 1.3rem;">Strategist</div>
+                            <div style="font-size: 1rem; opacity: 0.9; margin-top: 5px;">{strategist_to_executor} messages sent</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col4:
+                        st.markdown("""
+                        <div style="
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 120px;
+                            font-size: 2.5rem;
+                            color: #666;
+                            margin: 0;
+                            padding: 0;
+                        ">
+                            →
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col5:
+                        st.markdown("""
+                        <div style="
+                            background: linear-gradient(135deg, #FF9800, #F57C00);
+                            border-radius: 15px;
+                            padding: 25px;
+                            margin: 10px 0;
+                            color: white;
+                            text-align: center;
+                            box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+                        ">
+                            <div style="font-size: 2.5rem; margin-bottom: 10px;">⚡</div>
+                            <div style="font-weight: bold; font-size: 1.3rem;">Executor</div>
+                            <div style="font-size: 1rem; opacity: 0.9; margin-top: 5px;">Final Action</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                    # Error indicator if any
+                    if message_patterns.get('error_responses', 0) > 0:
+                            st.markdown(f"""
+                            <div style="
+                                background: linear-gradient(135deg, #F44336, #D32F2F);
+                                border-radius: 8px;
+                                padding: 8px 16px;
+                                margin: 16px auto;
+                                display: inline-block;
+                                color: white;
+                                font-weight: bold;
+                                box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+                            ">
+                                ⚠️ {message_patterns.get('error_responses', 0)} Error(s)
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+
+                        
+                    # Legend
+                    st.markdown("""
+                    <div style="background: rgba(0, 0, 0, 0.1); border-radius: 8px; padding: 8px; margin: 8px 0;">
+                        <small style="color: #ccc;">
+                            <strong>Legend:</strong><br>
+                            🟢 Scout (Analysis) | 🔵 Strategist (Planning) | 🟠 Executor (Action) | 🔴 Errors
+                        </small>
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
-                    st.info("🔄 **Message Flow Tracking Ready!** Communication patterns will be analyzed as agents interact.")
+                    st.markdown("""
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #4CAF50;">🔄 Message Flow Tracking Ready!</strong><br>
+                        <span style="color: #E8F5E8;">Communication patterns will be analyzed as agents interact.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Additional flow analysis
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("**📈 Flow Analysis:**")
+                st.markdown("""
+                <div style="background: rgba(156, 39, 176, 0.1); border: 2px solid #9C27B0; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                    <strong style="color: #9C27B0;">💡 Message Flow Explained:</strong><br>
+                    <span style="color: #F3E5F5;">• <strong>scout_to_strategist:</strong> Scout agent analyzing board state and sending observations</span><br>
+                    <span style="color: #F3E5F5;">• <strong>strategist_to_executor:</strong> Strategist creating plans and sending strategic guidance</span><br>
+                    <span style="color: #F3E5F5;">• <strong>executor_to_scout:</strong> Executor reporting move results back to scout</span><br>
+                    <span style="color: #F3E5F5;">• <strong>error_responses:</strong> Any communication errors or failed interactions</span>
+                </div>
+                """, unsafe_allow_html=True)
             
             with agent_tab:
                 st.subheader("🤖 Agent Analytics")
                 
                 # Inter-Agent Response Times
                 st.markdown("**Response Times:**")
-                agent_response_times = metrics.get('agent_response_times', {})
+                avg_response_times = metrics.get('avg_response_times', {})
                 current_models = metrics.get('current_models', {})
-                if agent_response_times:
-                    for agent, response_time in agent_response_times.items():
-                        response_text = f"{response_time:.2f}ms" if response_time > 0 else "0ms"
-                        current_model = current_models.get(agent, "Unknown")
-                        st.markdown(f"**{agent.title()}** ({current_model}): {response_text}")
+                
+                if avg_response_times:
+                    # Show average response times with model info
+                    for agent, avg_time in avg_response_times.items():
+                        if avg_time > 0:
+                            current_model = current_models.get(agent, "Unknown")
+                            # Color code based on response time performance
+                            if avg_time < 1000:  # Good performance
+                                color = "#4CAF50"
+                                performance = "Fast"
+                            elif avg_time < 3000:  # Moderate performance
+                                color = "#FF9800"
+                                performance = "Moderate"
+                            else:  # Slow performance
+                                color = "#F44336"
+                                performance = "Slow"
+                            
+                            st.markdown(f"""
+                            <div style="
+                                background: rgba({color[1:3]}, {color[3:5]}, {color[5:7]}, 0.1);
+                                border: 2px solid {color};
+                                border-radius: 8px;
+                                padding: 12px;
+                                margin: 8px 0;
+                            ">
+                                <strong style="color: {color};">{agent.title()}</strong> ({current_model})<br>
+                                <span style="color: #FFF3E0;">Average: <strong>{avg_time:.3f}ms</strong> ({performance})</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    
+                    # Show overall performance summary
+                    total_avg = sum(avg_response_times.values()) / len(avg_response_times) if avg_response_times else 0
+                    if total_avg > 0:
+                        st.markdown(f"""
+                        <div style="
+                            background: rgba(33, 150, 243, 0.1);
+                            border: 2px solid #2196F3;
+                            border-radius: 8px;
+                            padding: 12px;
+                            margin: 8px 0;
+                        ">
+                            <strong style="color: #2196F3;">📊 Overall Performance</strong><br>
+                            <span style="color: #E3F2FD;">Average Response Time: <strong>{total_avg:.3f}ms</strong></span>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
-                    st.info("🤖 **Agent Response Tracking Ready!** Response times will be tracked as agents communicate.")
+                    st.markdown("""
+                    <div style="background: rgba(255, 152, 0, 0.1); border: 2px solid #FF9800; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #FF9800;">🤖 Agent Response Tracking Ready!</strong><br>
+                        <span style="color: #FFF3E0;">Response times will be tracked as agents communicate. Start playing to see real-time performance metrics.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
                 
                 # Token Usage per Agent
                 st.markdown("<br>", unsafe_allow_html=True)
@@ -1402,16 +1589,42 @@ def main():
                 # Performance Impact Analysis
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("**📊 Performance Impact Analysis:**")
+                
+                # Get model usage history from metrics
+                model_usage_history = metrics.get('model_usage_history', [])
+                agent_response_times = metrics.get('agent_response_times', {})
+                
                 if model_usage_history and agent_response_times:
-                    st.info("🔄 **Model Switch Impact Analysis:** Compare response times and token usage before/after model switches to see performance changes.")
+                    st.markdown("""
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 2px solid #4CAF50; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #4CAF50;">🔄 Model Switch Impact Analysis</strong><br>
+                        <span style="color: #E8F5E8;">Compare response times and token usage before/after model switches to see performance changes.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
                     
                     # Show current model assignments
                     st.markdown("**Current Model Assignments:**")
                     current_models = metrics.get('current_models', {})
                     for agent, model in current_models.items():
                         st.markdown(f"**{agent.title()}:** {model}")
+                    
+                    # Show recent model switches
+                    if model_usage_history:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown("**Recent Model Switches:**")
+                        for switch in model_usage_history[-5:]:  # Show last 5 switches
+                            old_model = switch.get('old_model', 'unknown')
+                            new_model = switch.get('new_model', 'unknown')
+                            agent = switch.get('agent', 'unknown')
+                            move_number = switch.get('move_number', 'N/A')
+                            st.markdown(f"**{agent.title()}:** {old_model} → {new_model} (Move {move_number})")
                 else:
-                    st.info("📊 **Performance Analysis Ready!** Impact of model switches on agent performance will be analyzed here.")
+                    st.markdown("""
+                    <div style="background: rgba(156, 39, 176, 0.1); border: 2px solid #9C27B0; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #9C27B0;">📊 Performance Analysis Ready!</strong><br>
+                        <span style="color: #F3E5F5;">Impact of model switches on agent performance will be analyzed here.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             with resource_tab:
                 st.subheader("⚡ Resource Utilization")
@@ -1438,9 +1651,19 @@ def main():
                             if cost > 0:
                                 st.markdown(f"**{model.title()}:** ${cost:.6f}")
                     else:
-                        st.info("💰 **Cost Tracking Active!** No costs yet because no game has been played. Start playing to see real-time cost tracking across different LLM providers.")
+                        st.markdown("""
+                        <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #FFC107; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                            <strong style="color: #FFC107;">💰 Cost Tracking Active!</strong><br>
+                            <span style="color: #FFF8E1;">No costs yet because no game has been played. Start playing to see real-time cost tracking across different LLM providers.</span>
+                        </div>
+                        """, unsafe_allow_html=True)
                 else:
-                    st.info("💰 **Cost Tracking Ready!** The system will track costs across OpenAI, Anthropic, and Ollama models as you play.")
+                    st.markdown("""
+                    <div style="background: rgba(255, 193, 7, 0.1); border: 2px solid #FFC107; border-radius: 8px; padding: 12px; margin: 8px 0;">
+                        <strong style="color: #FFC107;">💰 Cost Tracking Ready!</strong><br>
+                        <span style="color: #FFF8E1;">The system will track costs across OpenAI, Anthropic, and Ollama models as you play.</span>
+                    </div>
+                    """, unsafe_allow_html=True)
         else:
             st.info("📊 **Metrics System Ready!** Performance tracking is active. Play a game to see real-time metrics including MCP messages, costs, and response times.")
     
