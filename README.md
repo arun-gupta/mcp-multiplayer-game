@@ -13,7 +13,7 @@ A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Ta
 - **🎮 Game**: Interactive Tic Tac Toe vs AI team
 - **🤖 AI Team**: Three specialized agents (Scout, Strategist, Executor)
 - **🔄 Hot-Swappable Models**: Switch LLMs mid-game without restart
-- **📊 Real-time Metrics**: MCP protocol monitoring and performance analytics
+- **📊 Real-time Analytics**: MCP protocol monitoring and performance analytics
 - **🎨 Modern UI**: Streamlit dashboard with live updates
 
 ## 🚀 Quick Start
@@ -213,7 +213,7 @@ Built on **CrewAI** for sophisticated multi-agent orchestration:
 | `/models` | GET | Available models for switching |
 | `/switch-model` | POST | Switch agent to different model |
 | `/mcp-logs` | GET | MCP protocol message logs |
-| `/metrics` | GET | Performance metrics and analytics |
+| `/metrics` | GET | Performance analytics and monitoring data |
 
 ### Example Usage
 
@@ -247,13 +247,13 @@ The Streamlit dashboard provides comprehensive monitoring:
 - **🤖 AI Agents & Models**: Agent information and model switching with enhanced status indicators
 - **📡 MCP Logs**: Real-time protocol communication logs
 - **📊 Analytics**: Performance analytics and system monitoring with enhanced visualizations
-  - **📈 Overview**: Game statistics and summary metrics
+  - **📈 Overview**: Game statistics and summary analytics
   - **📡 MCP Performance**: Protocol performance and message analysis
   - **🤖 Agent Analytics**: Detailed agent performance with response time tracking
   - **🔄 Message Flow**: Interactive visualization of agent communication patterns
   - **⚡ Resources**: System resources and LLM cost tracking
 
-### Key Metrics Tracked
+### Key Analytics Tracked
 
 | Metric | Description |
 |--------|-------------|
@@ -280,7 +280,7 @@ The Streamlit dashboard provides comprehensive monitoring:
 #### 📊 Advanced Analytics Dashboard
 - **Performance Ratings**: Color-coded response times (Fast/Moderate/Slow)
 - **Interactive Graphs**: Visual message flow patterns between agents
-- **Real-time Updates**: Live metrics without page refresh
+- **Real-time Updates**: Live analytics without page refresh
 - **Detailed Breakdowns**: Comprehensive performance analysis
 
 #### 🔍 Enhanced Monitoring
@@ -351,7 +351,7 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 1. **New Agents**: Create agent class in `agents/` directory
 2. **New Models**: Add to `ModelRegistry` in agent files
 3. **New Game Mechanics**: Extend `game/state.py`
-4. **New Metrics**: Add tracking in `game/state.py`
+4. **New Analytics**: Add tracking in `game/state.py`
 
 ---
 
@@ -379,7 +379,7 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 
 #### 📊 Monitoring & Analytics
 - ✅ MCP protocol message logging
-- ✅ Agent performance metrics with 3-decimal precision
+- ✅ Agent performance analytics with 3-decimal precision
 - ✅ Response time tracking with performance ratings (Fast/Moderate/Slow)
 - ✅ Message latency tracking with 3-decimal precision
 - ✅ Token usage monitoring per agent
