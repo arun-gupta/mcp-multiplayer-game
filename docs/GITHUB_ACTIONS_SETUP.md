@@ -89,10 +89,10 @@ Replace `your-username` with your actual Docker Hub username.
 - **Tags (v*)**: Creates versioned releases
 
 ### **Workflow Steps**
-1. **Test**: Runs `test_installation.py`
-2. **Build**: Creates Docker image with metadata
+1. **Test**: Runs comprehensive tests including agent creation and LLM validation
+2. **Build**: Creates multi-platform Docker image with metadata
 3. **Push**: Uploads to Docker Hub (main branch only)
-4. **Deploy**: Sends notification
+4. **Deploy**: Sends deployment notification
 
 ### **Image Tags**
 - `main`: Latest from main branch
@@ -111,7 +111,7 @@ Every push to main will:
 ### **Manual Trigger**
 You can also trigger manually:
 1. Go to **Actions** tab
-2. Select "Build and Push Docker Image"
+2. Select "Test, Build and Deploy Docker Image"
 3. Click **Run workflow**
 
 ### **Version Releases**
