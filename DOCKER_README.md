@@ -11,6 +11,19 @@ This guide explains how to deploy the MCP Multiplayer Game using Docker with sec
 
 ## 🔑 API Key Management Strategies
 
+### **Handling Existing .env Files**
+
+If you've been developing locally, you likely already have a `.env` file with your API keys. The Docker setup will automatically use this existing file:
+
+```bash
+# Check if .env exists
+ls -la .env
+
+# If it exists, Docker will use it automatically
+# If not, create it from template
+cp .env.example .env
+```
+
 ### **Method 1: Environment File (Recommended)**
 
 1. **Create `.env` file:**
@@ -95,10 +108,18 @@ git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
 cd mcp-multiplayer-game
 ```
 
+**Note**: If you've been developing locally, you may already have a `.env` file with your API keys. The Docker setup will use this existing file automatically.
+
 ### **2. Set API Keys**
 ```bash
-# Create environment file
-cp .env.example .env
+# Check if .env already exists (from local development)
+if [ ! -f .env ]; then
+    # Create environment file from template
+    cp .env.example .env
+    echo "📝 Created .env file from template"
+else
+    echo "✅ .env file already exists"
+fi
 
 # Edit with your keys
 nano .env  # or use your preferred editor
@@ -106,7 +127,7 @@ nano .env  # or use your preferred editor
 
 ### **3. Build and Run**
 ```bash
-# Option A: Use convenience script
+# Option A: Use convenience script (handles existing .env files)
 ./docker-run.sh
 
 # Option B: Manual build and run
@@ -273,6 +294,7 @@ spec:
 1. **"API key not found"**
    - Check `.env` file exists and has correct keys
    - Verify keys are not placeholder values
+   - If you have an existing `.env` file from local development, it will be used automatically
 
 2. **"Port already in use"**
    ```bash
