@@ -288,9 +288,7 @@ yarn-error.log*
 
 # Docker
 .dockerignore
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
+# Docker files should NOT be ignored - needed for CI builds and deployment
 
 # Terraform
 *.tfstate
