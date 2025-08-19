@@ -54,9 +54,7 @@ def test_local_modules() -> Dict[str, bool]:
         "schemas.observation",
         "schemas.plan", 
         "schemas.action_result",
-        "game.map",
         "game.state",
-        "game.engine",
         "agents.scout",
         "agents.strategist",
         "agents.executor"
@@ -82,27 +80,18 @@ def test_game_components() -> Dict[str, bool]:
     results = {}
     
     try:
-        from game.state import GameStateManager
-        game_manager = GameStateManager()
-        print("✅ GameStateManager")
-        results["GameStateManager"] = True
+        from game.state import TicTacToeGameState
+        game_state = TicTacToeGameState()
+        print("✅ TicTacToeGameState")
+        results["TicTacToeGameState"] = True
     except Exception as e:
-        print(f"❌ GameStateManager: {e}")
-        results["GameStateManager"] = False
-    
-    try:
-        from game.map import GameMap
-        game_map = GameMap(5, 5)
-        print("✅ GameMap")
-        results["GameMap"] = True
-    except Exception as e:
-        print(f"❌ GameMap: {e}")
-        results["GameMap"] = False
+        print(f"❌ TicTacToeGameState: {e}")
+        results["TicTacToeGameState"] = False
     
     try:
         from schemas.observation import Observation
         from schemas.plan import Plan
-        from schemas.action_result import TurnResult
+        from schemas.action_result import ActionResult
         print("✅ Schemas")
         results["Schemas"] = True
     except Exception as e:
@@ -119,13 +108,11 @@ def test_agent_creation() -> Dict[str, bool]:
     results = {}
     
     try:
-        from game.state import GameStateManager
         from agents.scout import ScoutAgent
         
-        game_manager = GameStateManager()
         # Note: This will fail if OpenAI API key is not set, but that's expected
         try:
-            scout = ScoutAgent(game_manager.get_current_state())
+            scout = ScoutAgent()
             print("✅ ScoutAgent (created)")
             results["ScoutAgent"] = True
         except Exception as e:
@@ -141,7 +128,7 @@ def test_agent_creation() -> Dict[str, bool]:
     
     try:
         from agents.strategist import StrategistAgent
-        # Note: This will fail if Ollama is not running, but that's expected
+        # Note: This will fail if Anthropic API key is not set, but that's expected
         try:
             strategist = StrategistAgent()
             print("✅ StrategistAgent (created)")
@@ -158,13 +145,11 @@ def test_agent_creation() -> Dict[str, bool]:
         results["StrategistAgent"] = False
     
     try:
-        from game.state import GameStateManager
         from agents.executor import ExecutorAgent
         
-        game_manager = GameStateManager()
         # Note: This will fail if Ollama is not running, but that's expected
         try:
-            executor = ExecutorAgent(game_manager.get_current_state())
+            executor = ExecutorAgent()
             print("✅ ExecutorAgent (created)")
             results["ExecutorAgent"] = True
         except Exception as e:
@@ -227,37 +212,26 @@ def run_basic_game_test():
     print("\n🎮 Running basic game test...")
     
     try:
-        from game.state import GameStateManager
-        from game.map import GameMap
-        from schemas.observation import Entity, TileType
+        from game.state import TicTacToeGameState
         
         # Create game state
-        game_manager = GameStateManager()
-        current_state = game_manager.get_current_state()
+        game_state = TicTacToeGameState()
         
-        # Test map operations
-        game_map = current_state.game_map
-        print(f"✅ Map created: {game_map.width}x{game_map.height}")
+        # Test game board
+        board = game_state.get_board()
+        print(f"✅ Game board created: {len(board)}x{len(board[0])}")
         
-        # Test entity operations
-        player = current_state.player_entity
-        if player:
-            print(f"✅ Player found at {player.position} with {player.health} HP")
+        # Test game status
+        status = game_state.get_game_status()
+        print(f"✅ Game status: {status}")
         
-        enemies = current_state.get_enemies()
-        print(f"✅ Found {len(enemies)} enemies")
+        # Test move validation
+        is_valid = game_state.is_valid_move(0, 0)
+        print(f"✅ Move validation: {is_valid}")
         
-        items = current_state.get_items()
-        print(f"✅ Found {len(items)} items")
-        
-        # Test visibility
-        visible_tiles = game_map.get_visible_tiles(player.position, 3)
-        print(f"✅ Scout can see {len(visible_tiles)} tiles")
-        
-        # Test ASCII representation
-        ascii_map = game_map.to_ascii()
-        print("✅ Map ASCII representation:")
-        print(ascii_map)
+        # Test game reset
+        game_state.reset_game()
+        print("✅ Game reset successful")
         
         print("✅ Basic game test completed successfully!")
         return True
