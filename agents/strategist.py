@@ -3,7 +3,7 @@ Strategist Agent Module
 Analyzes scout observations and creates strategic plans for Tic Tac Toe
 """
 import os
-from crewai import Agent
+from .base_agent import Agent
 from models.factory import ModelFactory
 from models.registry import model_registry
 from schemas.observation import Observation
