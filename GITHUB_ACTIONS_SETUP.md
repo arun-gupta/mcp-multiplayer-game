@@ -55,7 +55,7 @@ Without "Read & Write" permissions, the workflow will fail with authentication e
 
 ### **3. Update Workflow Configuration**
 
-Edit `.github/workflows/docker-test-build.yml`:
+Edit `.github/workflows/docker-build.yml`:
 
 ```yaml
 env:
@@ -95,7 +95,7 @@ Every push to main will:
 ### **Manual Trigger**
 You can also trigger manually:
 1. Go to **Actions** tab
-2. Select "Test, Build and Push Docker Image"
+2. Select "Build and Push Docker Image"
 3. Click **Run workflow**
 
 ### **Version Releases**
