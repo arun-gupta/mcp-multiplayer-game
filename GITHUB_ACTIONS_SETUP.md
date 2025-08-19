@@ -12,6 +12,7 @@ This guide explains how to set up automatic Docker builds and pushes to Docker H
    - Go to Docker Hub → Account Settings → Security
    - Click "New Access Token"
    - Give it a name (e.g., "GitHub Actions")
+   - **Permissions**: Select "Read & Write" (required for pushing images)
    - Copy the token (you'll need it for GitHub secrets)
 
 3. **GitHub Repository**
@@ -35,6 +36,14 @@ This guide explains how to set up automatic Docker builds and pushes to Docker H
 3. Click **New repository secret**
 4. Add these secrets:
 
+#### **Important: Docker Hub Token Permissions**
+When creating your Docker Hub access token, you must select **"Read & Write"** permissions:
+- **Read**: Allows pulling images (not sufficient)
+- **Read & Write**: Allows both pulling and pushing images (required)
+- **Write**: Allows only pushing images (not recommended)
+
+Without "Read & Write" permissions, the workflow will fail with authentication errors.
+
 #### **DOCKERHUB_USERNAME**
 - **Name**: `DOCKERHUB_USERNAME`
 - **Value**: Your Docker Hub username
@@ -42,6 +51,7 @@ This guide explains how to set up automatic Docker builds and pushes to Docker H
 #### **DOCKERHUB_TOKEN**
 - **Name**: `DOCKERHUB_TOKEN`
 - **Value**: Your Docker Hub access token
+- **Note**: Token must have "Read & Write" permissions to push images
 
 ### **3. Update Workflow Configuration**
 
@@ -116,6 +126,7 @@ This will create a tagged Docker image: `your-username/mcp-multiplayer-game:v1.0
 1. **"Authentication failed"**
    - Check `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets
    - Verify Docker Hub access token is valid
+   - Ensure token has "Read & Write" permissions (not just "Read")
 
 2. **"Repository not found"**
    - Ensure Docker Hub repository exists
