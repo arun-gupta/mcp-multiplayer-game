@@ -18,6 +18,23 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Accept build arguments for API keys
+ARG OPENAI_API_KEY
+ARG ANTHROPIC_API_KEY
+
+# Set environment variables for testing
+ENV OPENAI_API_KEY=$OPENAI_API_KEY
+ENV ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
+ENV CI=true
+
+# Run tests during build (only if API keys are provided)
+RUN if [ -n "$OPENAI_API_KEY" ] && [ -n "$ANTHROPIC_API_KEY" ]; then \
+        echo "🧪 Running tests during build..." && \
+        python test_installation.py; \
+    else \
+        echo "⚠️  Skipping tests (no API keys provided)"; \
+    fi
+
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app \
     && chown -R app:app /app

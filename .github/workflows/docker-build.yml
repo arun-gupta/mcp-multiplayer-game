@@ -12,31 +12,7 @@ env:
   IMAGE_NAME: arun-gupta/mcp-multiplayer-game
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
-    - name: Run tests
-      env:
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      run: |
-        python test_installation.py
-
-  build:
-    needs: test
+  test-and-build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,7 +44,7 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=sha,prefix={{branch}}-
 
-    - name: Build and push Docker image
+    - name: Build, test and push Docker image
       uses: docker/build-push-action@v5
       with:
         context: .
@@ -78,12 +54,12 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         platforms: linux/amd64,linux/arm64
-
-    - name: Image digest
-      run: echo ${{ steps.meta.outputs.tags }}
+        build-args: |
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
 
   deploy:
-    needs: build
+    needs: test-and-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -91,4 +67,4 @@ jobs:
       run: |
         echo "🚀 Docker image deployed successfully!"
         echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        echo "Tags: ${{ needs.build.outputs.tags }}"
+        echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
