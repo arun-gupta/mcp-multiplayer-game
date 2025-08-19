@@ -28,9 +28,10 @@ def test_imports() -> Dict[str, bool]:
         "pydantic",
         "langchain",
         "langchain_openai",
+        "langchain_anthropic",
         "langchain_community",
-        "matplotlib",
-        "numpy"
+        "requests",
+        "psutil"
     ]
     
     results = {}
