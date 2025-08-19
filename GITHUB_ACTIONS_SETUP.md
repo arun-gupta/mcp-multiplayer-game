@@ -36,6 +36,12 @@ This guide explains how to set up automatic Docker builds and pushes to Docker H
 3. Click **New repository secret**
 4. Add these secrets:
 
+#### **Important: API Key Security**
+- **Never commit API keys** to your repository
+- **Use GitHub Secrets** for all sensitive data
+- **Rotate keys regularly** for security
+- **Monitor usage** to prevent unexpected charges
+
 #### **Important: Docker Hub Token Permissions**
 When creating your Docker Hub access token, you must select **"Read & Write"** permissions:
 - **Read**: Allows pulling images (not sufficient)
@@ -52,6 +58,16 @@ Without "Read & Write" permissions, the workflow will fail with authentication e
 - **Name**: `DOCKERHUB_TOKEN`
 - **Value**: Your Docker Hub access token
 - **Note**: Token must have "Read & Write" permissions to push images
+
+#### **OPENAI_API_KEY**
+- **Name**: `OPENAI_API_KEY`
+- **Value**: Your OpenAI API key (starts with `sk-`)
+- **Note**: Required for Scout Agent testing in CI
+
+#### **ANTHROPIC_API_KEY**
+- **Name**: `ANTHROPIC_API_KEY`
+- **Value**: Your Anthropic API key (starts with `sk-ant-`)
+- **Note**: Required for Strategist Agent testing in CI
 
 ### **3. Update Workflow Configuration**
 

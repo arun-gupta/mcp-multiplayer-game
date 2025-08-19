@@ -107,16 +107,6 @@ def test_agent_creation() -> Dict[str, bool]:
     
     results = {}
     
-    # Check if we're in CI environment (no API keys)
-    is_ci = os.getenv('CI') == 'true' or not os.getenv('OPENAI_API_KEY')
-    
-    if is_ci:
-        print("🔄 CI environment detected - skipping agent creation tests")
-        results["ScoutAgent"] = True
-        results["StrategistAgent"] = True
-        results["ExecutorAgent"] = True
-        return results
-    
     try:
         from agents.scout import ScoutAgent
         from game.state import TicTacToeGameState
@@ -134,8 +124,51 @@ def test_agent_creation() -> Dict[str, bool]:
             else:
                 print(f"❌ ScoutAgent: {e}")
                 results["ScoutAgent"] = False
-    # Note: Agent creation tests are skipped in CI environment
-    # They would require API keys which are not available in GitHub Actions
+    except Exception as e:
+        print(f"❌ ScoutAgent: {e}")
+        results["ScoutAgent"] = False
+    
+    try:
+        from agents.strategist import StrategistAgent
+        from game.state import TicTacToeGameState
+        
+        game_state = TicTacToeGameState()
+        # Note: This will fail if Anthropic API key is not set, but that's expected
+        try:
+            strategist = StrategistAgent(game_state)
+            print("✅ StrategistAgent (created)")
+            results["StrategistAgent"] = True
+        except Exception as e:
+            if "ANTHROPIC_API_KEY" in str(e):
+                print("⚠️  StrategistAgent (requires Anthropic API key)")
+                results["StrategistAgent"] = True  # This is expected
+            else:
+                print(f"❌ StrategistAgent: {e}")
+                results["StrategistAgent"] = False
+    except Exception as e:
+        print(f"❌ StrategistAgent: {e}")
+        results["StrategistAgent"] = False
+    
+    try:
+        from agents.executor import ExecutorAgent
+        from game.state import TicTacToeGameState
+        
+        game_state = TicTacToeGameState()
+        # Note: This will fail if Ollama is not running, but that's expected
+        try:
+            executor = ExecutorAgent(game_state)
+            print("✅ ExecutorAgent (created)")
+            results["ExecutorAgent"] = True
+        except Exception as e:
+            if "Ollama" in str(e) or "Connection" in str(e):
+                print("⚠️  ExecutorAgent (requires Ollama)")
+                results["ExecutorAgent"] = True  # This is expected
+            else:
+                print(f"❌ ExecutorAgent: {e}")
+                results["ExecutorAgent"] = False
+    except Exception as e:
+        print(f"❌ ExecutorAgent: {e}")
+        results["ExecutorAgent"] = False
     
     return results
 
