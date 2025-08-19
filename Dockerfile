@@ -1,4 +1,4 @@
-# Multi-stage build for better caching and smaller final image
+# Multi-stage build optimized for ARM64
 FROM python:3.11-slim as builder
 
 # Set working directory
@@ -20,7 +20,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Production stage
+# Production stage (ARM64 optimized)
 FROM python:3.11-slim as production
 
 # Set working directory
