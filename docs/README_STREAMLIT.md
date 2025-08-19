@@ -97,7 +97,7 @@ mcp-multiplayer-game/
 ├── streamlit_app.py           # Streamlit frontend (new)
 ├── run_streamlit.py           # Launcher script (new)
 ├── requirements_streamlit.txt # Streamlit dependencies (new)
-├── README_STREAMLIT.md        # This file (new)
+├── docs/README_STREAMLIT.md   # This file (new)
 └── ... (existing files)
 ```
 

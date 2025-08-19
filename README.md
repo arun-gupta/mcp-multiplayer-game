@@ -82,7 +82,21 @@ The `quickstart.sh` script automatically:
 ./quickstart.sh --help
 ```
 
-📖 **[Complete Setup Guide](QUICKSTART.md)** - Detailed instructions and troubleshooting
+📖 **[Complete Setup Guide](docs/QUICKSTART.md)** - Detailed instructions and troubleshooting
+
+## 📚 Documentation
+
+### **📖 Guides & Tutorials**
+- **[📋 Quick Start Guide](docs/QUICKSTART.md)** - Complete setup and troubleshooting
+- **[🎨 Streamlit UI Guide](docs/README_STREAMLIT.md)** - Frontend features and customization
+- **[🐳 Docker Deployment](docs/DOCKER_README.md)** - Containerized deployment options
+- **[⚡ GitHub Actions CI/CD](docs/GITHUB_ACTIONS_SETUP.md)** - Automated testing and deployment
+
+### **🔧 Development & Deployment**
+- **Local Development**: Use the quickstart script or manual setup
+- **Docker Deployment**: Containerized deployment with API key management
+- **CI/CD Pipeline**: Automated testing, building, and Docker image publishing
+- **Production Ready**: Security best practices and monitoring included
 
 ## 🔑 API Keys Setup
 
@@ -347,7 +361,11 @@ mcp-multiplayer-game/
 ├── run_app.py             # Unified launcher script
 ├── requirements.txt       # Python dependencies
 ├── README.md             # This file
-├── QUICKSTART.md         # Detailed setup guide
+├── docs/                  # Documentation
+│   ├── QUICKSTART.md     # Detailed setup guide
+│   ├── README_STREAMLIT.md # Streamlit UI guide
+│   ├── DOCKER_README.md  # Docker deployment guide
+│   └── GITHUB_ACTIONS_SETUP.md # CI/CD setup guide
 ├── schemas/              # MCP-style communication schemas
 │   ├── observation.py    # Scout observations
 │   ├── plan.py          # Strategist plans
