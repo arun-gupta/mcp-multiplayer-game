@@ -623,61 +623,61 @@ def main():
         
         with col1:
             # Game board with forced white styling
-            board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
+        board = game_state.get('board', [['' for _ in range(3)] for _ in range(3)])
             current_player = game_state.get('current_player', 'player')
+        
+        
             
-
-            
-            for i in range(3):
-                cols = st.columns(3)
-                for j in range(3):
-                    with cols[j]:
-                        cell_value = board[i][j]
+        for i in range(3):
+            cols = st.columns(3)
+            for j in range(3):
+                with cols[j]:
+                    cell_value = board[i][j]
                         
                         # All cells must stay WHITE - no color changes
-                        if cell_value == '':
+                    if cell_value == '':
                             # Empty cell - always white
-                            if not game_state.get('game_over', False) and current_player == 'player':
+                        if not game_state.get('game_over', False) and current_player == 'player':
                                 # Clickable empty cell - white background
                                 if st.button(" ", key=f"cell_{i}_{j}", 
-                                           use_container_width=True,
-                                           help=f"Click to place your move at ({i}, {j})"):
-                                    st.session_state.pending_move = (i, j)
-                                    st.rerun()
-                            else:
+                                       use_container_width=True,
+                                       help=f"Click to place your move at ({i}, {j})"):
+                                st.session_state.pending_move = (i, j)
+                                st.rerun()
+                        else:
                                 # Disabled empty cell - white background
                                 st.button(" ", key=f"cell_{i}_{j}_disabled", 
-                                        disabled=True, use_container_width=True)
-                        else:
+                                    disabled=True, use_container_width=True)
+                    else:
                             # Filled cell - use regular button (not disabled) to avoid dark styling
                             symbol = "X" if cell_value == 'X' else "O"
                             # Regular button (not disabled) to maintain white background
                             st.button(symbol, key=f"cell_{i}_{j}_filled", 
                                     use_container_width=True, disabled=False)
-            
-            # Game controls
-            if st.button("🔄 New Game", use_container_width=True):
-                if reset_game():
-                    # Clear session state and refresh game state
-                    st.session_state.game_state = None
-                    st.session_state.pending_move = None
-                    st.session_state.last_refresh = 0
-                    st.rerun()
+        
+        # Game controls
+        if st.button("🔄 New Game", use_container_width=True):
+            if reset_game():
+                # Clear session state and refresh game state
+                st.session_state.game_state = None
+                st.session_state.pending_move = None
+                st.session_state.last_refresh = 0
+                st.rerun()
         
         with col2:
-            # Move history
-            st.subheader("📜 Move History")
-            moves = game_state.get('game_history', [])
-            if moves:
-                for i, move in enumerate(moves[-8:], 1):  # Show last 8 moves
-                    player = "👤 You" if move['player'] == 'player' else "🕵️‍♂️ Double-O-AI"
-                    position = move['position']
-                    row, col = position['row'], position['col']
-                    value = position['value']
-                    st.markdown(f"**{move['move_number']}.** {player} placed {value} at ({row}, {col})")
-            else:
-                st.markdown("*No moves yet. Start the game by clicking any cell!*")
-        
+        # Move history
+        st.subheader("📜 Move History")
+        moves = game_state.get('game_history', [])
+        if moves:
+            for i, move in enumerate(moves[-8:], 1):  # Show last 8 moves
+                player = "👤 You" if move['player'] == 'player' else "🕵️‍♂️ Double-O-AI"
+                position = move['position']
+                row, col = position['row'], position['col']
+                value = position['value']
+                st.markdown(f"**{move['move_number']}.** {player} placed {value} at ({row}, {col})")
+        else:
+            st.markdown("*No moves yet. Start the game by clicking any cell!*")
+    
         # Handle pending move (outside columns to avoid layout issues)
         if hasattr(st.session_state, 'pending_move') and st.session_state.pending_move is not None:
             row, col = st.session_state.pending_move
@@ -772,7 +772,7 @@ def main():
                 for agent, status in ai_team_status.get("agents", {}).items():
                     agent_name = agent.title()
                     if status.get("status") == "ready":
-                        st.markdown(f"""
+                st.markdown(f"""
                         <div style="
                             background: rgba(76, 175, 80, 0.1);
                             border: 2px solid #4CAF50;
@@ -782,9 +782,9 @@ def main():
                             color: white;
                         ">
                             <strong style="color: #4CAF50;">✅ {agent_name}:</strong> {status.get('model_name', 'Unknown')}
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
+                </div>
+                """, unsafe_allow_html=True)
+        else:
                         st.markdown(f"""
                         <div style="
                             background: rgba(244, 67, 54, 0.1);
@@ -797,8 +797,8 @@ def main():
                             <strong style="color: #F44336;">❌ {agent_name}:</strong> {status.get('status', 'Unknown')}
                         </div>
                         """, unsafe_allow_html=True)
-                
-                st.markdown("---")
+        
+        st.markdown("---")
         except Exception as e:
             st.markdown(f"""
             <div style="
@@ -927,7 +927,7 @@ def main():
                             # Auto-switch when a different model is selected
                             if new_model != st.session_state[prev_model_key]:
                                 st.session_state[prev_model_key] = new_model
-                                if new_model != current_model:
+                            if new_model != current_model:
                                     result = switch_model(agent_name, new_model)
                                     if result and result.get('success'):
                                         st.success(f"✅ Switched to {new_model}")
@@ -956,7 +956,7 @@ def main():
                 # Dynamic provider icons legend based on all configured models
                 configured_providers = set()
                 for model_info in available_models.values():
-                    provider = model_info.get('provider', 'Unknown')
+                        provider = model_info.get('provider', 'Unknown')
                     configured_providers.add(provider)
                 
                 # Create dynamic legend
@@ -995,10 +995,10 @@ def main():
                         local_models.append((model_name, provider_icon, provider))
                 
                 # Calculate counts for tab titles
-                total_models = len(cloud_models) + len(local_models)
-                available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
-                available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
-                
+                    total_models = len(cloud_models) + len(local_models)
+                    available_cloud = len([m for m in cloud_models if available_models.get(m[0], {}).get('is_available', False)])
+                    available_local = len([m for m in local_models if available_models.get(m[0], {}).get('is_available', False)])
+                    
                 # Create nested tabs with counts in titles
                 cloud_tab, local_tab = st.tabs([f"☁️ Cloud Models ({len(cloud_models)})", f"🖥️ Local Models ({len(local_models)})"])
                 
@@ -1089,7 +1089,7 @@ def main():
                             """, unsafe_allow_html=True)
                     else:
                         st.info("🖥️ **No local models available**")
-            
+                
             # Model History tab
             with agent_tabs[-1]:
                 st.markdown("### 🔄 Model Switch History")
@@ -1528,7 +1528,7 @@ def main():
                     # Show average response times with model info
                     for agent, avg_time in avg_response_times.items():
                         if avg_time > 0:
-                            current_model = current_models.get(agent, "Unknown")
+                        current_model = current_models.get(agent, "Unknown")
                             # Color code based on response time performance
                             if avg_time < 1000:  # Good performance
                                 color = "#4CAF50"

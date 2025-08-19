@@ -28,8 +28,8 @@ A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Ta
 # Clone and setup everything automatically
 git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
 cd mcp-multiplayer-game
-chmod +x launch.sh
-./launch.sh
+chmod +x quickstart.sh
+./quickstart.sh
 ```
 
 **Access the game**: http://localhost:8501
@@ -54,9 +54,9 @@ ollama pull llama3:latest
 python run_app.py
 ```
 
-### 🎮 **What the Launch Script Does**
+### 🎮 **What the Quickstart Script Does**
 
-The `launch.sh` script automatically:
+The `quickstart.sh` script automatically:
 - ✅ **Process cleanup** - Kills existing processes on ports 8000/8501
 - ✅ **Environment setup** - Creates venv and installs dependencies
 - ✅ **Python version checking** - Validates Python 3.11+
@@ -70,19 +70,42 @@ The `launch.sh` script automatically:
 
 ```bash
 # Full setup and launch (default)
-./launch.sh
+./quickstart.sh
 
 # Launch only (skip setup, venv must exist)
-./launch.sh --skip-setup
+./quickstart.sh --skip-setup
 
 # Setup and launch without cleanup
-./launch.sh --skip-cleanup
+./quickstart.sh --skip-cleanup
 
 # Show help
-./launch.sh --help
+./quickstart.sh --help
 ```
 
 📖 **[Complete Setup Guide](QUICKSTART.md)** - Detailed instructions and troubleshooting
+
+## 🔑 API Keys Setup
+
+To use the AI agents, you'll need API keys for the LLM providers:
+
+### **OpenAI API Key** (Required for Scout Agent)
+1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign in or create an account
+3. Click "Create new secret key"
+4. Copy the key (starts with `sk-`)
+5. Add to your `.env` file: `OPENAI_API_KEY=sk-your-key-here`
+
+### **Anthropic API Key** (Required for Strategist Agent)
+1. Visit [Anthropic Console](https://console.anthropic.com/)
+2. Sign in or create an account
+3. Click "Create Key"
+4. Copy the key (starts with `sk-ant-`)
+5. Add to your `.env` file: `ANTHROPIC_API_KEY=sk-ant-your-key-here`
+
+### **Local Models** (Optional - for Executor Agent)
+- Install [Ollama](https://ollama.ai/) for local model support
+- Pull models: `ollama pull llama2:7b mistral:latest`
+- No API keys required for local models
 
 ---
 
@@ -411,22 +434,6 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 ## 📄 License
 
 This project is licensed under the **Apache License, Version 2.0** - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-- **Issues**: Create an issue in the repository
-- **Documentation**: Check `/docs` for API documentation
-- **Debugging**: Review MCP logs for troubleshooting
-
----
 
 **Happy Gaming! 🎮**
 
