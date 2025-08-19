@@ -3,7 +3,7 @@ Scout Agent Module
 Observes the current game state and provides intelligence to other agents
 """
 import os
-from .base_agent import Agent
+from crewai import Agent
 from models.factory import ModelFactory
 from models.registry import model_registry
 from schemas.observation import Observation

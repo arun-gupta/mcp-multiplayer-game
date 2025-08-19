@@ -4,7 +4,7 @@ Executes strategic plans for Tic Tac Toe moves
 """
 import os
 import time
-from .base_agent import Agent
+from crewai import Agent
 from models.factory import ModelFactory
 from models.registry import model_registry
 from schemas.plan import Plan

@@ -24,6 +24,7 @@ def test_imports() -> Dict[str, bool]:
     required_modules = [
         "fastapi",
         "uvicorn",
+        "crewai",
         "pydantic",
         "langchain",
         "langchain_openai",
