@@ -433,8 +433,4 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 
 ## 📄 License
 
-This project is licensed under the **Apache License, Version 2.0** - see the [LICENSE](LICENSE) file for details.
-
-**Happy Gaming! 🎮**
-
-*Experience the power of multi-agent collaboration with hot-swappable models!* 
+This project is licensed under the **Apache License, Version 2.0** - see the [LICENSE](LICENSE) file for details. 
