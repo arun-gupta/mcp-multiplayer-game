@@ -109,10 +109,12 @@ def test_agent_creation() -> Dict[str, bool]:
     
     try:
         from agents.scout import ScoutAgent
+        from game.state import TicTacToeGameState
         
+        game_state = TicTacToeGameState()
         # Note: This will fail if OpenAI API key is not set, but that's expected
         try:
-            scout = ScoutAgent()
+            scout = ScoutAgent(game_state)
             print("✅ ScoutAgent (created)")
             results["ScoutAgent"] = True
         except Exception as e:
@@ -128,9 +130,12 @@ def test_agent_creation() -> Dict[str, bool]:
     
     try:
         from agents.strategist import StrategistAgent
+        from game.state import TicTacToeGameState
+        
+        game_state = TicTacToeGameState()
         # Note: This will fail if Anthropic API key is not set, but that's expected
         try:
-            strategist = StrategistAgent()
+            strategist = StrategistAgent(game_state)
             print("✅ StrategistAgent (created)")
             results["StrategistAgent"] = True
         except Exception as e:
@@ -146,10 +151,12 @@ def test_agent_creation() -> Dict[str, bool]:
     
     try:
         from agents.executor import ExecutorAgent
+        from game.state import TicTacToeGameState
         
+        game_state = TicTacToeGameState()
         # Note: This will fail if Ollama is not running, but that's expected
         try:
-            executor = ExecutorAgent()
+            executor = ExecutorAgent(game_state)
             print("✅ ExecutorAgent (created)")
             results["ExecutorAgent"] = True
         except Exception as e:
@@ -218,19 +225,19 @@ def run_basic_game_test():
         game_state = TicTacToeGameState()
         
         # Test game board
-        board = game_state.get_board()
+        board = game_state.board
         print(f"✅ Game board created: {len(board)}x{len(board[0])}")
         
-        # Test game status
-        status = game_state.get_game_status()
-        print(f"✅ Game status: {status}")
+        # Test available moves
+        available_moves = game_state.get_available_moves()
+        print(f"✅ Available moves: {len(available_moves)}")
         
-        # Test move validation
-        is_valid = game_state.is_valid_move(0, 0)
-        print(f"✅ Move validation: {is_valid}")
+        # Test making a move
+        success = game_state.make_move(0, 0, "player")
+        print(f"✅ Move made: {success}")
         
         # Test game reset
-        game_state.reset_game()
+        game_state.initialize_new_game()
         print("✅ Game reset successful")
         
         print("✅ Basic game test completed successfully!")
