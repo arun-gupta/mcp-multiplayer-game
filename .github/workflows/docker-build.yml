@@ -29,7 +29,14 @@ jobs:
         driver-opts: |
           image=moby/buildkit:v0.13.0
 
-    # Docker Hub login removed - building locally only
+    - name: Log in to Docker Hub
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        logout: true
 
     - name: Extract metadata
       id: meta
@@ -48,15 +55,17 @@ jobs:
       timeout-minutes: 10
       with:
         context: .
-        push: false
+        push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         # Use multiple cache sources for better performance
         cache-from: |
           type=gha
+          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
           type=gha,scope=deps
         cache-to: |
           type=gha,mode=max
+          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
           type=gha,mode=max,scope=deps
         platforms: linux/amd64
         build-args: |
@@ -71,6 +80,6 @@ jobs:
     steps:
     - name: Deploy notification
       run: |
-        echo "✅ Docker image built and tested successfully!"
-        echo "Build completed without Docker Hub push"
-        echo "To deploy, create Docker Hub repository and update workflow"
+        echo "🚀 Docker image deployed successfully!"
+        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
