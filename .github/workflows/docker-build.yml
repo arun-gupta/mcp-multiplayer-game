@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: arun-gupta/mcp-multiplayer-game
+  IMAGE_NAME: arungupta/mcp-multiplayer-game
 
 jobs:
   test-and-build:

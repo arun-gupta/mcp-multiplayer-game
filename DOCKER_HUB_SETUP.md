@@ -8,7 +8,7 @@
 2. **Sign in** with your account
 3. **Create Repository**:
    - Click "Create Repository"
-   - Name: `mcp-multiplayer-game`
+   - Name: `mcp-multiplayer-game` (or match your preference)
    - Visibility: Public or Private
    - Description: "Multi-Agent Game Simulation with MCP Protocol"
 
@@ -38,7 +38,7 @@ The access token needs these permissions:
 ## 🚀 Benefits of Docker Hub Push
 
 ### **Deployment Ready**
-- **Pull anywhere**: `docker pull arun-gupta/mcp-multiplayer-game`
+- **Pull anywhere**: `docker pull arungupta/mcp-multiplayer-game`
 - **Cloud deployment**: Works on AWS, GCP, Azure, etc.
 - **Easy sharing**: Others can run your app
 
