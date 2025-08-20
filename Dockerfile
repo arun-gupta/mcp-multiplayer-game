@@ -5,10 +5,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy requirements first for better caching
-COPY requirements_basic.txt requirements.txt
+# Note: Includes crewai and langchain for full app functionality
+COPY requirements_minimal.txt requirements.txt
 
-# Install Python dependencies directly (skip upgrades)
-RUN pip install --no-cache-dir --only-binary=all --retries 3 --timeout 60 -r requirements.txt
+# Install Python dependencies with optimizations for heavy packages
+# Increased timeout for crewai/langchain installation
+RUN pip install --no-cache-dir --only-binary=all --retries 3 --timeout 120 -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -22,9 +24,13 @@ ENV OPENAI_API_KEY=$OPENAI_API_KEY
 ENV ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
 ENV CI=true
 
-# Run basic tests during build
-RUN echo "🧪 Running basic web framework tests..." && \
-    python test_basic.py || echo "⚠️  Basic tests failed (expected without full dependencies)"
+# Run tests during build (only if API keys are provided)
+RUN if [ -n "$OPENAI_API_KEY" ] && [ -n "$ANTHROPIC_API_KEY" ]; then \
+        echo "🧪 Running tests during build..." && \
+        python test_installation.py; \
+    else \
+        echo "⚠️  Skipping tests (no API keys provided)"; \
+    fi
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash app \
