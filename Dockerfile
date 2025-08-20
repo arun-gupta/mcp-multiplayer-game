@@ -7,18 +7,19 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY requirements_minimal.txt requirements.txt
 
-# Install Python dependencies in a virtual environment
+# Install Python dependencies in a virtual environment with optimized caching
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Upgrade pip and install dependencies
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and install dependencies with better caching
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --compile -r requirements.txt
 
 # Production stage (ARM64 optimized)
 FROM python:3.11-slim as production

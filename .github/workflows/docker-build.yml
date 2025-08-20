@@ -14,6 +14,7 @@ env:
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: write
@@ -58,9 +59,11 @@ jobs:
         cache-from: |
           type=gha
           type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
+          type=gha,scope=deps
         cache-to: |
           type=gha,mode=max
           type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
+          type=gha,mode=max,scope=deps
         platforms: linux/arm64
         build-args: |
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}

@@ -172,9 +172,9 @@ To use the AI agents, you'll need API keys for the LLM providers:
 
 | Provider | Models | Type |
 |----------|--------|------|
-| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 Turbo | ☁️ Cloud |
+| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 Turbo, **GPT-5 Nano**, **GPT-5 Mini** | ☁️ Cloud |
 | **Anthropic** | Claude 3 Sonnet, Claude 3 Haiku | ☁️ Cloud |
-| **Ollama** | Llama2 7B/13B, Llama3 Latest, Mistral 7B | 🖥️ Local |
+| **Ollama** | Llama2 7B/13B, Llama3 Latest, **Llama3.2 3B**, Mistral 7B | 🖥️ Local |
 
 ### 🎯 Use Cases
 

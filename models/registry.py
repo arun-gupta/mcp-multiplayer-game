@@ -168,6 +168,26 @@ class ModelRegistry:
                 max_tokens=4096,
                 temperature=0.1
             ),
+            ModelConfig(
+                name="gpt-5-nano",
+                provider=ModelProvider.OPENAI,
+                model_id="gpt-5-nano",
+                display_name="GPT-5 Nano",
+                description="Ultra-fast and efficient GPT-5 model for lightweight tasks",
+                estimated_cost_per_1k_tokens=0.0005,
+                max_tokens=4096,
+                temperature=0.1
+            ),
+            ModelConfig(
+                name="gpt-5-mini",
+                provider=ModelProvider.OPENAI,
+                model_id="gpt-5-mini",
+                display_name="GPT-5 Mini",
+                description="Compact GPT-5 model with excellent performance and low cost",
+                estimated_cost_per_1k_tokens=0.001,
+                max_tokens=4096,
+                temperature=0.1
+            ),
             
             # Anthropic Models
             ModelConfig(
@@ -275,6 +295,17 @@ class ModelRegistry:
                 model_id="llama3:latest",
                 display_name="Llama3 Latest",
                 description="Latest Llama3 model, excellent performance",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
+            ModelConfig(
+                name="llama3.2-3b",
+                provider=ModelProvider.OLLAMA,
+                model_id="llama3.2:3b",
+                display_name="Llama3.2 3B",
+                description="Llama3.2 3B model, excellent performance and speed",
                 estimated_cost_per_1k_tokens=0.0,
                 max_tokens=4096,
                 temperature=0.1,
