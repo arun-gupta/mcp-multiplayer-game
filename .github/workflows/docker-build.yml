@@ -131,6 +131,8 @@ jobs:
           ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
         # Build only for AMD64 for fastest builds and maximum compatibility
         provenance: false
+        # Suppress cache-related warnings
+        outputs: type=docker,dest=/tmp/image.tar
 
     - name: Build and test Docker image (fallback - GitHub Actions cache only)
       id: build-fallback
@@ -203,6 +205,30 @@ jobs:
           echo "build_success=false" >> $GITHUB_OUTPUT
           echo "build_type=none" >> $GITHUB_OUTPUT
           exit 1
+        fi
+
+    - name: Build summary
+      if: always()
+      run: |
+        echo ""
+        echo "🎯 BUILD SUMMARY"
+        echo "================"
+        echo "Service Status:"
+        echo "  - Docker Hub: ${{ steps.check-dockerhub.outputs.docker_hub_available }}"
+        echo "  - GitHub Actions Cache: ${{ steps.check-dockerhub.outputs.gha_cache_available }}"
+        echo ""
+        echo "Build Results:"
+        echo "  - Full Cache Build: ${{ steps.build-with-cache.outcome }}"
+        echo "  - Fallback Build: ${{ steps.build-fallback.outcome }}"
+        echo "  - Ultimate Build: ${{ steps.build-ultimate.outcome }}"
+        echo ""
+        echo "Final Status: ${{ steps.build-status.outputs.build_success }}"
+        echo "Build Type: ${{ steps.build-status.outputs.build_type }}"
+        echo ""
+        if [ "${{ steps.build-status.outputs.build_success }}" == "true" ]; then
+          echo "✅ BUILD SUCCESSFUL - Image was built successfully!"
+        else
+          echo "❌ BUILD FAILED - All build attempts failed"
         fi
 
   deploy:
