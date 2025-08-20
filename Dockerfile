@@ -1,16 +1,25 @@
-# Single-stage build optimized for ARM64
-FROM python:3.11-slim
+# Multi-stage build with dependency caching
+FROM python:3.11-slim as deps
 
 # Set working directory
 WORKDIR /app
 
 # Copy requirements first for better caching
-# Note: Includes crewai and langchain for full app functionality
-COPY requirements_minimal.txt requirements.txt
+COPY requirements_essential.txt requirements.txt
 
-# Install Python dependencies with optimizations for heavy packages
-# Increased timeout for crewai/langchain installation
-RUN pip install --no-cache-dir --only-binary=all --retries 3 --timeout 120 -r requirements.txt
+# Install Python dependencies with aggressive optimizations
+# This layer will be cached separately for faster rebuilds
+RUN pip install --no-cache-dir --only-binary=all --retries 3 --timeout 180 --prefer-binary -r requirements.txt
+
+# Production stage
+FROM python:3.11-slim as production
+
+# Set working directory
+WORKDIR /app
+
+# Copy installed packages from deps stage
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
 
 # Copy application code
 COPY . .
