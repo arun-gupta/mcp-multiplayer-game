@@ -65,11 +65,11 @@ jobs:
           type=gha,mode=max
           type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
           type=gha,mode=max,scope=deps
-        platforms: linux/arm64
+        platforms: linux/amd64
         build-args: |
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
-        # Build only for ARM64 to reduce build time and eliminate duplicate downloads
+        # Build only for AMD64 for fastest builds and maximum compatibility
 
   deploy:
     needs: test-and-build

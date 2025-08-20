@@ -1,4 +1,4 @@
-# Multi-stage build with dependency caching
+# Multi-stage build optimized for AMD64
 FROM python:3.11-slim as deps
 
 # Set working directory
@@ -11,7 +11,7 @@ COPY requirements_essential.txt requirements.txt
 # This layer will be cached separately for faster rebuilds
 RUN pip install --no-cache-dir --only-binary=all --retries 3 --timeout 180 --prefer-binary -r requirements.txt
 
-# Production stage
+# Production stage (AMD64 optimized)
 FROM python:3.11-slim as production
 
 # Set working directory
