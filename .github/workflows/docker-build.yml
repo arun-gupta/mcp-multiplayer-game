@@ -29,8 +29,21 @@ jobs:
         driver-opts: |
           image=moby/buildkit:v0.13.0
 
-    - name: Log in to Docker Hub
+    - name: Check Docker Hub status
+      id: check-dockerhub
       if: github.event_name != 'pull_request'
+      run: |
+        echo "🔍 Checking Docker Hub status..."
+        if curl -s -f https://registry-1.docker.io/v2/ > /dev/null; then
+          echo "✅ Docker Hub is available"
+          echo "docker_hub_available=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ Docker Hub appears to be unavailable"
+          echo "docker_hub_available=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Log in to Docker Hub
+      if: github.event_name != 'pull_request' && steps.check-dockerhub.outputs.docker_hub_available == 'true'
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
@@ -50,7 +63,33 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=sha,prefix={{branch}}-
 
-    - name: Build and test Docker image
+    - name: Build and test Docker image (with registry cache)
+      id: build-with-cache
+      uses: docker/build-push-action@v5
+      timeout-minutes: 10
+      continue-on-error: true
+      with:
+        context: .
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        # Use GitHub Actions cache as primary, fallback to registry cache
+        cache-from: |
+          type=gha
+          type=gha,scope=deps
+          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
+        cache-to: |
+          type=gha,mode=max
+          type=gha,mode=max,scope=deps
+          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
+        platforms: linux/amd64
+        build-args: |
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+        # Build only for AMD64 for fastest builds and maximum compatibility
+
+    - name: Build and test Docker image (fallback - no registry cache)
+      if: steps.build-with-cache.outcome == 'failure'
       uses: docker/build-push-action@v5
       timeout-minutes: 10
       with:
@@ -58,14 +97,12 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        # Use multiple cache sources for better performance
+        # Use only GitHub Actions cache when registry is unavailable
         cache-from: |
           type=gha
-          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache
           type=gha,scope=deps
         cache-to: |
           type=gha,mode=max
-          type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:cache,mode=max
           type=gha,mode=max,scope=deps
         platforms: linux/amd64
         build-args: |
@@ -80,6 +117,11 @@ jobs:
     steps:
     - name: Deploy notification
       run: |
-        echo "🚀 Docker image deployed successfully!"
+        if [ "${{ steps.build-with-cache.outcome }}" == "success" ]; then
+          echo "🚀 Docker image deployed successfully with registry cache!"
+        else
+          echo "⚠️ Docker image deployed successfully (fallback build - no registry cache)"
+          echo "Note: Docker Hub was unavailable, used GitHub Actions cache only"
+        fi
         echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
         echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
