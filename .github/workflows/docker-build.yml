@@ -43,6 +43,7 @@ jobs:
         fi
 
     - name: Debug Docker Hub authentication
+      id: debug-auth
       if: github.event_name != 'pull_request'
       run: |
         echo "🔍 Debugging Docker Hub authentication..."
@@ -55,21 +56,26 @@ jobs:
           echo "✅ Both username and token are configured"
           
           # Test Docker Hub login
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin || {
+          if echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin; then
+            echo "✅ Docker Hub authentication successful"
+            echo "auth_ok=true" >> $GITHUB_OUTPUT
+          else
             echo "❌ Docker Hub login failed"
             echo "Possible issues:"
             echo "  - Invalid username or token"
             echo "  - Token expired or revoked"
             echo "  - Repository doesn't exist"
             echo "  - Insufficient permissions"
-          }
+            echo "auth_ok=false" >> $GITHUB_OUTPUT
+          fi
         else
           echo "❌ Missing Docker Hub credentials"
           echo "Please configure DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets"
+          echo "auth_ok=false" >> $GITHUB_OUTPUT
         fi
 
     - name: Log in to Docker Hub
-      if: github.event_name != 'pull_request' && steps.check-dockerhub.outputs.docker_hub_available == 'true'
+      if: github.event_name != 'pull_request' && steps.check-dockerhub.outputs.docker_hub_available == 'true' && steps.debug-auth.outputs.auth_ok == 'true'
       uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
@@ -120,7 +126,7 @@ jobs:
       timeout-minutes: 10
       with:
         context: .
-        push: ${{ github.event_name != 'pull_request' }}
+        push: false  # Don't push when Docker Hub is down
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         # Use only GitHub Actions cache when registry is unavailable
@@ -145,9 +151,14 @@ jobs:
       run: |
         if [ "${{ steps.build-with-cache.outcome }}" == "success" ]; then
           echo "🚀 Docker image deployed successfully with registry cache!"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
         else
-          echo "⚠️ Docker image deployed successfully (fallback build - no registry cache)"
+          echo "⚠️ Docker image built successfully (fallback build - no registry cache)"
           echo "Note: Docker Hub was unavailable, used GitHub Actions cache only"
+          echo "Image was built but not pushed due to Docker Hub outage"
+          echo "To deploy when Docker Hub is back:"
+          echo "1. Ensure Docker Hub credentials are configured"
+          echo "2. Create repository: arungupta/mcp-multiplayer-game"
+          echo "3. Trigger a new build"
         fi
-        echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-        echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
