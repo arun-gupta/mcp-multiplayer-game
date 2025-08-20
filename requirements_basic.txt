@@ -1,0 +1,4 @@
+# Basic requirements for web framework only
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+requests>=2.31.0
