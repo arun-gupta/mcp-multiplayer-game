@@ -41,6 +41,16 @@ jobs:
           echo "⚠️ Docker Hub appears to be unavailable"
           echo "docker_hub_available=false" >> $GITHUB_OUTPUT
         fi
+        
+        # Also check GitHub Actions cache availability
+        echo "🔍 Checking GitHub Actions cache status..."
+        if [ -d "$RUNNER_TEMP" ] && [ -w "$RUNNER_TEMP" ]; then
+          echo "✅ GitHub Actions cache appears available"
+          echo "gha_cache_available=true" >> $GITHUB_OUTPUT
+        else
+          echo "⚠️ GitHub Actions cache may be unavailable"
+          echo "gha_cache_available=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Debug Docker Hub authentication
       id: debug-auth
@@ -95,8 +105,9 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=sha,prefix={{branch}}-
 
-    - name: Build and test Docker image (with registry cache)
+    - name: Build and test Docker image (with full cache)
       id: build-with-cache
+      if: steps.check-dockerhub.outputs.docker_hub_available == 'true' && steps.check-dockerhub.outputs.gha_cache_available == 'true'
       uses: docker/build-push-action@v5
       timeout-minutes: 10
       continue-on-error: true
@@ -105,7 +116,7 @@ jobs:
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        # Use GitHub Actions cache as primary, fallback to registry cache
+        # Use full caching when all services are available
         cache-from: |
           type=gha
           type=gha,scope=deps
@@ -119,12 +130,11 @@ jobs:
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
         # Build only for AMD64 for fastest builds and maximum compatibility
-        # Make cache operations optional to handle service outages
         provenance: false
 
-    - name: Build and test Docker image (fallback - no registry cache)
+    - name: Build and test Docker image (fallback - GitHub Actions cache only)
       id: build-fallback
-      if: steps.build-with-cache.outcome == 'failure'
+      if: (steps.build-with-cache.outcome == 'failure' || steps.build-with-cache.outcome == 'skipped') && steps.check-dockerhub.outputs.gha_cache_available == 'true'
       uses: docker/build-push-action@v5
       timeout-minutes: 10
       continue-on-error: true
@@ -145,11 +155,11 @@ jobs:
           OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
         # Build only for AMD64 for fastest builds and maximum compatibility
-        # Make cache operations optional to handle service outages
         provenance: false
 
     - name: Build and test Docker image (ultimate fallback - no cache)
-      if: steps.build-with-cache.outcome == 'failure' && steps.build-fallback.outcome == 'failure'
+      id: build-ultimate
+      if: (steps.build-with-cache.outcome == 'failure' || steps.build-with-cache.outcome == 'skipped') && (steps.build-fallback.outcome == 'failure' || steps.build-fallback.outcome == 'skipped')
       uses: docker/build-push-action@v5
       timeout-minutes: 15
       with:
@@ -166,6 +176,19 @@ jobs:
         # No cache operations to avoid any service dependencies
         provenance: false
 
+    - name: Ensure build completed
+      if: always()
+      run: |
+        echo "🔍 Checking build completion status..."
+        if [ "${{ steps.build-with-cache.outcome }}" == "success" ] || [ "${{ steps.build-fallback.outcome }}" == "success" ] || [ "${{ steps.build-ultimate.outcome }}" == "success" ]; then
+          echo "✅ Build completed successfully"
+          echo "build_success=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ All build attempts failed"
+          echo "build_success=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+
   deploy:
     needs: test-and-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -174,19 +197,19 @@ jobs:
     - name: Deploy notification
       run: |
         if [ "${{ steps.build-with-cache.outcome }}" == "success" ]; then
-          echo "🚀 Docker image deployed successfully with registry cache!"
+          echo "🚀 Docker image deployed successfully with full cache!"
           echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
           echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
         elif [ "${{ steps.build-fallback.outcome }}" == "success" ]; then
-          echo "⚠️ Docker image built successfully (fallback build - GitHub Actions cache only)"
+          echo "⚠️ Docker image built successfully (GitHub Actions cache only)"
           echo "Note: Docker Hub was unavailable, used GitHub Actions cache only"
           echo "Image was built but not pushed due to Docker Hub outage"
           echo "To deploy when Docker Hub is back:"
           echo "1. Ensure Docker Hub credentials are configured"
           echo "2. Create repository: arungupta/mcp-multiplayer-game"
           echo "3. Trigger a new build"
-        else
-          echo "⚠️ Docker image built successfully (ultimate fallback - no cache)"
+        elif [ "${{ steps.build-ultimate.outcome }}" == "success" ]; then
+          echo "⚠️ Docker image built successfully (no cache - ultimate fallback)"
           echo "Note: All cache services were unavailable, built without caching"
           echo "Image was built but not pushed due to service outages"
           echo "Build completed successfully despite service issues"
@@ -194,4 +217,8 @@ jobs:
           echo "1. Ensure Docker Hub credentials are configured"
           echo "2. Create repository: arungupta/mcp-multiplayer-game"
           echo "3. Trigger a new build"
+        else
+          echo "❌ All build attempts failed"
+          echo "Please check the build logs for details"
+          exit 1
         fi
