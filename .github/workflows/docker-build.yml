@@ -50,6 +50,7 @@ jobs:
 
     - name: Build, test and push Docker image
       uses: docker/build-push-action@v5
+      timeout-minutes: 10
       with:
         context: .
         push: ${{ github.event_name != 'pull_request' }}

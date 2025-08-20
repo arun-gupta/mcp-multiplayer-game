@@ -1,33 +1,15 @@
-# Multi-stage build optimized for ARM64
-FROM python:3.11-slim as builder
+# Single-stage build optimized for ARM64
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
-
-# No system dependencies needed - Python base image has everything we need
 
 # Copy requirements first for better caching
 COPY requirements_ultra_minimal.txt requirements.txt
 
-# Install Python dependencies in a virtual environment with optimized caching
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-# Upgrade pip and install dependencies with better caching
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir --only-binary=all -r requirements.txt
-
-# Production stage (ARM64 optimized)
-FROM python:3.11-slim as production
-
-# Set working directory
-WORKDIR /app
-
-# No system dependencies needed
-
-# Copy virtual environment from builder stage
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Install Python dependencies directly with retry logic
+RUN pip install --upgrade pip setuptools wheel --retries 3 --timeout 60 && \
+    pip install --no-cache-dir --only-binary=all --retries 3 --timeout 60 -r requirements.txt
 
 # Copy application code
 COPY . .
