@@ -42,6 +42,32 @@ jobs:
           echo "docker_hub_available=false" >> $GITHUB_OUTPUT
         fi
 
+    - name: Debug Docker Hub authentication
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "🔍 Debugging Docker Hub authentication..."
+        echo "Repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        echo "Username configured: ${{ secrets.DOCKERHUB_USERNAME != '' }}"
+        echo "Token configured: ${{ secrets.DOCKERHUB_TOKEN != '' }}"
+        
+        # Test authentication without revealing credentials
+        if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+          echo "✅ Both username and token are configured"
+          
+          # Test Docker Hub login
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin || {
+            echo "❌ Docker Hub login failed"
+            echo "Possible issues:"
+            echo "  - Invalid username or token"
+            echo "  - Token expired or revoked"
+            echo "  - Repository doesn't exist"
+            echo "  - Insufficient permissions"
+          }
+        else
+          echo "❌ Missing Docker Hub credentials"
+          echo "Please configure DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets"
+        fi
+
     - name: Log in to Docker Hub
       if: github.event_name != 'pull_request' && steps.check-dockerhub.outputs.docker_hub_available == 'true'
       uses: docker/login-action@v3
