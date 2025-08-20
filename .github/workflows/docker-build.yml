@@ -35,6 +35,16 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+        logout: true
+
+    - name: Check Docker Hub repository
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "🔍 Checking Docker Hub repository access..."
+        echo "Repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+        echo "Username: ${{ secrets.DOCKERHUB_USERNAME }}"
+        # Test if we can access the repository
+        curl -s -o /dev/null -w "%{http_code}" "https://hub.docker.com/v2/repositories/${{ secrets.DOCKERHUB_USERNAME }}/mcp-multiplayer-game/" || echo "Repository check failed"
 
     - name: Extract metadata
       id: meta
