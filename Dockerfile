@@ -4,14 +4,10 @@ FROM python:3.11-slim as builder
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+# No system dependencies needed - Python base image has everything we need
 
 # Copy requirements first for better caching
-COPY requirements_minimal.txt requirements.txt
+COPY requirements_ultra_minimal.txt requirements.txt
 
 # Install Python dependencies in a virtual environment with optimized caching
 RUN python -m venv /opt/venv
@@ -19,7 +15,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Upgrade pip and install dependencies with better caching
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir --compile -r requirements.txt
+    pip install --no-cache-dir --only-binary=all -r requirements.txt
 
 # Production stage (ARM64 optimized)
 FROM python:3.11-slim as production
@@ -27,10 +23,7 @@ FROM python:3.11-slim as production
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# No system dependencies needed
 
 # Copy virtual environment from builder stage
 COPY --from=builder /opt/venv /opt/venv
@@ -64,9 +57,9 @@ USER app
 # Expose ports
 EXPOSE 8000 8501
 
-# Health check
+# Health check using Python instead of curl
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
 # Default command
 CMD ["python", "main.py"]
