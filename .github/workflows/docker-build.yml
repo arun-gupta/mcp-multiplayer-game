@@ -177,15 +177,31 @@ jobs:
         provenance: false
 
     - name: Ensure build completed
+      id: build-status
       if: always()
       run: |
         echo "🔍 Checking build completion status..."
-        if [ "${{ steps.build-with-cache.outcome }}" == "success" ] || [ "${{ steps.build-fallback.outcome }}" == "success" ] || [ "${{ steps.build-ultimate.outcome }}" == "success" ]; then
-          echo "✅ Build completed successfully"
+        echo "Build with cache outcome: ${{ steps.build-with-cache.outcome }}"
+        echo "Build fallback outcome: ${{ steps.build-fallback.outcome }}"
+        echo "Build ultimate outcome: ${{ steps.build-ultimate.outcome }}"
+        
+        # Check if any build step succeeded
+        if [ "${{ steps.build-with-cache.outcome }}" == "success" ]; then
+          echo "✅ Build with cache succeeded"
           echo "build_success=true" >> $GITHUB_OUTPUT
+          echo "build_type=cache" >> $GITHUB_OUTPUT
+        elif [ "${{ steps.build-fallback.outcome }}" == "success" ]; then
+          echo "✅ Build fallback succeeded"
+          echo "build_success=true" >> $GITHUB_OUTPUT
+          echo "build_type=fallback" >> $GITHUB_OUTPUT
+        elif [ "${{ steps.build-ultimate.outcome }}" == "success" ]; then
+          echo "✅ Build ultimate succeeded"
+          echo "build_success=true" >> $GITHUB_OUTPUT
+          echo "build_type=ultimate" >> $GITHUB_OUTPUT
         else
           echo "❌ All build attempts failed"
           echo "build_success=false" >> $GITHUB_OUTPUT
+          echo "build_type=none" >> $GITHUB_OUTPUT
           exit 1
         fi
 
@@ -196,27 +212,40 @@ jobs:
     steps:
     - name: Deploy notification
       run: |
-        if [ "${{ steps.build-with-cache.outcome }}" == "success" ]; then
-          echo "🚀 Docker image deployed successfully with full cache!"
-          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
-          echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
-        elif [ "${{ steps.build-fallback.outcome }}" == "success" ]; then
-          echo "⚠️ Docker image built successfully (GitHub Actions cache only)"
-          echo "Note: Docker Hub was unavailable, used GitHub Actions cache only"
-          echo "Image was built but not pushed due to Docker Hub outage"
-          echo "To deploy when Docker Hub is back:"
-          echo "1. Ensure Docker Hub credentials are configured"
-          echo "2. Create repository: arungupta/mcp-multiplayer-game"
-          echo "3. Trigger a new build"
-        elif [ "${{ steps.build-ultimate.outcome }}" == "success" ]; then
-          echo "⚠️ Docker image built successfully (no cache - ultimate fallback)"
-          echo "Note: All cache services were unavailable, built without caching"
-          echo "Image was built but not pushed due to service outages"
-          echo "Build completed successfully despite service issues"
-          echo "To deploy when services are back:"
-          echo "1. Ensure Docker Hub credentials are configured"
-          echo "2. Create repository: arungupta/mcp-multiplayer-game"
-          echo "3. Trigger a new build"
+        echo "🔍 Build status: ${{ steps.build-status.outputs.build_success }}"
+        echo "🔍 Build type: ${{ steps.build-status.outputs.build_type }}"
+        
+        if [ "${{ steps.build-status.outputs.build_success }}" == "true" ]; then
+          case "${{ steps.build-status.outputs.build_type }}" in
+            "cache")
+              echo "🚀 Docker image deployed successfully with full cache!"
+              echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+              echo "Tags: ${{ needs.test-and-build.outputs.tags }}"
+              ;;
+            "fallback")
+              echo "⚠️ Docker image built successfully (GitHub Actions cache only)"
+              echo "Note: Docker Hub was unavailable, used GitHub Actions cache only"
+              echo "Image was built but not pushed due to Docker Hub outage"
+              echo "To deploy when Docker Hub is back:"
+              echo "1. Ensure Docker Hub credentials are configured"
+              echo "2. Create repository: arungupta/mcp-multiplayer-game"
+              echo "3. Trigger a new build"
+              ;;
+            "ultimate")
+              echo "⚠️ Docker image built successfully (no cache - ultimate fallback)"
+              echo "Note: All cache services were unavailable, built without caching"
+              echo "Image was built but not pushed due to service outages"
+              echo "Build completed successfully despite service issues"
+              echo "To deploy when services are back:"
+              echo "1. Ensure Docker Hub credentials are configured"
+              echo "2. Create repository: arungupta/mcp-multiplayer-game"
+              echo "3. Trigger a new build"
+              ;;
+            *)
+              echo "❌ Unknown build type: ${{ steps.build-status.outputs.build_type }}"
+              exit 1
+              ;;
+          esac
         else
           echo "❌ All build attempts failed"
           echo "Please check the build logs for details"
