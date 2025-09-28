@@ -213,103 +213,17 @@ Built on **CrewAI** for sophisticated multi-agent orchestration:
 | **Data Validation** | [Pydantic](https://pydantic.dev/) | Schema validation |
 | **Visualization** | [Streamlit-Agraph](https://github.com/ChrisDelClea/streamlit-agraph) | Interactive graph visualizations |
 
-### 🏗️ Architecture Diagram
+### 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           MCP Protocol Architecture                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
+The system uses **MCP (Multi-Context Protocol)** for distributed communication between CrewAI agents. Each agent runs as both a CrewAI Agent and an MCP Server, enabling modular, scalable deployment.
 
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Scout Agent   │    │ Strategist Agent│    │ Executor Agent  │
-│                 │    │                 │    │                 │
-│ 🤖 CrewAI Agent │    │ 🤖 CrewAI Agent │    │ 🤖 CrewAI Agent │
-│ + MCP Server    │    │ + MCP Server    │    │ + MCP Server    │
-│ (Port 3001)     │    │ (Port 3002)     │    │ (Port 3003)     │
-│                 │    │                 │    │                 │
-│ • LLM Integration│    │ • LLM Integration│    │ • LLM Integration│
-│ • Memory Mgmt   │    │ • Memory Mgmt   │    │ • Memory Mgmt   │
-│ • Tool Execution│    │ • Tool Execution│    │ • Tool Execution│
-│ • MCP Endpoints │    │ • MCP Endpoints │    │ • MCP Endpoints │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │ MCP Protocol          │ MCP Protocol          │ MCP Protocol
-         │ Communication         │ Communication         │ Communication
-         ▼                       ▼                       ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           MCP Game Coordinator                                  │
-│                                                                                 │
-│ • Orchestrates agent communication via MCP protocol                            │
-│ • Manages game state and agent coordination                                     │
-│ • Handles player moves and AI responses                                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              Game State                                         │
-│                                                                                 │
-│ • Tic Tac Toe Board State                                                       │
-│ • Player/AI Move Tracking                                                       │
-│ • Win/Loss Detection                                                            │
-└─────────────────────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                            FastAPI Server                                       │
-│                                                                                 │
-│ • REST API Endpoints (Port 8000)                                               │
-│ • Agent Status & Metrics                                                        │
-│ • Game State Management                                                         │
-│ • MCP Protocol Logging                                                          │
-└─────────────────────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           Streamlit UI                                          │
-│                                                                                 │
-│ • Interactive Game Interface (Port 8501)                                       │
-│ • Real-time Agent Monitoring                                                   │
-│ • MCP Protocol Visualization                                                   │
-│ • Performance Analytics                                                         │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
+**Key Components**:
+- **🤖 MCP Agents**: Scout, Strategist, Executor (Ports 3001-3003)
+- **🌐 FastAPI Server**: Main application server (Port 8000)
+- **🎨 Streamlit UI**: Interactive game interface (Port 8501)
+- **📡 MCP Coordinator**: Orchestrates agent communication
 
-### 🔄 MCP Communication Flow
-
-```
-Player Move → MCP Coordinator → Scout Agent (MCP) → Strategist Agent (MCP) → Executor Agent (MCP) → Game State Update
-     │              │                    │                        │                        │
-     │              │                    │                        │                        │
-     ▼              ▼                    ▼                        ▼                        ▼
-┌─────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ Player  │  │ MCP Game    │  │ Scout MCP   │  │ Strategist  │  │ Executor    │  │ Game State │
-│ Input   │  │ Coordinator │  │ Server      │  │ MCP Server  │  │ MCP Server  │  │ Update     │
-│         │  │             │  │             │  │             │  │             │  │            │
-│ • Click │  │ • Routes    │  │ • Analyzes  │  │ • Creates   │  │ • Executes  │  │ • Board    │
-│ • Move  │  │ • Manages   │  │ • Reports   │  │ • Plans     │  │ • Validates │  │ • Status   │
-│         │  │ • Coordinates│  │ • Patterns  │  │ • Strategy  │  │ • Confirms  │  │ • Winner   │
-└─────────┘  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘
-```
-
-### 🤖 How CrewAI + MCP Work Together
-
-**CrewAI** provides the agent framework capabilities:
-- **🤖 Agent Intelligence**: LLM integration, memory management, tool execution
-- **🧠 Cognitive Abilities**: Reasoning, planning, decision-making
-- **📚 Memory System**: Persistent memory across interactions
-- **🔧 Tool Integration**: Access to external tools and APIs
-
-**MCP (Multi-Context Protocol)** provides the communication layer:
-- **🌐 Distributed Communication**: Agents communicate via standardized MCP protocol
-- **📡 Service Discovery**: Each agent exposes MCP endpoints for interaction
-- **🔄 Protocol Standardization**: Consistent communication format across agents
-- **📊 Monitoring & Debugging**: MCP Inspector integration for protocol debugging
-
-**Combined Benefits**:
-- **🎯 Best of Both Worlds**: CrewAI's intelligence + MCP's distributed communication
-- **🔧 Modularity**: Each agent can be developed and deployed independently
-- **📈 Scalability**: Agents can run on different machines via MCP protocol
-- **🛠️ Debugging**: Rich monitoring and debugging via MCP Inspector
+**📚 [Detailed Architecture Documentation](docs/ARCHITECTURE.md)** - Complete architecture diagrams, communication flows, and component details.
 
 ---
 
@@ -627,54 +541,15 @@ npx @modelcontextprotocol/inspector node agents/executor.py
 - Real-time agent performance tracking
 - Comprehensive logging of agent communications
 
-### **🔧 Development Workflow**
+### 📚 Documentation
 
-1. **Start Development** - Launch MCP agents and coordinator
-2. **Iterative Testing** - Make changes, rebuild, reconnect Inspector
-3. **Edge Case Testing** - Test invalid inputs, concurrent operations
-4. **Production Monitoring** - Use MCP endpoints for monitoring
-
-### **📚 MCP Documentation**
-
+- **[Architecture Documentation](docs/ARCHITECTURE.md)** - Complete architecture diagrams, communication flows, and component details
+- **[Development Guide](docs/DEVELOPMENT.md)** - Development workflow, debugging, and contribution guidelines
 - **[Base MCP Agent](agents/base_mcp_agent.py)** - Base MCP Agent implementation
 - **[MCP Game Coordinator](game/mcp_coordinator.py)** - MCP protocol coordination
 - **[Scout Agent](agents/scout.py)** - Scout MCP Agent implementation
 - **[Strategist Agent](agents/strategist.py)** - Strategist MCP Agent implementation
 - **[Executor Agent](agents/executor.py)** - Executor MCP Agent implementation
-
-### **🔧 Troubleshooting**
-
-#### **Common Issues**
-
-1. **Import Errors** - Ensure all dependencies are installed
-2. **Port Conflicts** - Check if ports 3001-3003 are available
-3. **Model Errors** - Verify API keys for LLM providers
-4. **MCP Communication** - Check agent status endpoints
-
-#### **Debug Commands**
-
-```bash
-# Check agent status
-curl http://localhost:8000/agents/status
-
-# Check health
-curl http://localhost:8000/health
-
-# View MCP logs
-curl http://localhost:8000/mcp-logs
-
-# Test the MCP hybrid system
-python test_mcp_hybrid.py
-```
-
-### **🚀 Next Steps**
-
-1. **Implement Real MCP Protocol** - Replace mock implementation with actual MCP library
-2. **MCP Inspector Integration** - Connect to MCP Inspector for debugging
-3. **Distributed Deployment** - Deploy agents on different machines
-4. **Advanced Monitoring** - Enhanced metrics and monitoring
-5. **Unit Tests** - Comprehensive testing of MCP endpoints
-6. **Documentation** - Complete API documentation
 
 ---
 
