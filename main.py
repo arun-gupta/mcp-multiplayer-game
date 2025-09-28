@@ -1,5 +1,5 @@
 """
-Main FastAPI Application with MCP Hybrid Architecture
+Main FastAPI Application with MCP Protocol
 Multi-Agent Game Simulation using CrewAI + MCP
 """
 from fastapi import FastAPI, HTTPException
@@ -217,7 +217,7 @@ async def health_check():
     return {
         "status": "healthy",
         "version": "2.0.0",
-        "architecture": "MCP + CrewAI Hybrid",
+        "architecture": "MCP + CrewAI Protocol",
         "agents": {
             "scout": scout_agent is not None,
             "strategist": strategist_agent is not None,

@@ -1,6 +1,6 @@
 """
-Test script for MCP Hybrid Architecture
-Tests the new CrewAI + MCP hybrid agents
+Test script for MCP Protocol Architecture
+Tests the new CrewAI + MCP agents
 """
 import asyncio
 import sys
@@ -16,8 +16,8 @@ from game.mcp_coordinator import MCPGameCoordinator
 
 
 async def test_mcp_agents():
-    """Test the MCP hybrid agents"""
-    print("🧪 Testing MCP Hybrid Architecture...")
+    """Test the MCP agents"""
+    print("🧪 Testing MCP Protocol Architecture...")
     
     try:
         # Test Scout Agent
@@ -62,7 +62,7 @@ async def test_mcp_agents():
         status = coordinator.get_agent_status()
         print(f"✅ Coordinator status: {status.get('coordinator_status', 'unknown')}")
         
-        print("\n🎉 All MCP Hybrid tests passed!")
+        print("\n🎉 All MCP Protocol tests passed!")
         return True
         
     except Exception as e:
@@ -118,7 +118,7 @@ async def test_agent_communication():
 
 async def main():
     """Main test function"""
-    print("🚀 Starting MCP Hybrid Architecture Tests")
+    print("🚀 Starting MCP Protocol Architecture Tests")
     print("=" * 50)
     
     # Test individual agents
@@ -129,7 +129,7 @@ async def main():
     
     print("\n" + "=" * 50)
     if agents_ok and communication_ok:
-        print("🎉 All tests passed! MCP Hybrid Architecture is working.")
+        print("🎉 All tests passed! MCP Protocol Architecture is working.")
         print("\nNext steps:")
         print("1. Run: python main.py")
         print("2. Test the API endpoints")

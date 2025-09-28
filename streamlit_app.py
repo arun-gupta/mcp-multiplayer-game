@@ -1,6 +1,6 @@
 """
 Streamlit MCP App
-Streamlit dashboard for MCP Hybrid Architecture
+Streamlit dashboard for MCP Protocol
 """
 import streamlit as st
 import requests
