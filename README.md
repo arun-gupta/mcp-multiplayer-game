@@ -97,7 +97,7 @@ The `quickstart.sh` script automatically:
 - **[🐳 Docker Deployment](docs/DOCKER_README.md)** - Containerized deployment options
 - **[⚡ GitHub Actions CI/CD](docs/GITHUB_ACTIONS_SETUP.md)** - Automated testing and deployment
 
-### **📚 Documentation**
+### **📚 Reference Documentation**
 - **[🏗️ Architecture](docs/ARCHITECTURE.md)** - System architecture and design
 - **[📡 API Reference](docs/API.md)** - Complete API documentation and examples
 - **[🎮 User Guide](docs/USER_GUIDE.md)** - Game experience and setup instructions
@@ -120,21 +120,15 @@ To use the AI agents, you'll need API keys for the LLM providers. See the **[Use
 
 The system uses **MCP (Multi-Context Protocol)** for distributed communication between CrewAI agents. Each agent runs as both a CrewAI Agent and an MCP Server, enabling modular, scalable deployment.
 
-**Key Components**:
+### **Key Components**
 - **🤖 MCP Agents**: Scout, Strategist, Executor (Ports 3001-3003)
 - **🌐 FastAPI Server**: Main application server (Port 8000)
 - **🎨 Streamlit UI**: Interactive game interface (Port 8501)
 - **📡 MCP Coordinator**: Orchestrates agent communication
 
-**📚 [Detailed Architecture Documentation](docs/ARCHITECTURE.md)** - Complete architecture diagrams, communication flows, and component details.
+### **API Endpoints**
 
----
-
-## 📡 API Architecture
-
-The system has **two types of endpoints**:
-
-### 🌐 **FastAPI Server Endpoints** (Port 8000)
+#### 🌐 **FastAPI Server Endpoints** (Port 8000)
 *Main application server that coordinates everything*
 
 | Endpoint | Method | Description |
@@ -149,12 +143,12 @@ The system has **two types of endpoints**:
 | `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
 | `/health` | GET | Health check |
 
-### 🤖 **MCP Agent Server Tools** (Ports 3001-3003)
+#### 🤖 **MCP Agent Server Tools** (Ports 3001-3003)
 *Individual agent MCP servers exposing tools for direct communication*
 
 > **📝 MCP Tools**: These are **tools** (actions/operations) that agents can perform, representing capabilities like "analyze", "create", "execute".
 
-**📚 [Complete API Documentation](docs/API.md)** - Detailed API reference with examples and MCP protocol details.
+**📚 [Complete Architecture & API Documentation](docs/ARCHITECTURE.md)** - Detailed architecture diagrams, communication flows, and complete API reference.
 
 ---
 
@@ -163,12 +157,6 @@ The system has **two types of endpoints**:
 The Streamlit dashboard provides comprehensive monitoring with real-time analytics, performance tracking, and MCP protocol logging.
 
 **📚 [Features Documentation](docs/FEATURES.md)** - Detailed monitoring capabilities, analytics, and feature status.
-
----
-
-## 🛠️ Development
-
-**📚 [Development Guide](docs/DEVELOPMENT.md)** - Complete development workflow, project structure, and contribution guidelines.
 
 ---
 
