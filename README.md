@@ -335,7 +335,7 @@ The system has **two types of endpoints**:
 ### 🤖 **MCP Agent Server Tools** (Ports 3001-3003)
 *Individual agent MCP servers exposing tools for direct communication*
 
-> **📝 MCP Tools vs Resources**: These are **tools** (actions/operations) that agents can perform, not **resources** (data/content) they can access. Tools represent capabilities like "analyze", "create", "execute", while resources would be data like game state, logs, or configuration files.
+> **📝 MCP Tools**: These are **tools** (actions/operations) that agents can perform, representing capabilities like "analyze", "create", "execute".
 
 #### **Scout Agent** (Port 3001)
 | Tool | Description |
