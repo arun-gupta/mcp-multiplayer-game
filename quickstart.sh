@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# MCP Multiplayer Game - Unified Launch Script
-# Combines environment setup, process cleanup, and application startup
+# MCP Multiplayer Game - MCP Hybrid Architecture Launcher
+# CrewAI + MCP hybrid agents with distributed communication
 
 set -e  # Exit on any error
 
@@ -29,8 +29,10 @@ print_info() {
     echo -e "${BLUE}ℹ️${NC} $1"
 }
 
-echo "🎮 MCP Multiplayer Game - Unified Launcher"
-echo "=========================================="
+echo "🎮 MCP Multiplayer Game - MCP Hybrid Architecture"
+echo "================================================"
+echo "🤖 CrewAI + MCP hybrid agents with distributed communication"
+echo ""
 
 # Function to kill processes on a specific port
 kill_port() {
@@ -163,21 +165,39 @@ validate_environment() {
         exit 1
     fi
     
-    if [ ! -f "run_app.py" ]; then
-        print_error "run_app.py not found!"
+    if [ ! -f "run_streamlit.py" ]; then
+        print_error "run_streamlit.py not found!"
         exit 1
     fi
     
-    print_status "All required files found"
+    print_status "All required MCP hybrid files found"
 }
 
-# Function to start the application
+# Function to start the MCP application
 start_application() {
-    print_info "Starting MCP Multiplayer Game..."
+    print_info "🚀 Starting MCP Hybrid Architecture..."
     echo "=========================================="
+    print_info "🤖 CrewAI + MCP hybrid agents with distributed communication"
+    echo ""
     
-    # Use the Python launcher script
-    python run_app.py
+    print_info "🚀 Starting MCP API server..."
+    python main.py &
+    API_PID=$!
+    
+    # Wait for API to start
+    print_info "⏳ Waiting for MCP API to start..."
+    sleep 5
+    
+    # Check if API is running
+    if curl -s http://localhost:8000/health > /dev/null; then
+        print_status "✅ MCP API is ready!"
+        print_info "🎨 Starting MCP Streamlit UI..."
+        python run_streamlit.py
+    else
+        print_error "❌ MCP API failed to start"
+        kill $API_PID 2>/dev/null || true
+        exit 1
+    fi
 }
 
 # Main execution function
@@ -199,13 +219,24 @@ main() {
             --help|-h)
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
+                echo "MCP Multiplayer Game - MCP Hybrid Architecture"
+                echo "🤖 CrewAI + MCP hybrid agents with distributed communication"
+                echo ""
                 echo "Options:"
                 echo "  --skip-cleanup    Skip cleaning up existing processes"
                 echo "  --skip-setup      Skip environment setup (assumes venv exists)"
                 echo "  --help, -h        Show this help message"
                 echo ""
+                echo "Architecture:"
+                echo "  MCP Hybrid:      CrewAI + MCP hybrid agents with distributed communication"
+                echo "                   - Scout Agent (MCP Server on port 3001)"
+                echo "                   - Strategist Agent (MCP Server on port 3002)"
+                echo "                   - Executor Agent (MCP Server on port 3003)"
+                echo "                   - FastAPI Coordinator (port 8000)"
+                echo "                   - Streamlit UI (port 8501)"
+                echo ""
                 echo "Examples:"
-                echo "  $0                # Full setup and launch"
+                echo "  $0                # Full setup and launch MCP hybrid system"
                 echo "  $0 --skip-setup   # Launch only (venv must exist)"
                 echo "  $0 --skip-cleanup # Setup and launch without cleanup"
                 exit 0
@@ -256,4 +287,4 @@ main() {
 trap 'echo ""; print_warning "Interrupted by user"; exit 1' INT
 
 # Run main function
-main "$@" 
+main "$@"

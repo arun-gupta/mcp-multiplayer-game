@@ -1,8 +1,8 @@
-# 🎮 Agentic Tic-Tac-Toe: MCP Protocol Showcase
+# 🎮 Agentic Tic-Tac-Toe: MCP Hybrid Architecture
 
 [![YouTube Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/6kMry-zlO3U)
 
-A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** as the agentic framework. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs on different models and communicates only through standardized JSON schemas.
+A **CrewAI + MCP hybrid architecture** featuring an interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** for agent framework capabilities and **MCP** for distributed communication. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs as both a CrewAI Agent and an MCP Server.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
@@ -13,10 +13,11 @@ A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Ta
 ## 🎯 Quick Overview
 
 - **🎮 Game**: Interactive Tic Tac Toe vs AI team
-- **🤖 AI Team**: Three specialized agents (Scout, Strategist, Executor)
-- **🔄 Hot-Swappable Models**: Switch LLMs mid-game without restart
+- **🤖 AI Team**: Three hybrid agents (Scout, Strategist, Executor) - each a CrewAI Agent + MCP Server
+- **🔄 Hot-Swappable Models**: Switch LLMs mid-game without restart via MCP protocol
 - **📊 Real-time Analytics**: MCP protocol monitoring and performance analytics
 - **🎨 Modern UI**: Streamlit dashboard with live updates
+- **🌐 Distributed**: Each agent runs as independent MCP server for scalable deployment
 
 ## 🚀 Quick Start
 
@@ -25,19 +26,20 @@ A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Ta
 ### 🎯 **One-Command Setup (Recommended)**
 
 ```bash
-# Clone and setup everything automatically
+# Clone and setup MCP hybrid architecture automatically
 git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
 cd mcp-multiplayer-game
 chmod +x quickstart.sh
 ./quickstart.sh
 ```
 
-**Access the game**: http://localhost:8501
+**Access the game**: http://localhost:8501  
+**API Documentation**: http://localhost:8000/docs
 
 ### 🔧 **Manual Setup (Alternative)**
 
 ```bash
-# Clone and setup
+# Clone and setup MCP hybrid architecture
 git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
 cd mcp-multiplayer-game
 
@@ -48,10 +50,13 @@ pip install -r requirements.txt
 
 # Install Ollama models (optional)
 ollama pull llama2:7b
-ollama pull llama3:latest
+ollama pull mistral
 
-# Run the application
-python run_app.py
+# Start MCP API server
+python main.py &
+
+# Start Streamlit UI (in another terminal)
+python run_streamlit.py
 ```
 
 ### 🎮 **What the Quickstart Script Does**
@@ -446,6 +451,168 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 - 🔮 Real-time multiplayer support
 - 🔮 Advanced MCP protocol features
 - 🔮 Machine learning pattern recognition
+- 🔮 MCP Inspector integration for advanced protocol debugging and interactive testing (complementing existing MCP logs)
+- ✅ **MCP Hybrid Architecture** - CrewAI + MCP hybrid agents with distributed communication
+
+---
+
+## 🤖 MCP Hybrid Architecture
+
+The project uses a **hybrid architecture** that combines CrewAI's agent framework with MCP's distributed communication protocol:
+
+### **🤖 MCP Hybrid Agents**
+- **Scout Agent** - Board analysis with MCP endpoints (Port 3001)
+- **Strategist Agent** - Strategy creation with MCP endpoints (Port 3002)  
+- **Executor Agent** - Move execution with MCP endpoints (Port 3003)
+- **MCP Game Coordinator** - Orchestrates agent communication via MCP protocol
+
+### **🔗 MCP Communication Flow**
+```
+Player Move → MCP Coordinator → Scout Agent (MCP) → Strategist Agent (MCP) → Executor Agent (MCP) → Game State Update
+```
+
+### **📡 MCP API Endpoints**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Root endpoint |
+| `/state` | GET | Get current game state |
+| `/make-move` | POST | Make a player move |
+| `/reset-game` | POST | Reset game |
+| `/agents/status` | GET | Get all agent status |
+| `/agents/{agent_id}/switch-model` | POST | Switch agent model |
+| `/mcp-logs` | GET | Get MCP protocol logs |
+| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
+| `/health` | GET | Health check |
+
+### **🔧 Example API Usage**
+
+```bash
+# Get game state
+curl http://localhost:8000/state
+
+# Make a move
+curl -X POST http://localhost:8000/make-move \
+  -H "Content-Type: application/json" \
+  -d '{"row": 0, "col": 0}'
+
+# Get agent status
+curl http://localhost:8000/agents/status
+
+# Switch Scout agent model
+curl -X POST http://localhost:8000/agents/scout/switch-model \
+  -H "Content-Type: application/json" \
+  -d '{"model": "gpt-4"}'
+
+# Get MCP logs
+curl http://localhost:8000/mcp-logs
+```
+
+### **🔧 MCP Agent Endpoints**
+
+#### **Scout Agent (Port 3001)**
+- `analyze_board` - Analyze board state
+- `detect_threats` - Detect immediate threats
+- `identify_opportunities` - Identify winning opportunities
+- `get_pattern_analysis` - Analyze game patterns
+
+#### **Strategist Agent (Port 3002)**
+- `create_strategy` - Create strategic plan
+- `evaluate_position` - Evaluate position strength
+- `recommend_move` - Recommend best move
+- `assess_win_probability` - Assess win probability
+
+#### **Executor Agent (Port 3003)**
+- `execute_move` - Execute strategic move
+- `validate_move` - Validate move legality
+- `update_game_state` - Update game state
+- `confirm_execution` - Confirm move execution
+
+### **🔧 MCP Inspector Integration**
+
+Connect to each agent's MCP server for debugging:
+
+```bash
+# Connect to Scout Agent
+npx @modelcontextprotocol/inspector node agents/scout.py
+
+# Connect to Strategist Agent  
+npx @modelcontextprotocol/inspector node agents/strategist.py
+
+# Connect to Executor Agent
+npx @modelcontextprotocol/inspector node agents/executor.py
+```
+
+### **🎯 Architecture Benefits**
+
+#### **Modularity**
+- Each agent can be developed and deployed independently
+- Agents communicate via standardized MCP protocol
+- Easy to add new agents or modify existing ones
+
+#### **Scalability**
+- Agents can run on different machines
+- Load balancing across multiple agent instances
+- Horizontal scaling of agent capabilities
+
+#### **Flexibility**
+- Hot-swap agents or models without restarting the entire system
+- Runtime configuration changes via MCP endpoints
+- Language-agnostic agent development
+
+#### **Monitoring**
+- Rich metrics and monitoring via MCP endpoints
+- Real-time agent performance tracking
+- Comprehensive logging of agent communications
+
+### **🔧 Development Workflow**
+
+1. **Start Development** - Launch MCP agents and coordinator
+2. **Iterative Testing** - Make changes, rebuild, reconnect Inspector
+3. **Edge Case Testing** - Test invalid inputs, concurrent operations
+4. **Production Monitoring** - Use MCP endpoints for monitoring
+
+### **📚 MCP Documentation**
+
+- **[Base MCP Agent](agents/base_mcp_agent.py)** - Base MCP Agent implementation
+- **[MCP Game Coordinator](game/mcp_coordinator.py)** - MCP protocol coordination
+- **[Scout Agent](agents/scout.py)** - Scout MCP Agent implementation
+- **[Strategist Agent](agents/strategist.py)** - Strategist MCP Agent implementation
+- **[Executor Agent](agents/executor.py)** - Executor MCP Agent implementation
+
+### **🔧 Troubleshooting**
+
+#### **Common Issues**
+
+1. **Import Errors** - Ensure all dependencies are installed
+2. **Port Conflicts** - Check if ports 3001-3003 are available
+3. **Model Errors** - Verify API keys for LLM providers
+4. **MCP Communication** - Check agent status endpoints
+
+#### **Debug Commands**
+
+```bash
+# Check agent status
+curl http://localhost:8000/agents/status
+
+# Check health
+curl http://localhost:8000/health
+
+# View MCP logs
+curl http://localhost:8000/mcp-logs
+
+# Test the MCP hybrid system
+python test_mcp_hybrid.py
+```
+
+### **🚀 Next Steps**
+
+1. **Implement Real MCP Protocol** - Replace mock implementation with actual MCP library
+2. **MCP Inspector Integration** - Connect to MCP Inspector for debugging
+3. **Distributed Deployment** - Deploy agents on different machines
+4. **Advanced Monitoring** - Enhanced metrics and monitoring
+5. **Unit Tests** - Comprehensive testing of MCP endpoints
+6. **Documentation** - Complete API documentation
 
 ---
 

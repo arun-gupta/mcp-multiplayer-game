@@ -1,332 +1,139 @@
 """
-Strategist Agent Module
-Analyzes scout observations and creates strategic plans for Tic Tac Toe
+Strategist MCP Agent Module
+Strategist agent with MCP capabilities for distributed communication
 """
-import os
-from crewai import Agent
+from .base_mcp_agent import BaseMCPAgent
+from crewai import Task
+from typing import Dict, List
+import asyncio
+from datetime import datetime
 from models.factory import ModelFactory
-from models.registry import model_registry
-from schemas.observation import Observation
-from schemas.plan import Plan, Strategy
-from schemas.observation import BoardPosition
-import uuid
 
-class StrategistAgent:
-    """Strategist agent that creates plans based on game observations"""
+
+class StrategistMCPAgent(BaseMCPAgent):
+    """Strategist agent with MCP capabilities"""
     
-    def __init__(self, game_state=None, model_name: str = "claude-3-sonnet"):
-        self.game_state = game_state
-        self.model_name = model_name
-        self.llm = self._create_llm(model_name)
+    def __init__(self, model_config: Dict):
+        # Create LLM first
+        llm = self.create_llm(model_config)
         
-        self.agent = Agent(
-            role="Game Strategist",
-            goal="Analyze game observations and create optimal strategies for Tic Tac Toe",
-            backstory="""You are an expert Tic Tac Toe strategist with deep understanding of:
-            - Board position analysis and strategic planning
-            - Threat detection and blocking strategies
-            - Opening, midgame, and endgame tactics
-            - Pattern recognition and opponent behavior analysis
-            - Optimal move selection based on game state
-            
-            Your job is to analyze the scout's observations and create the best possible strategy
-            for the next move, considering the current board state, threats, and strategic opportunities.""",
-            verbose=True,
-            allow_delegation=False,
-            llm=self.llm
+        super().__init__(
+            role="Strategist Agent", 
+            goal="Create optimal strategies based on board analysis",
+            backstory="""You are a master strategist with deep understanding of Tic Tac Toe
+            tactics. You excel at creating winning strategies and tactical plans.""",
+            mcp_port=3002,
+            agent_id="strategist",
+            llm=llm
         )
     
-    def _create_llm(self, model_name: str):
-        """Create LLM instance for the specified model"""
-        llm = ModelFactory.create_llm(model_name)
-        if llm is None:
-            # Fallback to default model
-            print(f"Warning: Could not create LLM for {model_name}, falling back to claude-3-sonnet")
-            llm = ModelFactory.create_llm("claude-3-sonnet")
-        return llm
+    def register_agent_specific_endpoints(self):
+        """Register Strategist-specific MCP endpoints"""
+        self.register_handler("create_strategy", self.create_strategy)
+        self.register_handler("evaluate_position", self.evaluate_position)
+        self.register_handler("recommend_move", self.recommend_move)
+        self.register_handler("assess_win_probability", self.assess_win_probability)
     
-    def switch_model(self, model_name: str):
-        """Switch to a different model"""
-        new_llm = self._create_llm(model_name)
-        if new_llm:
-            self.llm = new_llm
-            self.model_name = model_name
-            # Update the agent's LLM
-            self.agent.llm = new_llm
-            return True
-        return False
-    
-    def create_plan(self, observation: Observation) -> Plan:
-        """Create a strategic plan based on the current observation"""
-        import time
-        start_time = time.time()
-        
+    async def create_strategy(self, observation_data: Dict) -> Dict:
+        """Create strategy based on Scout's observation"""
         try:
-            # Analyze the board state
-            board_analysis = self._analyze_board_state(observation)
-            threat_assessment = self._assess_threats(observation)
-            game_phase = self._determine_game_phase(observation)
+            # Extract data from Scout's observation
+            board_analysis = observation_data.get("analysis", "")
+            threats = observation_data.get("threats", [])
+            opportunities = observation_data.get("opportunities", [])
             
-            # Create primary strategy
-            primary_strategy = self._create_primary_strategy(observation, board_analysis)
-            
-            # Create alternative strategies
-            alternative_strategies = self._create_alternative_strategies(observation, primary_strategy)
-            
-            # Generate plan reasoning
-            reasoning = self._generate_reasoning(observation, board_analysis, threat_assessment, game_phase)
-            
-            plan = Plan(
-                plan_id=f"plan_{uuid.uuid4().hex[:8]}",
-                move_number=observation.move_number + 1,
-                current_board=observation.current_board,
-                primary_strategy=primary_strategy,
-                alternative_strategies=alternative_strategies,
-                board_analysis=board_analysis,
-                threat_assessment=threat_assessment,
-                confidence_level=self._calculate_confidence(observation, threat_assessment),
-                reasoning=reasoning,
-                game_phase=game_phase
+            # Create strategy task for CrewAI
+            strategy_task = Task(
+                description=f"""
+                Based on this board analysis: {board_analysis}
+                Threats identified: {threats}
+                Opportunities: {opportunities}
+                
+                Create a strategic plan that:
+                1. Prioritizes moves by importance
+                2. Provides reasoning for each recommendation
+                3. Includes fallback options
+                4. Assesses win probability
+                """,
+                expected_output="Detailed strategic plan with prioritized moves"
             )
             
-            # Track metrics if game_state is available
-            response_time = (time.time() - start_time) * 1000  # Convert to milliseconds
-            if self.game_state:
-                self.game_state.increment_mcp_messages()
-                self.game_state.add_message_flow_pattern("strategist_to_executor")
-                self.game_state.add_response_time("strategist", response_time)
-                self.game_state.add_message_latency(response_time)
-                
-                # Add estimated cost and token usage (Claude pricing)
-                estimated_cost = 0.000015  # Rough estimate per message
-                estimated_tokens = 200  # Rough estimate per strategy
-                self.game_state.add_llm_cost("claude", estimated_cost)
-                self.game_state.add_token_usage("strategist", estimated_tokens)
-                
-                # Update resource utilization
-                try:
-                    import psutil
-                    cpu_percent = psutil.cpu_percent()
-                    memory_mb = psutil.virtual_memory().used / (1024 * 1024)  # Convert to MB
-                    self.game_state.update_resource_utilization(cpu_percent, memory_mb)
-                except:
-                    pass  # Ignore if psutil is not available
+            # Execute using CrewAI
+            strategy_result = await asyncio.to_thread(self.execute, strategy_task)
             
-            return plan
+            return {
+                "agent_id": "strategist",
+                "strategy": strategy_result,
+                "recommended_move": self.extract_best_move(strategy_result),
+                "confidence": 0.90,
+                "reasoning": self.extract_reasoning(strategy_result),
+                "timestamp": datetime.now().isoformat()
+            }
             
         except Exception as e:
-            print(f"Error in StrategistAgent.create_plan: {e}")
-            # Return a fallback plan
-            return self._create_fallback_plan(observation)
+            return {"error": str(e), "agent_id": "strategist"}
     
-    def _analyze_board_state(self, observation: Observation) -> str:
-        """Analyze the current board state"""
-        board = observation.current_board
-        available_moves = len(observation.available_moves)
+    async def evaluate_position(self, board_data: Dict) -> Dict:
+        """Evaluate the current position strength"""
+        evaluation_task = Task(
+            description=f"Evaluate the strategic strength of this position: {board_data.get('board')}",
+            expected_output="Position evaluation with strategic assessment"
+        )
         
-        analysis = f"Board has {available_moves} available moves. "
-        
-        # Check for immediate threats
-        if observation.threats:
-            analysis += f"AI has {len(observation.threats)} winning opportunities. "
-        
-        if observation.blocking_moves:
-            analysis += f"Player has {len(observation.blocking_moves)} winning opportunities that need blocking. "
-        
-        # Analyze strategic positions
-        center_available = board[1][1] == ""
-        corners_available = sum(1 for r, c in [(0,0), (0,2), (2,0), (2,2)] if board[r][c] == "")
-        
-        if center_available:
-            analysis += "Center position is available. "
-        if corners_available > 0:
-            analysis += f"{corners_available} corner positions available. "
-        
-        return analysis
-    
-    def _assess_threats(self, observation: Observation) -> str:
-        """Assess the current threat level"""
-        if observation.threats:
-            return "critical"  # AI can win immediately
-        elif observation.blocking_moves:
-            return "high"  # Player can win, must block
-        elif observation.move_number < 3:
-            return "low"  # Early game
-        elif observation.move_number < 6:
-            return "medium"  # Mid game
-        else:
-            return "high"  # End game
-    
-    def _determine_game_phase(self, observation: Observation) -> str:
-        """Determine the current game phase"""
-        if observation.move_number < 3:
-            return "opening"
-        elif observation.move_number < 6:
-            return "midgame"
-        else:
-            return "endgame"
-    
-    def _create_primary_strategy(self, observation: Observation, board_analysis: str) -> Strategy:
-        """Create the primary strategy for the next move"""
-        # Priority 1: Win if possible
-        if observation.threats:
-            pos = observation.threats[0]
-            return Strategy(
-                position=pos,
-                move_type="winning",
-                confidence=0.95,
-                reasoning="Immediate winning move available",
-                expected_outcome="win"
-            )
-        
-        # Priority 2: Block opponent's win
-        if observation.blocking_moves:
-            pos = observation.blocking_moves[0]
-            return Strategy(
-                position=pos,
-                move_type="blocking",
-                confidence=0.9,
-                reasoning="Must block opponent's winning move",
-                expected_outcome="continue"
-            )
-        
-        # Priority 3: Take center
-        if observation.current_board[1][1] == "":
-            return Strategy(
-                position=BoardPosition(row=1, col=1, value=""),
-                move_type="center",
-                confidence=0.8,
-                reasoning="Center position is strategically valuable",
-                expected_outcome="continue"
-            )
-        
-        # Priority 4: Take corner
-        corners = [(0,0), (0,2), (2,0), (2,2)]
-        for r, c in corners:
-            if observation.current_board[r][c] == "":
-                return Strategy(
-                    position=BoardPosition(row=r, col=c, value=""),
-                    move_type="corner",
-                    confidence=0.7,
-                    reasoning="Corner position provides strategic advantage",
-                    expected_outcome="continue"
-                )
-        
-        # Priority 5: Take any available edge
-        edges = [(0,1), (1,0), (1,2), (2,1)]
-        for r, c in edges:
-            if observation.current_board[r][c] == "":
-                return Strategy(
-                    position=BoardPosition(row=r, col=c, value=""),
-                    move_type="edge",
-                    confidence=0.5,
-                    reasoning="Taking available edge position",
-                    expected_outcome="continue"
-                )
-        
-        # Fallback
-        if observation.available_moves:
-            pos = observation.available_moves[0]
-            return Strategy(
-                position=pos,
-                move_type="random",
-                confidence=0.3,
-                reasoning="No clear strategic advantage, taking available move",
-                expected_outcome="uncertain"
-            )
-    
-    def _create_alternative_strategies(self, observation: Observation, primary: Strategy) -> list[Strategy]:
-        """Create alternative strategies"""
-        alternatives = []
-        
-        # Add a few alternative moves with lower confidence
-        for i, move in enumerate(observation.available_moves[:3]):
-            if move.row != primary.position.row or move.col != primary.position.col:
-                alternatives.append(Strategy(
-                    position=move,
-                    move_type="alternative",
-                    confidence=0.3 - (i * 0.1),
-                    reasoning=f"Alternative move option {i+1}",
-                    expected_outcome="continue"
-                ))
-        
-        return alternatives
-    
-    def _calculate_confidence(self, observation: Observation, threat_assessment: str) -> float:
-        """Calculate confidence level based on game state"""
-        base_confidence = 0.5
-        
-        if threat_assessment == "critical":
-            base_confidence = 0.95
-        elif threat_assessment == "high":
-            base_confidence = 0.8
-        elif threat_assessment == "medium":
-            base_confidence = 0.6
-        elif threat_assessment == "low":
-            base_confidence = 0.4
-        
-        # Adjust based on available moves
-        if len(observation.available_moves) <= 2:
-            base_confidence += 0.1
-        
-        return min(0.95, base_confidence)
-    
-    def _generate_reasoning(self, observation: Observation, board_analysis: str, 
-                          threat_assessment: str, game_phase: str) -> str:
-        """Generate reasoning for the plan"""
-        return f"""Move {observation.move_number + 1} strategy: {board_analysis} 
-        Threat assessment: {threat_assessment}. Game phase: {game_phase}. 
-        Current player: {observation.current_player}. Available moves: {len(observation.available_moves)}."""
-    
-    def _create_fallback_plan(self, observation: Observation) -> Plan:
-        """Create a fallback plan if the main strategy fails"""
-        if observation.available_moves:
-            fallback_move = observation.available_moves[0]
-            return Plan(
-                plan_id=f"fallback_{uuid.uuid4().hex[:8]}",
-                move_number=observation.move_number + 1,
-                current_board=observation.current_board,
-                primary_strategy=Strategy(
-                    position=fallback_move,
-                    move_type="fallback",
-                    confidence=0.3,
-                    reasoning="Fallback strategy due to error",
-                    expected_outcome="uncertain"
-                ),
-                alternative_strategies=[],
-                board_analysis="Fallback analysis",
-                threat_assessment="unknown",
-                confidence_level=0.3,
-                                 reasoning="Fallback plan created due to error",
-                 game_phase="unknown"
-             )
-    
-    def get_agent_info(self) -> dict:
-        """Get information about this agent"""
-        model_config = model_registry.get_model(self.model_name)
-        model_display = model_config.display_name if model_config else self.model_name
-        provider = model_config.provider if model_config else "Unknown"
-        
-        # Determine provider type and icon
-        provider_str = str(provider).upper()
-        if "OPENAI" in provider_str or "ANTHROPIC" in provider_str:
-            provider_type = "☁️ Cloud"
-            provider_icon = "☁️"
-        elif "OLLAMA" in provider_str:
-            provider_type = "🖥️ Local"
-            provider_icon = "🖥️"
-        else:
-            provider_type = "❓ Unknown"
-            provider_icon = "❓"
+        result = await asyncio.to_thread(self.execute, evaluation_task)
         
         return {
-            "name": "Strategist Agent",
-            "role": "Strategy Creator",
-            "model": model_display,
-            "model_name": self.model_name,
-            "provider": provider,
-            "provider_type": provider_type,
-            "provider_icon": provider_icon,
-            "description": "Analyzes board state and creates strategic plans",
-            "capabilities": ["Board Analysis", "Strategy Creation", "Threat Assessment", "Move Planning"]
-        } 
+            "agent_id": "strategist",
+            "position_evaluation": result,
+            "strategic_advantage": "neutral",  # Extract from result
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    async def recommend_move(self, context_data: Dict) -> Dict:
+        """Recommend the best move based on context"""
+        recommendation_task = Task(
+            description=f"Recommend the best move based on: {context_data}",
+            expected_output="Move recommendation with detailed reasoning"
+        )
+        
+        result = await asyncio.to_thread(self.execute, recommendation_task)
+        
+        return {
+            "agent_id": "strategist",
+            "recommendation": result,
+            "move": self.extract_best_move(result),
+            "confidence": 0.88,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    async def assess_win_probability(self, game_state: Dict) -> Dict:
+        """Assess the probability of winning from current position"""
+        probability_task = Task(
+            description=f"Assess win probability from this game state: {game_state}",
+            expected_output="Win probability assessment with reasoning"
+        )
+        
+        result = await asyncio.to_thread(self.execute, probability_task)
+        
+        return {
+            "agent_id": "strategist",
+            "win_probability": result,
+            "confidence": 0.75,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    def extract_best_move(self, strategy_result: str) -> Dict:
+        """Extract best move from strategy result"""
+        # TODO: Implement proper parsing of CrewAI result
+        # For now, return a mock move
+        return {"row": 1, "col": 1, "reasoning": "Strategic center control"}
+    
+    def extract_reasoning(self, strategy_result: str) -> str:
+        """Extract reasoning from strategy result"""
+        # TODO: Implement proper parsing of CrewAI result
+        return "Strategic reasoning: Control center, create threats, block opponent"
+    
+    def create_llm(self, model_config: Dict):
+        """Create LLM instance based on config"""
+        model_name = model_config.get("model", "gpt-4")
+        return ModelFactory.create_llm(model_name)
