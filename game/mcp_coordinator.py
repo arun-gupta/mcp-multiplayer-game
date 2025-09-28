@@ -37,13 +37,13 @@ class MCPGameCoordinator:
         """Process player move and orchestrate AI response via MCP"""
         
         # 1. Update game state with player move
-        move_result = self.game_state.make_move(row, col, "X")
-        if not move_result["success"]:
-            return move_result
+        move_success = self.game_state.make_move(row, col, "X")
+        if not move_success:
+            return {"success": False, "error": "Invalid move or game over"}
         
         # 2. Check if game is over
-        if self.game_state.check_winner() or self.game_state.is_board_full():
-            return {"game_over": True, "state": self.game_state.get_board()}
+        if self.game_state._check_winner() or self.game_state.move_number >= 9:
+            return {"game_over": True, "state": self.game_state.board}
         
         # 3. Get AI response via MCP protocol
         ai_move_result = await self.get_ai_move()
@@ -51,8 +51,8 @@ class MCPGameCoordinator:
         return {
             "player_move": {"row": row, "col": col},
             "ai_move": ai_move_result,
-            "board": self.game_state.get_board(),
-            "game_over": self.game_state.check_winner() is not None
+            "board": self.game_state.board,
+            "game_over": self.game_state._check_winner() is not None
         }
     
     async def get_ai_move(self) -> Dict:
