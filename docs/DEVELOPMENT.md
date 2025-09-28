@@ -44,22 +44,33 @@ pip install pytest black flake8 mypy
 
 ```
 mcp-multiplayer-game/
-├── agents/                    # MCP Agent implementations
-│   ├── base_mcp_agent.py     # Base MCP Agent class
-│   ├── scout.py              # Scout Agent (Port 3001)
-│   ├── strategist.py         # Strategist Agent (Port 3002)
-│   └── executor.py           # Executor Agent (Port 3003)
-├── game/                     # Game logic and coordination
-│   ├── mcp_coordinator.py    # MCP Game Coordinator
-│   └── state.py              # Game state management
-├── docs/                     # Documentation
-│   ├── ARCHITECTURE.md       # Architecture documentation
-│   └── DEVELOPMENT.md        # This file
-├── main.py                   # FastAPI application
-├── streamlit_app.py          # Streamlit UI
-├── run_streamlit.py          # Streamlit launcher
-├── test_mcp_hybrid.py        # MCP system tests
-└── quickstart.sh             # Quick start script
+├── main.py                 # FastAPI application
+├── streamlit_app.py        # Streamlit dashboard
+├── run_app.py             # Unified launcher script
+├── requirements.txt       # Python dependencies
+├── README.md             # Main documentation
+├── docs/                  # Documentation
+│   ├── QUICKSTART.md     # Detailed setup guide
+│   ├── README_STREAMLIT.md # Streamlit UI guide
+│   ├── DOCKER_README.md  # Docker deployment guide
+│   ├── GITHUB_ACTIONS_SETUP.md # CI/CD setup guide
+│   ├── ARCHITECTURE.md   # Architecture documentation
+│   ├── DEVELOPMENT.md    # This file
+│   ├── FEATURES.md       # Features documentation
+│   ├── API.md           # API documentation
+│   └── USER_GUIDE.md    # User guide
+├── schemas/              # MCP-style communication schemas
+│   ├── observation.py    # Scout observations
+│   ├── plan.py          # Strategist plans
+│   └── action_result.py # Executor results
+├── agents/              # CrewAI agent implementations
+│   ├── base_mcp_agent.py # Base MCP Agent class
+│   ├── scout.py        # Scout agent
+│   ├── strategist.py   # Strategist agent
+│   └── executor.py     # Executor agent
+└── game/               # Game logic and state
+    ├── mcp_coordinator.py # MCP Game Coordinator
+    └── state.py       # Tic Tac Toe game state management
 ```
 
 ## Development Commands
@@ -67,11 +78,12 @@ mcp-multiplayer-game/
 ### Running the Application
 
 ```bash
-# Start MCP API server
-python main.py
+# Start both backend and frontend
+python run_app.py
 
-# Start Streamlit UI (in another terminal)
-python run_streamlit.py
+# Or start separately
+python main.py          # Backend API (port 8000)
+streamlit run streamlit_app.py  # Frontend (port 8501)
 
 # Or use the quickstart script
 ./quickstart.sh
@@ -80,7 +92,7 @@ python run_streamlit.py
 ### Testing
 
 ```bash
-# Run MCP hybrid system tests
+# Run MCP system tests
 python test_mcp_hybrid.py
 
 # Run specific tests
