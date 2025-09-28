@@ -23,7 +23,7 @@ def start_mcp_api():
     try:
         # Start the MCP API server in the background
         process = subprocess.Popen([
-            sys.executable, "main_mcp.py"
+            sys.executable, "main.py"
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
         # Wait for API to be ready
@@ -63,8 +63,8 @@ def main():
     print("=" * 50)
     
     # Check if we're in the right directory
-    if not Path("main_mcp.py").exists():
-        print("❌ main_mcp.py not found. Please run from the project root directory.")
+    if not Path("main.py").exists():
+        print("❌ main.py not found. Please run from the project root directory.")
         sys.exit(1)
     
     # Check if MCP API is already running

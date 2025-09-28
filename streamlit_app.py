@@ -454,7 +454,7 @@ def main():
             return
     except Exception as e:
         st.error(f"❌ Cannot connect to MCP API: {e}")
-        st.info("Make sure to run: `python main_mcp.py`")
+        st.info("Make sure to run: `python main.py`")
         return
     
     # Create tabs

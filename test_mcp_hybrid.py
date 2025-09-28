@@ -131,7 +131,7 @@ async def main():
     if agents_ok and communication_ok:
         print("🎉 All tests passed! MCP Hybrid Architecture is working.")
         print("\nNext steps:")
-        print("1. Run: python main_mcp.py")
+        print("1. Run: python main.py")
         print("2. Test the API endpoints")
         print("3. Integrate with MCP Inspector")
     else:
