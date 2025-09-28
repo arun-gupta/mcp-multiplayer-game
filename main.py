@@ -32,8 +32,8 @@ from models.factory import ModelFactory
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="MCP CrewAI Tic Tac Toe",
-    description="Multi-Agent Game Simulation using CrewAI + MCP hybrid architecture",
+    title="MCP Protocol Tic Tac Toe",
+    description="Multi-Agent Game Simulation using CrewAI + MCP Protocol",
     version="2.0.0"
 )
 

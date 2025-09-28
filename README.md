@@ -1,8 +1,8 @@
-# 🎮 Agentic Tic-Tac-Toe: MCP Hybrid Architecture
+# 🎮 Agentic Tic-Tac-Toe: MCP Protocol
 
 [![YouTube Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/6kMry-zlO3U)
 
-A **CrewAI + MCP hybrid architecture** featuring an interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** for agent framework capabilities and **MCP** for distributed communication. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs as both a CrewAI Agent and an MCP Server.
+A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** as the agent framework and **MCP** for distributed communication. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs as both a CrewAI Agent and an MCP Server.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
@@ -13,7 +13,7 @@ A **CrewAI + MCP hybrid architecture** featuring an interactive Tic Tac Toe game
 ## 🎯 Quick Overview
 
 - **🎮 Game**: Interactive Tic Tac Toe vs AI team
-- **🤖 AI Team**: Three hybrid agents (Scout, Strategist, Executor) - each a CrewAI Agent + MCP Server
+- **🤖 AI Team**: Three MCP agents (Scout, Strategist, Executor) - each a CrewAI Agent + MCP Server
 - **🔄 Hot-Swappable Models**: Switch LLMs mid-game without restart via MCP protocol
 - **📊 Real-time Analytics**: MCP protocol monitoring and performance analytics
 - **🎨 Modern UI**: Streamlit dashboard with live updates
@@ -456,11 +456,11 @@ streamlit run streamlit_app.py  # Frontend (port 8501)
 
 ---
 
-## 🤖 MCP Hybrid Architecture
+## 🤖 MCP Protocol Architecture
 
-The project uses a **hybrid architecture** that combines CrewAI's agent framework with MCP's distributed communication protocol:
+The project uses **MCP (Multi-Context Protocol)** for distributed communication between CrewAI agents:
 
-### **🤖 MCP Hybrid Agents**
+### **🤖 MCP Agents**
 - **Scout Agent** - Board analysis with MCP endpoints (Port 3001)
 - **Strategist Agent** - Strategy creation with MCP endpoints (Port 3002)  
 - **Executor Agent** - Move execution with MCP endpoints (Port 3003)

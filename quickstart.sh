@@ -29,9 +29,9 @@ print_info() {
     echo -e "${BLUE}ℹ️${NC} $1"
 }
 
-echo "🎮 MCP Multiplayer Game - MCP Hybrid Architecture"
-echo "================================================"
-echo "🤖 CrewAI + MCP hybrid agents with distributed communication"
+echo "🎮 MCP Multiplayer Game - MCP Protocol"
+echo "======================================"
+echo "🤖 CrewAI agents with MCP distributed communication"
 echo ""
 
 # Function to kill processes on a specific port
@@ -219,8 +219,8 @@ main() {
             --help|-h)
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
-                echo "MCP Multiplayer Game - MCP Hybrid Architecture"
-                echo "🤖 CrewAI + MCP hybrid agents with distributed communication"
+                echo "MCP Multiplayer Game - MCP Protocol"
+                echo "🤖 CrewAI agents with MCP distributed communication"
                 echo ""
                 echo "Options:"
                 echo "  --skip-cleanup    Skip cleaning up existing processes"
@@ -228,7 +228,7 @@ main() {
                 echo "  --help, -h        Show this help message"
                 echo ""
                 echo "Architecture:"
-                echo "  MCP Hybrid:      CrewAI + MCP hybrid agents with distributed communication"
+                echo "  MCP Protocol:    CrewAI agents with MCP distributed communication"
                 echo "                   - Scout Agent (MCP Server on port 3001)"
                 echo "                   - Strategist Agent (MCP Server on port 3002)"
                 echo "                   - Executor Agent (MCP Server on port 3003)"
@@ -236,7 +236,7 @@ main() {
                 echo "                   - Streamlit UI (port 8501)"
                 echo ""
                 echo "Examples:"
-                echo "  $0                # Full setup and launch MCP hybrid system"
+                echo "  $0                # Full setup and launch MCP system"
                 echo "  $0 --skip-setup   # Launch only (venv must exist)"
                 echo "  $0 --skip-cleanup # Setup and launch without cleanup"
                 exit 0
