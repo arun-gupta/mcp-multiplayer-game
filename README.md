@@ -332,32 +332,34 @@ The system has **two types of endpoints**:
 | `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
 | `/health` | GET | Health check |
 
-### 🤖 **MCP Agent Server Endpoints** (Ports 3001-3003)
-*Individual agent MCP servers for direct communication*
+### 🤖 **MCP Agent Server Tools** (Ports 3001-3003)
+*Individual agent MCP servers exposing tools for direct communication*
+
+> **📝 MCP Tools vs Resources**: These are **tools** (actions/operations) that agents can perform, not **resources** (data/content) they can access. Tools represent capabilities like "analyze", "create", "execute", while resources would be data like game state, logs, or configuration files.
 
 #### **Scout Agent** (Port 3001)
-| Endpoint | Description |
-|----------|-------------|
-| `analyze_board` | Analyze board state |
-| `detect_threats` | Detect immediate threats |
+| Tool | Description |
+|------|-------------|
+| `analyze_board` | Analyze board state and provide insights |
+| `detect_threats` | Detect immediate threats on the board |
 | `identify_opportunities` | Identify winning opportunities |
-| `get_pattern_analysis` | Analyze game patterns |
+| `get_pattern_analysis` | Analyze game patterns and trends |
 
 #### **Strategist Agent** (Port 3002)
-| Endpoint | Description |
-|----------|-------------|
-| `create_strategy` | Create strategic plan |
-| `evaluate_position` | Evaluate position strength |
-| `recommend_move` | Recommend best move |
-| `assess_win_probability` | Assess win probability |
+| Tool | Description |
+|------|-------------|
+| `create_strategy` | Create strategic plan based on analysis |
+| `evaluate_position` | Evaluate position strength and options |
+| `recommend_move` | Recommend best move with reasoning |
+| `assess_win_probability` | Assess win probability for current position |
 
 #### **Executor Agent** (Port 3003)
-| Endpoint | Description |
-|----------|-------------|
-| `execute_move` | Execute strategic move |
-| `validate_move` | Validate move legality |
-| `update_game_state` | Update game state |
-| `confirm_execution` | Confirm move execution |
+| Tool | Description |
+|------|-------------|
+| `execute_move` | Execute strategic move on the board |
+| `validate_move` | Validate move legality and constraints |
+| `update_game_state` | Update game state after move |
+| `confirm_execution` | Confirm move execution and results |
 
 ### 🔧 **Example Usage**
 
@@ -383,15 +385,15 @@ curl -X POST http://localhost:8000/agents/scout/switch-model \
 curl http://localhost:8000/mcp-logs
 ```
 
-#### **MCP Agent Servers (Direct Communication)**
+#### **MCP Agent Servers (Direct Tool Access)**
 ```bash
-# Connect to Scout Agent via MCP Inspector
+# Connect to Scout Agent via MCP Inspector to access tools
 npx @modelcontextprotocol/inspector node agents/scout.py
 
-# Connect to Strategist Agent via MCP Inspector  
+# Connect to Strategist Agent via MCP Inspector to access tools
 npx @modelcontextprotocol/inspector node agents/strategist.py
 
-# Connect to Executor Agent via MCP Inspector
+# Connect to Executor Agent via MCP Inspector to access tools
 npx @modelcontextprotocol/inspector node agents/executor.py
 ```
 
