@@ -313,46 +313,86 @@ Player Move → MCP Coordinator → Scout Agent (MCP) → Strategist Agent (MCP)
 
 ---
 
-## 📡 API Endpoints
+## 📡 API Architecture
 
-### Core Game Endpoints
+The system has **two types of endpoints**:
+
+### 🌐 **FastAPI Server Endpoints** (Port 8000)
+*Main application server that coordinates everything*
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | Game dashboard with visualization |
-| `/state` | GET | Current game state |
+| `/` | GET | Root endpoint |
+| `/state` | GET | Get current game state |
 | `/make-move` | POST | Make a player move |
-| `/simulate-turn` | POST | Simulate a complete AI turn |
-| `/reset-game` | POST | Reset game to initial state |
+| `/reset-game` | POST | Reset game |
+| `/agents/status` | GET | Get all agent status |
+| `/agents/{agent_id}/switch-model` | POST | Switch agent model |
+| `/mcp-logs` | GET | Get MCP protocol logs |
+| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
+| `/health` | GET | Health check |
 
-### Agent & Model Management
+### 🤖 **MCP Agent Server Endpoints** (Ports 3001-3003)
+*Individual agent MCP servers for direct communication*
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/agents` | GET | Information about all agents |
-| `/models` | GET | Available models for switching |
-| `/switch-model` | POST | Switch agent to different model |
-| `/mcp-logs` | GET | MCP protocol message logs |
-| `/metrics` | GET | Performance analytics and monitoring data |
+#### **Scout Agent** (Port 3001)
+| Endpoint | Description |
+|----------|-------------|
+| `analyze_board` | Analyze board state |
+| `detect_threats` | Detect immediate threats |
+| `identify_opportunities` | Identify winning opportunities |
+| `get_pattern_analysis` | Analyze game patterns |
 
-### Example Usage
+#### **Strategist Agent** (Port 3002)
+| Endpoint | Description |
+|----------|-------------|
+| `create_strategy` | Create strategic plan |
+| `evaluate_position` | Evaluate position strength |
+| `recommend_move` | Recommend best move |
+| `assess_win_probability` | Assess win probability |
 
+#### **Executor Agent** (Port 3003)
+| Endpoint | Description |
+|----------|-------------|
+| `execute_move` | Execute strategic move |
+| `validate_move` | Validate move legality |
+| `update_game_state` | Update game state |
+| `confirm_execution` | Confirm move execution |
+
+### 🔧 **Example Usage**
+
+#### **FastAPI Server (Main Application)**
 ```bash
-# Get current game state
+# Get game state
 curl http://localhost:8000/state
 
-# Make a move (row=0, col=0)
+# Make a move
 curl -X POST http://localhost:8000/make-move \
   -H "Content-Type: application/json" \
   -d '{"row": 0, "col": 0}'
 
-# Switch Scout agent to GPT-4
-curl -X POST http://localhost:8000/switch-model \
-  -H "Content-Type: application/json" \
-  -d '{"agent": "scout", "model": "gpt-4"}'
+# Get agent status
+curl http://localhost:8000/agents/status
 
-# Get agent information
-curl http://localhost:8000/agents
+# Switch Scout agent model
+curl -X POST http://localhost:8000/agents/scout/switch-model \
+  -H "Content-Type: application/json" \
+  -d '{"model": "gpt-4"}'
+
+# Get MCP logs
+curl http://localhost:8000/mcp-logs
+```
+
+#### **MCP Agent Servers (Direct Communication)**
+```bash
+# Connect to Scout Agent via MCP Inspector
+npx @modelcontextprotocol/inspector node agents/scout.py
+
+# Connect to Strategist Agent via MCP Inspector  
+npx @modelcontextprotocol/inspector node agents/strategist.py
+
+# Connect to Executor Agent via MCP Inspector
+npx @modelcontextprotocol/inspector node agents/executor.py
 ```
 
 ---
@@ -547,62 +587,6 @@ The project uses **MCP (Multi-Context Protocol)** for distributed communication 
 Player Move → MCP Coordinator → Scout Agent (MCP) → Strategist Agent (MCP) → Executor Agent (MCP) → Game State Update
 ```
 
-### **📡 MCP API Endpoints**
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Root endpoint |
-| `/state` | GET | Get current game state |
-| `/make-move` | POST | Make a player move |
-| `/reset-game` | POST | Reset game |
-| `/agents/status` | GET | Get all agent status |
-| `/agents/{agent_id}/switch-model` | POST | Switch agent model |
-| `/mcp-logs` | GET | Get MCP protocol logs |
-| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
-| `/health` | GET | Health check |
-
-### **🔧 Example API Usage**
-
-```bash
-# Get game state
-curl http://localhost:8000/state
-
-# Make a move
-curl -X POST http://localhost:8000/make-move \
-  -H "Content-Type: application/json" \
-  -d '{"row": 0, "col": 0}'
-
-# Get agent status
-curl http://localhost:8000/agents/status
-
-# Switch Scout agent model
-curl -X POST http://localhost:8000/agents/scout/switch-model \
-  -H "Content-Type: application/json" \
-  -d '{"model": "gpt-4"}'
-
-# Get MCP logs
-curl http://localhost:8000/mcp-logs
-```
-
-### **🔧 MCP Agent Endpoints**
-
-#### **Scout Agent (Port 3001)**
-- `analyze_board` - Analyze board state
-- `detect_threats` - Detect immediate threats
-- `identify_opportunities` - Identify winning opportunities
-- `get_pattern_analysis` - Analyze game patterns
-
-#### **Strategist Agent (Port 3002)**
-- `create_strategy` - Create strategic plan
-- `evaluate_position` - Evaluate position strength
-- `recommend_move` - Recommend best move
-- `assess_win_probability` - Assess win probability
-
-#### **Executor Agent (Port 3003)**
-- `execute_move` - Execute strategic move
-- `validate_move` - Validate move legality
-- `update_game_state` - Update game state
-- `confirm_execution` - Confirm move execution
 
 ### **🔧 MCP Inspector Integration**
 
