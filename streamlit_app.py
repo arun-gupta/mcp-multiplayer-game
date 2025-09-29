@@ -389,6 +389,21 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
     }
     
+    /* Force bright green for secondary buttons (NEW GAME button) */
+    button[data-testid="baseButton-secondary"],
+    button[data-testid="baseButton-secondary"]:hover,
+    button[data-testid="baseButton-secondary"]:focus,
+    button[data-testid="baseButton-secondary"]:active {
+        background: #00ff00 !important;
+        background-color: #00ff00 !important;
+        background-image: none !important;
+        color: white !important;
+        border: 3px solid #00ff00 !important;
+        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+    }
+    
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
