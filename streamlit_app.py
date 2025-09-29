@@ -346,11 +346,11 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
     
-    /* NEW GAME button styling */
+    /* NEW GAME button styling - bright green */
     .stButton > button[key="new_game"] {
-        background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%) !important;
+        background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%) !important;
         color: white !important;
-        border: 3px solid #00ff88 !important;
+        border: 3px solid #00ff00 !important;
         border-radius: 12px !important;
         font-size: 18px !important;
         font-weight: bold !important;
@@ -358,14 +358,14 @@ def render_game_board(board, game_over=False):
         width: 100% !important;
         max-width: 400px !important;
         margin: 0 auto !important;
-        box-shadow: 0 0 20px rgba(0,255,136,0.4) !important;
+        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
         transition: all 0.3s ease !important;
     }
     
     .stButton > button[key="new_game"]:hover {
         transform: translateY(-3px) !important;
-        box-shadow: 0 0 30px rgba(0,255,136,0.6) !important;
-        background: linear-gradient(135deg, #00ff88 0%, #00ff88 100%) !important;
+        box-shadow: 0 0 30px rgba(0,255,0,0.6) !important;
+        background: linear-gradient(135deg, #00ff00 0%, #00ff00 100%) !important;
     }
     
     .game-board {
