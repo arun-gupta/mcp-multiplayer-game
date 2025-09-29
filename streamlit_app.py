@@ -351,6 +351,14 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
         opacity: 1 !important;
         cursor: default !important;
+        font-weight: bold !important;
+    }
+    
+    /* Ensure filled cells override any default button styling */
+    .game-board-container .stButton > button[disabled] {
+        background-color: #00ff88 !important;
+        border-color: #00ff88 !important;
+        color: #000 !important;
     }
     
     /* Empty cells hover effect */
