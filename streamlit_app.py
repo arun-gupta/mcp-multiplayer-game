@@ -337,6 +337,7 @@ def render_game_board(board, game_over=False):
         height: 80px !important;
         margin: 0 auto !important;
         display: flex !important;
+        flex: none !important;
     }
     
     .game-board-container .stButton > button {
@@ -360,6 +361,23 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 5px rgba(102, 102, 102, 0.3) !important;
         transition: all 0.2s ease !important;
         flex: none !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+    
+    /* Force button to not resize on any state */
+    .game-board-container .stButton > button:focus,
+    .game-board-container .stButton > button:active,
+    .game-board-container .stButton > button:hover {
+        width: 80px !important;
+        height: 80px !important;
+        min-width: 80px !important;
+        min-height: 80px !important;
+        max-width: 80px !important;
+        max-height: 80px !important;
+        transform: none !important;
+        scale: 1 !important;
     }
     
     .game-board-container .stButton > button:hover {
@@ -391,25 +409,19 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - use button with exact same dimensions as filled cells
-                    if not game_over:
-                        if st.button(
-                            " ",
-                            key=f"move_{row}_{col}",
-                            help=f"Click to place X at ({row}, {col})",
-                            use_container_width=True
-                        ):
-                            # Make the move
+                    # Empty cell - use button but force exact same size as filled cells
+                    if st.button(
+                        " ",
+                        key=f"move_{row}_{col}",
+                        help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
+                        use_container_width=True,
+                        disabled=game_over
+                    ):
+                        # Make the move (only if game is not over)
+                        if not game_over:
                             result = make_move(row, col)
                             if result:
                                 st.rerun()
-                    else:
-                        # Disabled empty cell - same size as filled cells
-                        st.markdown(f"""
-                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; opacity: 0.5;">
-                            &nbsp;
-                        </div>
-                        """, unsafe_allow_html=True)
         
     st.markdown('</div>', unsafe_allow_html=True)
 
