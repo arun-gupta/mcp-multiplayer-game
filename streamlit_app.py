@@ -343,7 +343,8 @@ def render_game_board(board, game_over=False):
         transition: all 0.2s ease !important;
     }
     
-    /* Filled cells (disabled buttons) - neon green styling */
+    /* Filled cells (disabled buttons) - neon green styling with higher specificity */
+    .game-board-container .stButton > button[disabled],
     .game-board-container .stButton > button:disabled {
         border: 2px solid #00ff88 !important;
         background-color: #00ff88 !important;
@@ -354,11 +355,15 @@ def render_game_board(board, game_over=False):
         font-weight: bold !important;
     }
     
-    /* Ensure filled cells override any default button styling */
-    .game-board-container .stButton > button[disabled] {
-        background-color: #00ff88 !important;
-        border-color: #00ff88 !important;
-        color: #000 !important;
+    /* Remove extra spacing */
+    .game-board-container {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .game-board-container .stButton {
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Empty cells hover effect */
