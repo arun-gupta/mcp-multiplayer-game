@@ -312,12 +312,17 @@ def render_game_board(board, game_over=False):
         flex-direction: column;
         align-items: center;
         gap: 20px;
-        padding: 40px;
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        padding: 20px;
+        background: transparent;
         margin: 20px 0;
-        border: 1px solid #e0e0e0;
+    }
+    
+    .game-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 10px;
+        background: transparent;
     }
     
     .game-board {
@@ -468,47 +473,47 @@ def render_game_board(board, game_over=False):
     
     
     </style>
-    """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
+    """, unsafe_allow_html=True)    # Create simple 3x3 grid without extra boxes
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
+    st.markdown('<div class="game-grid">', unsafe_allow_html=True)
     
-    # Create 3x3 grid using Streamlit columns
+    # Create 3x3 grid cells
     for row in range(3):
-        cols = st.columns(3)
         for col in range(3):
-            with cols[col]:
-                cell_value = board[row][col] if board[row][col] else ""
-                # Use custom divs for filled cells to ensure neon green styling
-                if cell_value:
-                    # Filled cell - clean white with subtle glow
+            cell_value = board[row][col] if board[row][col] else ""
+            
+            if cell_value:
+                # Filled cell - clean white with subtle glow
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #2c3e50; font-size: 36px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                    {cell_value}
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                # Empty cell - same exact dimensions
+                if not game_over:
+                    # Create clickable div with JavaScript
                     st.markdown(f"""
-                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #2c3e50; font-size: 36px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05); transition: all 0.2s ease;">
-                        {cell_value}
+                    <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
+                         style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #6c757d; font-size: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+                        &nbsp;
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    # Hidden button for functionality
+                    if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
+                        result = make_move(row, col)
+                        if result:
+                            st.rerun()
                 else:
-                    # Empty cell - custom div with same exact dimensions
-                    if not game_over:
-                        # Create clickable div with JavaScript
-                        st.markdown(f"""
-                        <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
-                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #6c757d; font-size: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
-                            &nbsp;
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Hidden button for functionality
-                        if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
-                            result = make_move(row, col)
-                            if result:
-                                st.rerun()
-                    else:
-                        # Disabled empty cell - same exact dimensions
-                        st.markdown(f"""
-                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #6c757d; font-size: 36px; font-weight: bold; opacity: 0.5;">
-                            &nbsp;
-                        </div>
-                        """, unsafe_allow_html=True)
-        
+                    # Disabled empty cell - same exact dimensions
+                    st.markdown(f"""
+                    <div style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #6c757d; font-size: 36px; font-weight: bold; opacity: 0.5;">
+                        &nbsp;
+                    </div>
+                    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 def render_agent_status(agent_status):
