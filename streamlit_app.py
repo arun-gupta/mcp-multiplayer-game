@@ -570,18 +570,12 @@ def main():
             st.markdown("---")  # Add a separator line
             st.markdown("### Game Controls")
             
-            # Test button first
-            if st.button("Test Button", key="test_button"):
-                st.write("Test button clicked!")
-            
-            # New Game button
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_main"):
-                    result = reset_game()
-                    if result:
-                        st.success("Game reset successfully!")
-                        st.rerun()
+            # Simple NEW GAME button
+            if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_simple"):
+                result = reset_game()
+                if result:
+                    st.success("Game reset successfully!")
+                    st.rerun()
         else:
             st.error("Failed to load game state")
     
