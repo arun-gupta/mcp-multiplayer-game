@@ -348,6 +348,15 @@ def render_game_board(board):
                             st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Add New Game button at the bottom of the game board
+    st.markdown('<div style="text-align: center; margin-top: 20px;">', unsafe_allow_html=True)
+    if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_bottom"):
+        result = reset_game()
+        if result:
+            st.success("Game reset successfully!")
+            st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def render_agent_status(agent_status):
     """Render MCP agent status"""
