@@ -567,13 +567,13 @@ def main():
             render_game_board(board)
             
             # Add New Game button below the game board
-            st.markdown('<div style="text-align: center; margin: 20px 0;">', unsafe_allow_html=True)
+            st.markdown("---")  # Add a separator line
+            st.markdown("### Game Controls")
             if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_main"):
                 result = reset_game()
                 if result:
                     st.success("Game reset successfully!")
                     st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.error("Failed to load game state")
     
