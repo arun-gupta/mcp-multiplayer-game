@@ -331,7 +331,7 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
     }
     
-    /* Game board button sizing to match filled cells */
+    /* Game board button styling to match filled cells exactly */
     .game-board-container .stButton > button {
         width: 80px !important;
         height: 80px !important;
@@ -343,9 +343,26 @@ def render_game_board(board, game_over=False):
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        border: 2px solid #666 !important;
         border-radius: 8px !important;
+        background-color: #333 !important;
+        color: #666 !important;
         font-size: 28px !important;
         font-weight: bold !important;
+        box-shadow: 0 0 5px rgba(102, 102, 102, 0.3) !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .game-board-container .stButton > button:hover {
+        border: 2px solid #00ff88 !important;
+        background-color: #00ff88 !important;
+        color: #000 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
+    }
+    
+    .game-board-container .stButton > button:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
     }
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
@@ -365,7 +382,7 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - clickable button with consistent sizing
+                    # Empty cell - use button but with exact same styling as filled cells
                     if st.button(
                         " ",
                         key=f"move_{row}_{col}",
