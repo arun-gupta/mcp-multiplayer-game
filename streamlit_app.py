@@ -577,22 +577,37 @@ def main():
             st.write("Debug: Game Controls section loaded")
             st.write("Debug: About to create buttons...")
             
-            # Simple NEW GAME button
+            # Try different button approaches
             st.write("Debug: Creating NEW GAME button...")
-            st.markdown('<div style="background-color: #00ff88; padding: 10px; border-radius: 5px; margin: 10px 0;">', unsafe_allow_html=True)
-            if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_simple"):
+            
+            # Method 1: Simple button without styling
+            if st.button("🔄 NEW GAME", key="new_game_simple"):
                 st.write("NEW GAME button clicked!")
                 result = reset_game()
                 st.write(f"reset_game() returned: {result}")
                 if result:
                     st.success("Game reset successfully!")
                     st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
             
-            # Also add a regular button to test
-            st.write("Debug: Creating Test Reset button...")
-            if st.button("Test Reset", key="test_reset"):
-                st.write("Test Reset button clicked!")
+            # Method 2: Button in columns
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("Test Reset", key="test_reset"):
+                    st.write("Test Reset button clicked!")
+            
+            # Method 3: HTML button
+            st.markdown("""
+            <button onclick="alert('HTML button clicked!')" style="
+                background-color: #00ff88;
+                color: black;
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                margin: 10px 0;
+            ">🔄 HTML NEW GAME</button>
+            """, unsafe_allow_html=True)
             
             st.write("Debug: Finished creating buttons")
             
