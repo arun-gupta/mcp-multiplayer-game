@@ -740,12 +740,12 @@ def render_model_switching():
         st.error("Failed to load agent status")
         return
     
-    # Available models (mock data for now)
+    # Available models
     available_models = [
         "gpt-5",
-        "gpt-5-mini",
+        "gpt-5-mini", 
         "gpt-4",
-        "gpt-3.5-turbo", 
+        "gpt-3.5-turbo",
         "llama3:latest",
         "llama3.2:3b"
     ]
