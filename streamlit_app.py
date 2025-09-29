@@ -452,6 +452,13 @@ def render_game_board(board, game_over=False):
         font-family: 'Arial Black', Arial, sans-serif !important;
     }
     
+    /* Target Streamlit buttons that contain X or O */
+    .stButton > button:not(:empty) {
+        font-size: 32px !important;
+        font-weight: 900 !important;
+        font-family: 'Arial Black', Arial, sans-serif !important;
+    }
+    
     .game-cell.empty:hover {
         background-color: #f0f0f0;
         border-color: #00ff88;
