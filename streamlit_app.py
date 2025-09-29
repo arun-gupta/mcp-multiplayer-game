@@ -331,7 +331,7 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
     }
     
-    /* Simple game board button styling */
+    /* Game board button styling for both empty and filled cells */
     .game-board-container .stButton > button {
         border: 2px solid #666 !important;
         border-radius: 8px !important;
@@ -343,16 +343,22 @@ def render_game_board(board, game_over=False):
         transition: all 0.2s ease !important;
     }
     
-    .game-board-container .stButton > button:hover {
+    /* Filled cells (disabled buttons) - neon green styling */
+    .game-board-container .stButton > button:disabled {
         border: 2px solid #00ff88 !important;
         background-color: #00ff88 !important;
         color: #000 !important;
         box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
+        opacity: 1 !important;
+        cursor: default !important;
     }
     
-    .game-board-container .stButton > button:disabled {
-        opacity: 0.5 !important;
-        cursor: not-allowed !important;
+    /* Empty cells hover effect */
+    .game-board-container .stButton > button:not(:disabled):hover {
+        border: 2px solid #00ff88 !important;
+        background-color: #00ff88 !important;
+        color: #000 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
     }
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
@@ -364,15 +370,19 @@ def render_game_board(board, game_over=False):
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
+                # Use same button approach for both empty and filled cells
                 if cell_value:
-                    # Filled cell - display as styled div with consistent neon green color
-                    st.markdown(f"""
-                    <div class="game-cell filled" style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #00ff88; border-radius: 8px; background-color: #00ff88; color: #000; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);">
-                        {cell_value}
-                    </div>
-                    """, unsafe_allow_html=True)
+                    # Filled cell - display as button with content
+                    if st.button(
+                        cell_value,
+                        key=f"filled_{row}_{col}",
+                        help=f"{cell_value} at ({row}, {col})",
+                        use_container_width=True,
+                        disabled=True
+                    ):
+                        pass  # Filled cells are not clickable
                 else:
-                    # Empty cell - simple button with consistent styling
+                    # Empty cell - clickable button
                     if st.button(
                         " ",
                         key=f"move_{row}_{col}",
