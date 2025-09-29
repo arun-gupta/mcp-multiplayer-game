@@ -546,6 +546,14 @@ def main():
     with tab1:
         print("DEBUG: Entering Game tab (tab1)")
         
+        # TEST BUTTONS FIRST - BEFORE ANYTHING ELSE
+        st.write("=== BUTTON TEST ===")
+        if st.button("BUTTON TEST 1"):
+            st.write("Button 1 works!")
+        if st.button("BUTTON TEST 2"):
+            st.write("Button 2 works!")
+        st.write("=== END BUTTON TEST ===")
+        
         # Get and display game state
         game_state = get_game_state()
         print(f"DEBUG: game_state = {game_state}")
