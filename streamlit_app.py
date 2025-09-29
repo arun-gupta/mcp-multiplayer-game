@@ -388,6 +388,18 @@ def render_game_board(board, game_over=False):
         padding: 0 !important;
     }
     
+    /* Hide the actual buttons completely */
+    .game-board-container .stButton > button {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        z-index: 1 !important;
+        cursor: pointer !important;
+    }
+    
     /* Empty cells hover effect */
     .game-board-container .stButton > button:not(:disabled):hover {
         border: 2px solid #00ff88 !important;
@@ -414,19 +426,28 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - clickable button
-                    if st.button(
-                        " ",
-                        key=f"move_{row}_{col}",
-                        help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
-                        use_container_width=True,
-                        disabled=game_over
-                    ):
-                        # Make the move (only if game is not over)
-                        if not game_over:
+                    # Empty cell - use custom div with same size as filled cells
+                    if not game_over:
+                        # Create clickable div that triggers button click
+                        st.markdown(f"""
+                        <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
+                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 0 5px rgba(102, 102, 102, 0.3); transition: all 0.2s ease;">
+                            &nbsp;
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Hidden button for functionality
+                        if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
                             result = make_move(row, col)
                             if result:
                                 st.rerun()
+                    else:
+                        # Disabled empty cell - same size as filled cells
+                        st.markdown(f"""
+                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; opacity: 0.5;">
+                            &nbsp;
+                        </div>
+                        """, unsafe_allow_html=True)
         
     st.markdown('</div>', unsafe_allow_html=True)
 
