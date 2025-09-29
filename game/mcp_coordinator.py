@@ -69,14 +69,21 @@ class MCPGameCoordinator:
     async def get_ai_move(self) -> Dict:
         """Coordinate AI move using MCP protocol"""
         
+        print(f"[DEBUG] Starting MCP AI move coordination")
+        print(f"[DEBUG] Available agents: {list(self.agents.keys())}")
+        
         # Step 1: Scout analyzes board
         available_moves = self.get_available_moves(self.game_state.board)
+        print(f"[DEBUG] Calling scout.analyze_board with {len(available_moves)} available moves")
+        
         observation = await self.call_agent("scout", "analyze_board", {
             "board": self.game_state.board,
             "current_player": "ai", 
             "move_number": len(self.move_history),
             "available_moves": available_moves
         })
+        
+        print(f"[DEBUG] Scout response: {observation}")
         
         if "error" in observation:
             print(f"Scout analysis failed: {observation}")
@@ -85,6 +92,7 @@ class MCPGameCoordinator:
         
         # Log MCP communication
         self.log_mcp_message("scout", "analyze_board", observation)
+        print(f"[DEBUG] Logged scout MCP message")
         
         # Step 2: Strategist creates plan
         strategy = await self.call_agent("strategist", "create_strategy", observation)
@@ -136,9 +144,10 @@ class MCPGameCoordinator:
         
         agent = self.agents.get(agent_name)
         if not agent:
+            print(f"[DEBUG] Agent {agent_name} not found in {list(self.agents.keys())}")
             return {"error": f"Agent {agent_name} not available"}
         
-        print(f"MCP Call: {agent_name}.{method} with {data}")
+        print(f"[DEBUG] MCP Call: {agent_name}.{method} with agent type: {type(agent)}")
         
         # Measure actual agent response time
         start_time = time.time()
@@ -146,12 +155,16 @@ class MCPGameCoordinator:
         try:
             # Call the actual agent method
             if agent_name == "scout" and method == "analyze_board":
+                print(f"[DEBUG] Calling agent.analyze_board")
                 result = await agent.analyze_board(data)
             elif agent_name == "strategist" and method == "create_strategy":
+                print(f"[DEBUG] Calling agent.create_strategy")
                 result = await agent.create_strategy(data)
             elif agent_name == "executor" and method == "execute_move":
+                print(f"[DEBUG] Calling agent.execute_move")
                 result = await agent.execute_move(data)
             else:
+                print(f"[DEBUG] Unknown method {method} for {agent_name}")
                 return {"error": f"Unknown method {method} for {agent_name}"}
             
             end_time = time.time()
@@ -160,12 +173,14 @@ class MCPGameCoordinator:
             # Track the real response time in the agent
             agent.track_request(response_time)
             
+            print(f"[DEBUG] Agent call successful, response time: {response_time:.3f}s")
             return result
             
         except Exception as e:
             end_time = time.time()
             response_time = end_time - start_time
             agent.track_request(response_time)  # Track even failed requests
+            print(f"[DEBUG] Agent call failed: {e}")
             return {"error": str(e)}
     
     async def scout_analyze_board(self, data: Dict) -> Dict:
