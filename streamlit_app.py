@@ -458,6 +458,8 @@ def render_game_board(board, game_over=False):
         margin: 0 !important;
         padding: 0 !important;
         flex: none !important;
+        display: inline-block !important;
+        position: relative !important;
     }
     
     .game-board-container .stButton > button {
@@ -483,6 +485,12 @@ def render_game_board(board, game_over=False):
         justify-content: center !important;
         flex: none !important;
         box-sizing: border-box !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        overflow: hidden !important;
     }
     
     .game-board-container .stButton > button:hover {
@@ -501,6 +509,12 @@ def render_game_board(board, game_over=False):
         max-width: 100px !important;
         min-height: 100px !important;
         max-height: 100px !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        overflow: hidden !important;
     }
     
     /* Prevent any content-based resizing */
