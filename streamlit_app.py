@@ -557,14 +557,17 @@ def main():
             game_over = game_state.get('game_over', False)
             winner = game_state.get('winner')
             
-            # Game status
-            if game_over:
-                if winner:
-                    st.success(f"🎉 Game Over! Winner: {winner}")
+            # Game status - only show if game has started
+            if move_number > 0:
+                if game_over:
+                    if winner:
+                        st.success(f"🎉 Game Over! Winner: {winner}")
+                    else:
+                        st.info("🤝 Game Over! It's a draw!")
                 else:
-                    st.info("🤝 Game Over! It's a draw!")
+                    st.info(f"Current Player: {current_player} | Move: {move_number}")
             else:
-                st.info(f"Current Player: {current_player} | Move: {move_number}")
+                st.info("🎮 Game Not Yet Started - Click a cell to begin!")
             
             # Create two-column layout: Game Board (50%) and Player Moves (50%)
             col1, col2 = st.columns([1, 1])
@@ -602,18 +605,21 @@ def main():
                 else:
                     st.info("Move history not available")
                 
-                # Show current game status
+                # Show game statistics
                 st.markdown("---")
-                st.markdown("### 📊 Game Status")
-                st.write(f"**Current Player:** {current_player}")
-                st.write(f"**Move Number:** {move_number}")
-                if game_over:
-                    if winner:
-                        st.success(f"🎉 **Winner:** {winner}")
+                st.markdown("### 📊 Game Statistics")
+                
+                if move_number > 0:
+                    st.write(f"**Total Moves:** {move_number}")
+                    if game_over:
+                        if winner:
+                            st.success(f"🎉 **Winner:** {winner}")
+                        else:
+                            st.info("🤝 **Game Over:** It's a draw!")
                     else:
-                        st.info("🤝 **Game Over:** It's a draw!")
+                        st.info("🔄 **Game in Progress**")
                 else:
-                    st.info("🔄 **Game in Progress**")
+                    st.info("🎮 **Ready to Start** - Click any cell to begin!")
         else:
             st.error("Failed to load game state")
     
