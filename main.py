@@ -164,7 +164,7 @@ async def get_agent_status():
             "coordinator": coordinator.get_agent_status()
         }
         return status
-            except Exception as e:
+    except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting agent status: {str(e)}")
 
 @app.post("/agents/{agent_id}/switch-model")
