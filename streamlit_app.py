@@ -446,8 +446,8 @@ def render_agent_metrics():
         if metrics:
             with st.expander(f"{agent_names.get(agent_id, agent_id)} Metrics", expanded=True):
                 col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
+                
+                with col1:
                     st.metric(
                         "Request Count",
                         metrics.get('request_count', 0)
