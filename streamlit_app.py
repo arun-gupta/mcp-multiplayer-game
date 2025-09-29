@@ -569,33 +569,27 @@ def main():
             render_game_board(board)
             
             # Add New Game button below the game board
-            print("DEBUG: Starting Game Controls section")
             st.markdown("---")  # Add a separator line
             st.markdown("### Game Controls")
             
-            # Debug: Show that we're in the right place
-            st.write("Debug: Game Controls section loaded")
-            st.write("Debug: About to create buttons...")
+            # Simple NEW GAME button - no complex styling
+            st.write("Click the button below to start a new game:")
             
-            # Working Streamlit buttons
-            st.write("Debug: Creating NEW GAME button...")
+            # Force button to be visible with explicit styling
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("🔄 NEW GAME", key="new_game_simple", use_container_width=True):
+                    st.write("NEW GAME button clicked!")
+                    result = reset_game()
+                    if result:
+                        st.success("Game reset successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to reset game")
             
-            # Main NEW GAME button
-            if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_main"):
-                st.write("NEW GAME button clicked!")
-                result = reset_game()
-                st.write(f"reset_game() returned: {result}")
-                if result:
-                    st.success("Game reset successfully!")
-                    st.rerun()
-            
-            # Test button
-            if st.button("Test Reset", key="test_reset"):
-                st.write("Test Reset button clicked!")
-            
-            st.write("Debug: Finished creating buttons")
-            
-            print("DEBUG: Finished Game Controls section")
+            # Debug button to test functionality
+            if st.button("Test Button", key="test_debug"):
+                st.write("Test button works!")
         else:
             st.error("Failed to load game state")
     
