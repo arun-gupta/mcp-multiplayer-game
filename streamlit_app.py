@@ -452,8 +452,21 @@ def render_game_board(board, game_over=False):
         font-family: 'Arial Black', Arial, sans-serif !important;
     }
     
-    /* Target Streamlit buttons that contain X or O */
-    .stButton > button:not(:empty) {
+    /* Target Streamlit buttons that contain X or O - more aggressive selectors */
+    .stButton > button:not(:empty),
+    button[data-testid="baseButton-primary"]:not(:empty),
+    button[data-testid="baseButton-secondary"]:not(:empty),
+    .stButton button:not(:empty),
+    button:not(:empty) {
+        font-size: 32px !important;
+        font-weight: 900 !important;
+        font-family: 'Arial Black', Arial, sans-serif !important;
+        line-height: 1 !important;
+        padding: 0 !important;
+    }
+    
+    /* Even more specific targeting for game buttons */
+    div[data-testid="column"] .stButton > button:not(:empty) {
         font-size: 32px !important;
         font-weight: 900 !important;
         font-family: 'Arial Black', Arial, sans-serif !important;
