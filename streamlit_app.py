@@ -320,7 +320,7 @@ def render_game_board(board, game_over=False):
     /* Make buttons span full column width with fluorescent green borders */
     .stButton > button {
         width: 100% !important;
-        min-height: 80px !important;
+        min-height: 100px !important;
         font-size: 24px !important;
         font-weight: bold !important;
         border: 3px solid #00ff88 !important;
@@ -329,6 +329,8 @@ def render_game_board(board, game_over=False):
         color: #00ff88 !important;
         box-shadow: 0 0 10px rgba(0,255,136,0.3) !important;
         transition: all 0.2s ease !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     .stButton > button:hover {
@@ -517,26 +519,26 @@ def render_game_board(board, game_over=False):
     """, unsafe_allow_html=True)    # Simple 3x3 grid using Streamlit columns
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
     
-    # Create 3x3 grid using Streamlit columns
+    # Create 3x3 grid using Streamlit columns with equal spacing
     for row in range(3):
-        cols = st.columns(3)
+        cols = st.columns(3, gap="small")
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
                 
                 if cell_value:
                     # Filled cell - show the value
-                    st.button(cell_value, key=f"filled_{row}_{col}", disabled=True, type="primary")
+                    st.button(cell_value, key=f"filled_{row}_{col}", disabled=True, type="primary", use_container_width=True)
                 else:
                     # Empty cell - clickable button
                     if not game_over:
-                        if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})"):
+                        if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", use_container_width=True):
                             result = make_move(row, col)
                             if result:
                                 st.rerun()
                     else:
                         # Disabled empty cell
-                        st.button("", key=f"disabled_{row}_{col}", disabled=True)
+                        st.button("", key=f"disabled_{row}_{col}", disabled=True, use_container_width=True)
     
     # Single NEW GAME button - spans across the board
     if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary", use_container_width=True):
