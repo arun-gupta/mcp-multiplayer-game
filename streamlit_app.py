@@ -634,14 +634,14 @@ def main():
                         
                         if symbol == 'X':
                             st.write(f"{i}. 👤 You placed X at ({row}, {col})")
-                            else:
+                        else:
                             st.write(f"{i}. 🤖 Double-O-AI placed O at ({row}, {col})")
-                    else:
+                else:
                     st.info("No moves yet - click a cell to start!")
                 
                 # Game outcome is already shown at the top of the game board
                 # No need to duplicate it in the move history
-                            else:
+        else:
             st.error("Failed to load game state")
     
     with tab2:
@@ -651,7 +651,7 @@ def main():
         agent_status = get_agent_status()
         if agent_status:
             render_agent_status(agent_status)
-                    else:
+        else:
             st.error("Failed to load agent status")
     
     with tab3:
@@ -661,7 +661,7 @@ def main():
         logs_data = get_mcp_logs()
         if logs_data:
             render_mcp_logs(logs_data)
-                    else:
+        else:
             st.error("Failed to load MCP logs")
     
     with tab4:
