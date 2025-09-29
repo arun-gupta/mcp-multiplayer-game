@@ -346,9 +346,13 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
     
-    /* NEW GAME button styling - bright green */
-    .stButton > button[key="new_game"] {
+    /* NEW GAME button styling - bright green with more specific selectors */
+    .stButton > button[key="new_game"],
+    .stButton > button[data-testid="baseButton-primary"],
+    .stButton > button[type="submit"],
+    .stButton > button:has-text("NEW GAME") {
         background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%) !important;
+        background-color: #00ff00 !important;
         color: white !important;
         border: 3px solid #00ff00 !important;
         border-radius: 12px !important;
@@ -362,10 +366,27 @@ def render_game_board(board, game_over=False):
         transition: all 0.3s ease !important;
     }
     
-    .stButton > button[key="new_game"]:hover {
+    .stButton > button[key="new_game"]:hover,
+    .stButton > button[data-testid="baseButton-primary"]:hover,
+    .stButton > button[type="submit"]:hover,
+    .stButton > button:has-text("NEW GAME"):hover {
         transform: translateY(-3px) !important;
         box-shadow: 0 0 30px rgba(0,255,0,0.6) !important;
         background: linear-gradient(135deg, #00ff00 0%, #00ff00 100%) !important;
+        background-color: #00ff00 !important;
+    }
+    
+    /* Force bright green for all primary buttons */
+    button[data-testid="baseButton-primary"],
+    button[data-testid="baseButton-primary"]:hover,
+    button[data-testid="baseButton-primary"]:focus,
+    button[data-testid="baseButton-primary"]:active {
+        background: #00ff00 !important;
+        background-color: #00ff00 !important;
+        background-image: none !important;
+        color: white !important;
+        border: 3px solid #00ff00 !important;
+        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
     }
     
     .game-board {
