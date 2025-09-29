@@ -244,13 +244,29 @@ def get_agent_metrics(agent_id):
         return None
 
 def render_game_board(board):
-    """Render the Tic Tac Toe board with enhanced styling"""
+    """Render the Tic Tac Toe board with proper styling"""
     st.markdown("### 🎮 Game Board")
     
     # Add custom CSS for game board styling
     st.markdown("""
     <style>
-    .game-board-cell {
+    .game-board-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+    
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        background-color: #1e1e1e;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .game-cell {
         width: 80px;
         height: 80px;
         border: 2px solid #333;
@@ -258,68 +274,81 @@ def render_game_board(board):
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: bold;
-        margin: 2px;
-        transition: all 0.3s ease;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: #ffffff;
+        color: #000;
     }
     
-    .game-board-cell.filled {
+    .game-cell.filled {
         background-color: #00ff88;
         color: #000;
         border-color: #00ff88;
-        box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+        cursor: default;
     }
     
-    .game-board-cell.empty {
-        background-color: #ffffff;
-        color: #333;
-        border-color: #ddd;
-        cursor: pointer;
-    }
-    
-    .game-board-cell.empty:hover {
+    .game-cell.empty:hover {
         background-color: #f0f0f0;
         border-color: #00ff88;
-        box-shadow: 0 0 5px rgba(0, 255, 136, 0.2);
+        box-shadow: 0 0 8px rgba(0, 255, 136, 0.3);
     }
     
-    .game-board-container {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        max-width: 260px;
-        margin: 20px auto;
+    .game-cell.empty:active {
+        background-color: #e0e0e0;
+        transform: scale(0.95);
+    }
+    
+    /* Hide the default Streamlit button styling */
+    .stButton > button {
+        background-color: transparent !important;
+        border: none !important;
+        color: transparent !important;
+        width: 80px !important;
+        height: 80px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: transparent !important;
+        border: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Create 3x3 grid with enhanced styling
+    # Create the game board using Streamlit columns
+    st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
+    
+    # Create 3x3 grid using Streamlit columns
     for row in range(3):
         cols = st.columns(3)
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
                 if cell_value:
-                    # Filled cell with green highlighting
+                    # Filled cell - display as styled div
                     st.markdown(f"""
-                    <div class="game-board-cell filled">
+                    <div class="game-cell filled" style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #00ff88; border-radius: 8px; background-color: #00ff88; color: #000; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);">
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell with white background
+                    # Empty cell - clickable button
                     if st.button(
                         " ",
                         key=f"move_{row}_{col}",
-                        use_container_width=True,
                         help=f"Click to place X at ({row}, {col})",
-                        type="secondary"
+                        use_container_width=True
                     ):
                         # Make the move
                         result = make_move(row, col)
                         if result:
                             st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def render_agent_status(agent_status):
     """Render MCP agent status"""
