@@ -384,7 +384,7 @@ def render_agent_status(agent_status):
                     st.markdown(f"**Model:** {agent_data.get('current_model', 'Unknown')}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
                     st.markdown(f"**Memory Size:** {agent_data.get('memory_size', 0)}")
-                    else:
+        else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
 def render_mcp_logs(logs_data):
