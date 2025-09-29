@@ -344,6 +344,28 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
     
+    /* NEW GAME button styling */
+    .stButton > button[key="new_game"] {
+        background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%) !important;
+        color: white !important;
+        border: 3px solid #00ff88 !important;
+        border-radius: 12px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        padding: 15px 30px !important;
+        width: 100% !important;
+        max-width: 400px !important;
+        margin: 0 auto !important;
+        box-shadow: 0 0 20px rgba(0,255,136,0.4) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button[key="new_game"]:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 0 30px rgba(0,255,136,0.6) !important;
+        background: linear-gradient(135deg, #00ff88 0%, #00ff88 100%) !important;
+    }
+    
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -516,8 +538,8 @@ def render_game_board(board, game_over=False):
                         # Disabled empty cell
                         st.button("", key=f"disabled_{row}_{col}", disabled=True)
     
-    # Single NEW GAME button
-    if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary"):
+    # Single NEW GAME button - spans across the board
+    if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary", use_container_width=True):
         st.session_state.board = [['', '', ''] for _ in range(3)]
         st.session_state.current_player = 'X'
         st.session_state.game_over = False
