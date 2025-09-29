@@ -464,13 +464,20 @@ Example: 1,1 for center position
             board_str = self._board_to_string(self.game_state.board)
             
             prompt = f"""
-You are playing Tic-Tac-Toe as the AI (O). The current board state is:
+You are playing Tic-Tac-Toe as the AI (O) against a human player (X). The current board state is:
 
 {board_str}
 
 Available moves: {available_moves}
 
-Choose the best move for the AI. Return only the row and column numbers as JSON: {{"row": X, "col": Y}}
+STRATEGY PRIORITIES:
+1. FIRST: Block the human from winning (if they have 2 in a row, block the 3rd)
+2. SECOND: Try to win (if you have 2 in a row, complete the 3rd)
+3. THIRD: Take center if available
+4. FOURTH: Take corners if available
+5. LAST: Take any available position
+
+Analyze the board carefully and choose the BEST strategic move. Return only the row and column numbers as JSON: {{"row": X, "col": Y}}
 """
             
             # Use the first available agent's LLM
