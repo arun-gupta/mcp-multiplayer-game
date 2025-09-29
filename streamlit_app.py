@@ -345,7 +345,7 @@ def render_game_board(board):
                         # Make the move
                         result = make_move(row, col)
                         if result:
-                    st.rerun()
+                            st.rerun()
         
     st.markdown('</div>', unsafe_allow_html=True)
 
