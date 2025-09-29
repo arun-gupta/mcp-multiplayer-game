@@ -575,24 +575,24 @@ def main():
             
             # Debug: Show that we're in the right place
             st.write("Debug: Game Controls section loaded")
-            print("DEBUG: Game Controls section loaded in UI")
+            st.write("Debug: About to create buttons...")
             
             # Simple NEW GAME button
-            print("DEBUG: About to create NEW GAME button")
+            st.write("Debug: Creating NEW GAME button...")
             if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_simple"):
-                print("DEBUG: NEW GAME button clicked!")
-                st.write("Button clicked!")
+                st.write("NEW GAME button clicked!")
                 result = reset_game()
-                print(f"DEBUG: reset_game() returned: {result}")
+                st.write(f"reset_game() returned: {result}")
                 if result:
                     st.success("Game reset successfully!")
                     st.rerun()
             
             # Also add a regular button to test
-            print("DEBUG: About to create Test Reset button")
+            st.write("Debug: Creating Test Reset button...")
             if st.button("Test Reset", key="test_reset"):
-                print("DEBUG: Test Reset button clicked!")
-                st.write("Test button clicked!")
+                st.write("Test Reset button clicked!")
+            
+            st.write("Debug: Finished creating buttons")
             
             print("DEBUG: Finished Game Controls section")
         else:
