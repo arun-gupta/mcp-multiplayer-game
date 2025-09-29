@@ -573,18 +573,14 @@ def main():
             st.markdown("---")
             st.markdown("### Game Controls")
             
-            # JUST A SIMPLE BUTTON - NO COMPLEXITY
-            if st.button("🔄 NEW GAME"):
+            # NEW GAME button
+            if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
                 result = reset_game()
                 if result:
-                    st.success("Game reset!")
+                    st.success("Game reset successfully!")
                     st.rerun()
                 else:
-                    st.error("Reset failed")
-            
-            # Test button
-            if st.button("Test"):
-                st.write("Test works!")
+                    st.error("Failed to reset game")
         else:
             st.error("Failed to load game state")
     
