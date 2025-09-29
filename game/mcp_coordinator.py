@@ -412,25 +412,114 @@ Example: 1,1 for center position
         self.mcp_logs = []
     
     async def _fallback_ai_move(self) -> Dict:
-        """Fallback AI move when agents fail"""
-        import random
-        
-        available_moves = self.get_available_moves(self.game_state.board)
-        if not available_moves:
-            return {"error": "No available moves"}
-        
-        # Pick a random move
-        ai_move = random.choice(available_moves)
-        
-        # Make the move
-        move_success = self.game_state.make_move(ai_move["row"], ai_move["col"], "ai")
-        if not move_success:
-            return {"error": "Failed to make fallback AI move"}
-        
-        return {
-            "success": True,
-            "ai_move": ai_move,
-            "fallback": True,
-            "message": "Used fallback random move"
-        }
+        """Fallback AI move using LLM directly"""
+        try:
+            # Get available moves
+            available_moves = self.get_available_moves(self.game_state.board)
+            if not available_moves:
+                return {"error": "No available moves"}
+            
+            # Use LLM to get the next move
+            ai_move = await self._get_llm_move(available_moves)
+            if not ai_move:
+                # If LLM fails, use random move
+                ai_move = random.choice(available_moves)
+            
+            # Make the move
+            move_success = self.game_state.make_move(ai_move["row"], ai_move["col"], "ai")
+            if not move_success:
+                return {"error": "Failed to make AI move"}
+            
+            return {
+                "success": True,
+                "ai_move": ai_move,
+                "llm_move": True,
+                "message": "Used LLM to determine move"
+            }
+            
+        except Exception as e:
+            print(f"Error in fallback AI move: {e}")
+            # Final fallback to random move
+            import random
+            available_moves = self.get_available_moves(self.game_state.board)
+            if not available_moves:
+                return {"error": "No available moves"}
+            
+            ai_move = random.choice(available_moves)
+            move_success = self.game_state.make_move(ai_move["row"], ai_move["col"], "ai")
+            if not move_success:
+                return {"error": "Failed to make fallback AI move"}
+            
+            return {
+                "success": True,
+                "ai_move": ai_move,
+                "fallback": True,
+                "message": "Used random fallback move"
+            }
+    
+    async def _get_llm_move(self, available_moves: List[Dict]) -> Dict:
+        """Get AI move using LLM directly"""
+        try:
+            # Create a simple prompt for the LLM
+            board_str = self._board_to_string(self.game_state.board)
+            
+            prompt = f"""
+You are playing Tic-Tac-Toe as the AI (O). The current board state is:
+
+{board_str}
+
+Available moves: {available_moves}
+
+Choose the best move for the AI. Return only the row and column numbers as JSON: {{"row": X, "col": Y}}
+"""
+            
+            # Use the first available agent's LLM
+            agent = None
+            for agent_name in ["scout", "strategist", "executor"]:
+                if self.agents.get(agent_name):
+                    agent = self.agents[agent_name]
+                    break
+            
+            if not agent:
+                return None
+            
+            # Get LLM response
+            response = await agent.llm.ainvoke(prompt)
+            
+            # Parse the response
+            import json
+            import re
+            
+            # Extract JSON from response
+            json_match = re.search(r'\{[^}]*"row"[^}]*"col"[^}]*\}', str(response))
+            if json_match:
+                move_data = json.loads(json_match.group())
+                row = move_data.get("row")
+                col = move_data.get("col")
+                
+                # Validate the move
+                if isinstance(row, int) and isinstance(col, int) and 0 <= row < 3 and 0 <= col < 3:
+                    if self.game_state.board[row][col] == "":
+                        return {"row": row, "col": col}
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error getting LLM move: {e}")
+            return None
+    
+    def _board_to_string(self, board: List[List[str]]) -> str:
+        """Convert board to string representation"""
+        result = ""
+        for i, row in enumerate(board):
+            for j, cell in enumerate(row):
+                if cell == "":
+                    result += f"[{i},{j}]"
+                else:
+                    result += f" {cell} "
+                if j < 2:
+                    result += " | "
+            if i < 2:
+                result += "\n---+---+---\n"
+        return result
         print("Game reset via MCP coordinator")
