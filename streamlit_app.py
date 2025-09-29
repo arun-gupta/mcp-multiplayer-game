@@ -543,17 +543,8 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - same exact dimensions
+                    # Empty cell - directly clickable button
                     if not game_over:
-                        # Create clickable div with JavaScript
-                        st.markdown(f"""
-                        <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
-                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #e0e0e0; border-radius: 8px; background-color: #ffffff; color: #6c757d; font-size: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
-                            &nbsp;
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Hidden button for functionality
                         if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
                             result = make_move(row, col)
                             if result:
