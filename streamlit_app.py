@@ -594,19 +594,34 @@ def main():
                 st.markdown("### 📝 Player Moves")
                 
                 # Show move history
+                # Debug: Show what's actually in game_state
+                st.write("Debug - Game State Keys:", list(game_state.keys()))
+                
+                # Try different possible field names for move history
+                move_history = None
                 if 'move_history' in game_state:
                     move_history = game_state.get('move_history', [])
-                    if move_history:
-                        for i, move in enumerate(move_history, 1):
-                            player = move.get('player', 'Unknown')
-                            position = move.get('position', {})
-                            row = position.get('row', '?')
-                            col = position.get('col', '?')
-                            st.write(f"**Move {i}:** {player} at ({row}, {col})")
-                    else:
-                        st.info("No moves yet")
+                elif 'game_history' in game_state:
+                    move_history = game_state.get('game_history', [])
+                elif 'moves' in game_state:
+                    move_history = game_state.get('moves', [])
+                
+                if move_history:
+                    st.write(f"Debug - Move history found: {len(move_history)} moves")
+                    for i, move in enumerate(move_history, 1):
+                        player = move.get('player', 'Unknown')
+                        position = move.get('position', {})
+                        row = position.get('row', '?')
+                        col = position.get('col', '?')
+                        st.write(f"**Move {i}:** {player} at ({row}, {col})")
                 else:
-                    st.info("Move history not available")
+                    st.info("No move history found in game state")
+                    # Show current board state as fallback
+                    st.write("**Current Board State:**")
+                    for row_idx, row in enumerate(board):
+                        for col_idx, cell in enumerate(row):
+                            if cell:
+                                st.write(f"  {cell} at ({row_idx}, {col_idx})")
                 
         else:
             st.error("Failed to load game state")
