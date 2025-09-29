@@ -254,32 +254,39 @@ def render_game_board(board, game_over=False):
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Beautiful title styling */
+    /* Cyberpunk page styling */
+    .main .block-container {
+        background-color: #000 !important;
+        color: #00ff88 !important;
+    }
+    
+    /* Cyberpunk title styling */
     h1 {
-        color: #2c3e50 !important;
+        color: #00ff88 !important;
         font-size: 2.5rem !important;
         font-weight: 700 !important;
         text-align: center !important;
         margin-bottom: 2rem !important;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1) !important;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
     }
     
-    /* Modern button styling */
+    /* Cyberpunk button styling */
     .stButton > button {
-        background: linear-gradient(45deg, #4CAF50, #45a049) !important;
-        color: white !important;
-        border: none !important;
+        background: linear-gradient(45deg, #00ff88, #00cc6a) !important;
+        color: #000 !important;
+        border: 2px solid #00ff88 !important;
         border-radius: 12px !important;
         padding: 12px 24px !important;
         font-size: 16px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        font-weight: bold !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
         transition: all 0.3s ease !important;
     }
     
     .stButton > button:hover {
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important;
+        box-shadow: 0 0 25px rgba(0, 255, 136, 0.6) !important;
+        background: linear-gradient(45deg, #00ff88, #00ff88) !important;
     }
     
     .game-board-container {
@@ -288,10 +295,11 @@ def render_game_board(board, game_over=False):
         align-items: center;
         gap: 20px;
         padding: 40px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
         border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 0 30px rgba(0, 255, 136, 0.2), inset 0 0 30px rgba(0, 255, 136, 0.1);
         margin: 20px 0;
+        border: 1px solid #00ff88;
     }
     
     .game-board {
@@ -451,9 +459,9 @@ def render_game_board(board, game_over=False):
                 cell_value = board[row][col] if board[row][col] else ""
                 # Use custom divs for filled cells to ensure neon green styling
                 if cell_value:
-                    # Filled cell - modern styling
+                    # Filled cell - neon green cyberpunk style
                     st.markdown(f"""
-                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background: linear-gradient(145deg, #f8f9fa, #e9ecef); color: #2c3e50; font-size: 36px; font-weight: 600; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #00ff88; border-radius: 12px; background-color: #00ff88; color: #000; font-size: 36px; font-weight: bold; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), inset 0 0 20px rgba(0, 255, 136, 0.3); transition: all 0.2s ease;">
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
@@ -463,7 +471,7 @@ def render_game_board(board, game_over=False):
                         # Create clickable div that triggers button click
                         st.markdown(f"""
                         <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
-                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background: linear-gradient(145deg, #ffffff, #f8f9fa); color: #6c757d; font-size: 36px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease; hover:box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #00ff88; border-radius: 12px; background-color: #000; color: #00ff88; font-size: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); transition: all 0.2s ease; hover:box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);">
                             &nbsp;
                         </div>
                         """, unsafe_allow_html=True)
@@ -476,7 +484,7 @@ def render_game_board(board, game_over=False):
                     else:
                         # Disabled empty cell - same size as filled cells
                         st.markdown(f"""
-                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background: linear-gradient(145deg, #f8f9fa, #e9ecef); color: #6c757d; font-size: 36px; font-weight: 600; opacity: 0.5;">
+                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #00ff88; border-radius: 12px; background-color: #000; color: #00ff88; font-size: 36px; font-weight: bold; opacity: 0.5;">
                             &nbsp;
                         </div>
                         """, unsafe_allow_html=True)
