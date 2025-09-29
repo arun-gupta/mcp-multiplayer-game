@@ -608,21 +608,6 @@ def main():
                 else:
                     st.info("Move history not available")
                 
-                # Show game statistics
-                st.markdown("---")
-                st.markdown("### 📊 Game Statistics")
-                
-                if move_number > 0:
-                    st.write(f"**Total Moves:** {move_number}")
-                    if game_over:
-                        if winner:
-                            st.success(f"🎉 **Winner:** {winner}")
-                        else:
-                            st.info("🤝 **Game Over:** It's a draw!")
-                    else:
-                        st.info("🔄 **Game in Progress**")
-                else:
-                    st.info("🎮 **Ready to Start**")
         else:
             st.error("Failed to load game state")
     
