@@ -334,7 +334,7 @@ def render_game_board(board):
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
-                            else:
+                else:
                     # Empty cell - clickable button
                     if st.button(
                         " ",
