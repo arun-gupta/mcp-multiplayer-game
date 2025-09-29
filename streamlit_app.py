@@ -391,6 +391,22 @@ def render_game_board(board, game_over=False):
         opacity: 0.5 !important;
         cursor: not-allowed !important;
     }
+    
+    /* Hide the actual buttons completely */
+    .game-board-container .stButton {
+        position: relative !important;
+    }
+    
+    .game-board-container .stButton > button {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        z-index: 1 !important;
+        cursor: pointer !important;
+    }
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
@@ -409,19 +425,27 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - use button but force exact same size as filled cells
-                    if st.button(
-                        " ",
-                        key=f"move_{row}_{col}",
-                        help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
-                        use_container_width=True,
-                        disabled=game_over
-                    ):
-                        # Make the move (only if game is not over)
-                        if not game_over:
+                    # Empty cell - use button but hide it completely and show custom div
+                    if not game_over:
+                        # Hidden button for functionality
+                        if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
                             result = make_move(row, col)
                             if result:
                                 st.rerun()
+                        
+                        # Custom div overlay that looks exactly like filled cells
+                        st.markdown(f"""
+                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 0 5px rgba(102, 102, 102, 0.3); transition: all 0.2s ease; position: absolute; z-index: 10;">
+                            &nbsp;
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # Disabled empty cell - same size as filled cells
+                        st.markdown(f"""
+                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; opacity: 0.5;">
+                            &nbsp;
+                        </div>
+                        """, unsafe_allow_html=True)
         
     st.markdown('</div>', unsafe_allow_html=True)
 
