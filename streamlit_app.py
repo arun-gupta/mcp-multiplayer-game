@@ -746,8 +746,6 @@ def render_model_switching():
         "gpt-5-mini",
         "gpt-4",
         "gpt-3.5-turbo", 
-        "claude-3-sonnet",
-        "claude-3-haiku",
         "llama3:latest",
         "llama3.2:3b"
     ]
