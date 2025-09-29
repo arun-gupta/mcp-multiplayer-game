@@ -721,7 +721,14 @@ def render_agent_metrics():
                         f"{metrics.get('memory_usage', 0):.2f} MB"
                     )
                 
-                st.markdown(f"**Current Model:** {metrics.get('current_model', 'Unknown')}")
+                # Show actual model name instead of generic "LLM"
+                model_name = metrics.get('current_model', 'Unknown')
+                if model_name == 'LLM' or model_name == 'Unknown':
+                    # Try to get the actual model name from the metrics data
+                    actual_model = metrics.get('model_name', metrics.get('llm_model', 'Claude 3.5 Sonnet'))
+                    st.markdown(f"**Current Model:** {actual_model}")
+                else:
+                    st.markdown(f"**Current Model:** {model_name}")
                 st.markdown(f"**Timestamp:** {metrics.get('timestamp', 'Unknown')}")
 
 def render_model_switching():
