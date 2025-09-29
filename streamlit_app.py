@@ -247,7 +247,7 @@ def render_game_board(board):
     """Render the Tic Tac Toe board with proper styling"""
     
     # Add custom CSS for game board styling
-        st.markdown("""
+    st.markdown("""
     <style>
     .game-board-container {
         display: flex;
