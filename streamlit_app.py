@@ -525,12 +525,12 @@ def main():
         health_response = requests.get(f"{API_BASE}/health", timeout=5)
         if health_response.status_code == 200:
             health_data = health_response.json()
-            st.success(f"✅ Connected to MCP API - Version: {health_data.get('version', 'Unknown')}")
+            st.success("✅ AI Team Ready - Three agents are online and ready to play!")
         else:
-            st.error("❌ Failed to connect to MCP API")
+            st.error("❌ AI Team Offline - Backend connection failed")
             return
     except Exception as e:
-        st.error(f"❌ Cannot connect to MCP API: {e}")
+        st.error("❌ AI Team Offline - Cannot connect to backend")
         st.info("Make sure to run: `python main.py`")
         return
     
