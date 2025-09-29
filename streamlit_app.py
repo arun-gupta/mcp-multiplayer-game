@@ -394,17 +394,14 @@ def render_game_board(board, game_over=False):
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
-                # Use same button approach for both empty and filled cells
+                # Use custom divs for filled cells to ensure neon green styling
                 if cell_value:
-                    # Filled cell - display as button with content
-                    if st.button(
-                        cell_value,
-                        key=f"filled_{row}_{col}",
-                        help=f"{cell_value} at ({row}, {col})",
-                        use_container_width=True,
-                        disabled=True
-                    ):
-                        pass  # Filled cells are not clickable
+                    # Filled cell - display as styled div with neon green
+                    st.markdown(f"""
+                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #00ff88; border-radius: 8px; background-color: #00ff88; color: #000; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);">
+                        {cell_value}
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
                     # Empty cell - clickable button
                     if st.button(
