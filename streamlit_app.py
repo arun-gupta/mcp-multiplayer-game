@@ -760,7 +760,12 @@ def render_model_switching():
     for agent_id in agents:
         agent_data = agent_status.get(agent_id)
         if agent_data:
+            # Get the actual model name, not generic "LLM"
             current_model = agent_data.get('current_model', 'Unknown')
+            if current_model == 'LLM' or current_model == 'Unknown':
+                # Try to get the actual model name from other fields
+                actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'Claude 3.5 Sonnet'))
+                current_model = actual_model
             
             with st.expander(f"{agent_names.get(agent_id, agent_id)} - Current: {current_model}", expanded=False):
                 selected_model = st.selectbox(
