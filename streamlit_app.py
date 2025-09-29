@@ -334,12 +334,20 @@ def render_game_board(board, game_over=False):
         padding: 0 !important;
     }
     
-    /* Filled cells should be bright green */
-    .stButton > button[type="primary"] {
+    /* Filled cells should be bright green - only when they have content */
+    .stButton > button[type="primary"]:not(:empty) {
         background-color: #00ff88 !important;
         color: white !important;
         border: 3px solid #00ff88 !important;
         box-shadow: 0 0 15px rgba(0,255,136,0.4) !important;
+    }
+    
+    /* Empty cells should stay white with green borders */
+    .stButton > button[type="secondary"] {
+        background-color: #ffffff !important;
+        color: #6c757d !important;
+        border: 3px solid #00ff88 !important;
+        box-shadow: 0 0 10px rgba(0,255,136,0.3) !important;
     }
     
     .stButton > button:hover {
