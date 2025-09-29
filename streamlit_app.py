@@ -640,7 +640,7 @@ def render_agent_status(agent_status):
                         st.markdown(f"**LLM Model:** {model_name}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
                     # Remove memory size as it's not relevant
-                            else:
+        else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
 def render_mcp_logs(logs_data):
