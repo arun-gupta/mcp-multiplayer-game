@@ -575,9 +575,6 @@ def main():
                 render_game_board(board)
                 
                 # Add New Game button below the game board
-                st.markdown("---")
-                st.markdown("### Game Controls")
-                
                 # NEW GAME button
                 if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
                     result = reset_game()
