@@ -597,7 +597,7 @@ def main():
                     if winner == "player":
                         st.success("🎉 You Win! Congratulations!")
                     elif winner == "ai":
-                        st.error("🤖 AI Wins! Better luck next time!")
+                        st.error("🤖 Double-O-AI Wins! Better luck next time!")
                     elif winner == "draw":
                         st.info("🤝 It's a Draw! Good game!")
             
@@ -624,7 +624,7 @@ def main():
                         if symbol == 'X':
                             st.write(f"{i}. 👤 You placed X at ({row}, {col})")
                         else:
-                            st.write(f"{i}. 🤖 AI placed O at ({row}, {col})")
+                            st.write(f"{i}. 🤖 Double-O-AI placed O at ({row}, {col})")
                 else:
                     st.info("No moves yet - click a cell to start!")
                 
