@@ -243,7 +243,7 @@ def get_agent_metrics(agent_id):
         st.error(f"Error fetching metrics: {e}")
         return None
 
-def render_game_board(board):
+def render_game_board(board, game_over=False):
     """Render the Tic Tac Toe board with proper styling"""
     
     # Add custom CSS for game board styling
@@ -348,17 +348,19 @@ def render_game_board(board):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - clickable button
+                    # Empty cell - clickable button (disabled if game over)
                     if st.button(
                         " ",
                         key=f"move_{row}_{col}",
-                        help=f"Click to place X at ({row}, {col})",
-                        use_container_width=True
+                        help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
+                        use_container_width=True,
+                        disabled=game_over
                     ):
-                        # Make the move
-                        result = make_move(row, col)
-                        if result:
-                            st.rerun()
+                        # Make the move (only if game is not over)
+                        if not game_over:
+                            result = make_move(row, col)
+                            if result:
+                                st.rerun()
         
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -587,7 +589,7 @@ def main():
                         st.info("🤝 It's a Draw! Good game!")
                 
                 # Render game board
-                render_game_board(board)
+                render_game_board(board, game_over)
                 
                 # Add New Game button below the game board
                 # NEW GAME button
