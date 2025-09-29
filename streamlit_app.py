@@ -289,16 +289,16 @@ def render_game_board(board, game_over=False):
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1) !important;
     }
     
-    /* Clean modern button styling */
+    /* Clean modern button styling - bright green */
     .stButton > button {
-        background: linear-gradient(45deg, #4CAF50, #45a049) !important;
+        background: linear-gradient(45deg, #00ff00, #00cc00) !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
         padding: 12px 24px !important;
         font-size: 16px !important;
         font-weight: 600 !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        box-shadow: 0 4px 8px rgba(0,255,0,0.2) !important;
         transition: all 0.3s ease !important;
     }
     
