@@ -331,8 +331,16 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
     }
     
-    /* Game board button styling for both empty and filled cells */
+    /* Game board button styling to match div size exactly */
     .game-board-container .stButton > button {
+        width: 80px !important;
+        height: 80px !important;
+        min-width: 80px !important;
+        min-height: 80px !important;
+        max-width: 80px !important;
+        max-height: 80px !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
         border: 2px solid #666 !important;
         border-radius: 8px !important;
         background-color: #333 !important;
@@ -341,6 +349,9 @@ def render_game_board(board, game_over=False):
         font-weight: bold !important;
         box-shadow: 0 0 5px rgba(102, 102, 102, 0.3) !important;
         transition: all 0.2s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
     
     /* Filled cells (disabled buttons) - neon green styling with maximum specificity */
