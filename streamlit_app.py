@@ -545,8 +545,6 @@ def main():
     ])
     
     with tab1:
-        st.markdown("### 🎮 MCP Tic Tac Toe Game")
-        
         # Game controls
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
