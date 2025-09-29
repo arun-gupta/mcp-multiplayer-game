@@ -875,8 +875,6 @@ def main():
             st.error("Failed to load agent status")
     
     with tab3:
-        st.markdown("### 📡 MCP Protocol Communication")
-        
         # Get MCP logs
         logs_data = get_mcp_logs()
         if logs_data:
