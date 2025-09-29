@@ -619,7 +619,7 @@ def main():
                     else:
                         st.info("🔄 **Game in Progress**")
                 else:
-                    st.info("🎮 **Ready to Start** - Click any cell to begin!")
+                    st.info("🎮 **Ready to Start**")
         else:
             st.error("Failed to load game state")
     
