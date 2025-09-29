@@ -258,6 +258,23 @@ def render_game_board(board, game_over=False):
     .main .block-container {
         background-color: #000 !important;
         color: #00ff88 !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+    
+    /* Remove excessive top spacing */
+    .main .block-container > div {
+        padding-top: 0 !important;
+    }
+    
+    /* Reduce header spacing */
+    header {
+        display: none !important;
+    }
+    
+    /* Remove Streamlit's default top padding */
+    .stApp > div:first-child {
+        padding-top: 0 !important;
     }
     
     /* Cyberpunk title styling */
@@ -266,7 +283,9 @@ def render_game_board(board, game_over=False):
         font-size: 2.5rem !important;
         font-weight: 700 !important;
         text-align: center !important;
-        margin-bottom: 2rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 1rem !important;
+        padding-top: 0.5rem !important;
         text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
     }
     
