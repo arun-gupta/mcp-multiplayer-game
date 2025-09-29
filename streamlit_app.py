@@ -247,7 +247,7 @@ def render_game_board(board, game_over=False):
     """Render the Tic Tac Toe board with proper styling"""
     
     # Add custom CSS for game board styling
-        st.markdown("""
+    st.markdown("""
     <style>
     .game-board-container {
         display: flex;
@@ -336,7 +336,7 @@ def render_game_board(board, game_over=False):
     
     # Create 3x3 grid using Streamlit columns
     for row in range(3):
-                cols = st.columns(3)
+        cols = st.columns(3)
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
@@ -410,7 +410,7 @@ def render_agent_status(agent_status):
                     st.markdown(f"**Model:** {agent_data.get('current_model', 'Unknown')}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
                     st.markdown(f"**Memory Size:** {agent_data.get('memory_size', 0)}")
-            else:
+        else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
 def render_mcp_logs(logs_data):
@@ -472,8 +472,8 @@ def render_agent_metrics():
         if metrics:
             with st.expander(f"{agent_names.get(agent_id, agent_id)} Metrics", expanded=True):
                 col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
+                
+                with col1:
                     st.metric(
                         "Request Count",
                         metrics.get('request_count', 0)
@@ -496,8 +496,8 @@ def render_agent_metrics():
 
 def render_model_switching():
     """Render model switching interface"""
-                        st.markdown("### 🔄 Model Switching")
-                        
+    st.markdown("### 🔄 Model Switching")
+    
     agent_status = get_agent_status()
     if not agent_status:
         st.error("Failed to load agent status")
