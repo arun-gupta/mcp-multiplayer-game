@@ -59,10 +59,12 @@ class MCPGameCoordinator:
         """Coordinate AI move using MCP protocol"""
         
         # Step 1: Scout analyzes board
+        available_moves = self.get_available_moves(self.game_state.board)
         observation = await self.call_agent("scout", "analyze_board", {
             "board": self.game_state.board,
             "current_player": "ai", 
-            "move_number": len(self.move_history)
+            "move_number": len(self.move_history),
+            "available_moves": available_moves
         })
         
         if "error" in observation:
@@ -122,11 +124,13 @@ class MCPGameCoordinator:
         # Return mock response based on agent and method
         if agent_name == "scout":
             if method == "analyze_board":
+                board = data.get("board", [])
+                available_moves = data.get("available_moves", self.get_available_moves(board))
                 return {
                     "agent_id": "scout",
-                    "board_state": data.get("board", []),
-                    "analysis": "Board analysis complete",
-                    "available_moves": self.get_available_moves(data.get("board", [])),
+                    "board_state": board,
+                    "analysis": f"Board analysis complete - {len(available_moves)} moves available",
+                    "available_moves": available_moves,
                     "threats": ["Opponent has two in a row"],
                     "opportunities": ["Can create fork"],
                     "confidence": 0.85,
@@ -135,12 +139,20 @@ class MCPGameCoordinator:
         
         elif agent_name == "strategist":
             if method == "create_strategy":
+                # Get available moves from the observation data
+                available_moves = data.get("available_moves", [])
+                if available_moves:
+                    import random
+                    recommended_move = random.choice(available_moves)
+                else:
+                    recommended_move = {"row": 1, "col": 1}  # Fallback
+                
                 return {
                     "agent_id": "strategist",
                     "strategy": "Strategic plan created",
-                    "recommended_move": {"row": 1, "col": 1},
+                    "recommended_move": recommended_move,
                     "confidence": 0.90,
-                    "reasoning": "Control center for strategic advantage",
+                    "reasoning": f"Selected move from {len(available_moves)} available options",
                     "timestamp": datetime.now().isoformat()
                 }
         
