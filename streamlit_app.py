@@ -329,7 +329,6 @@ def render_game_board(board):
         background-color: #00ff88 !important;
         color: #000 !important;
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
-        transform: scale(1.02) !important;
     }
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
