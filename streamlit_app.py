@@ -860,8 +860,6 @@ def main():
             st.error("Failed to load game state")
     
     with tab2:
-        st.markdown("### 🤖 MCP Agent Status")
-        
         # Get agent status
         agent_status = get_agent_status()
         if agent_status:
