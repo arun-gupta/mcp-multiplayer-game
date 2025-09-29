@@ -155,7 +155,7 @@ class BaseMCPAgent(Agent, ABC):
         
         return {
             "agent_id": str(agent_id),
-            "role": str(self.role) if hasattr(self, 'role') else 'Unknown',
+            "role": str(agent_id).title() + " Agent",  # Use agent_id as role instead of self.role
             "is_running": bool(is_running),
             "current_model": str(current_model),
             "mcp_port": int(mcp_port),
