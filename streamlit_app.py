@@ -315,6 +315,22 @@ def render_game_board(board):
         background-color: transparent !important;
         border: none !important;
     }
+    
+    /* NEW GAME button styling */
+    .stButton > button[kind="primary"] {
+        background-color: #00ff88 !important;
+        color: #000 !important;
+        border: 2px solid #00ff88 !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
+        font-weight: bold !important;
+    }
+    
+    .stButton > button[kind="primary"]:hover {
+        background-color: #00ff88 !important;
+        color: #000 !important;
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
+        transform: scale(1.02) !important;
+    }
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
