@@ -58,65 +58,7 @@ scout_agent = None
 strategist_agent = None
 executor_agent = None
 
-# Metrics tracking system
-class MetricsTracker:
-    """Track agent performance metrics"""
-    def __init__(self):
-        self.metrics = {
-            "scout": {
-                "request_count": 0,
-                "total_response_time": 0.0,
-                "avg_response_time": 0.0,
-                "memory_usage": 0.0,
-                "current_model": "Claude 3.5 Sonnet",
-                "last_request_time": None,
-                "timestamp": datetime.now().isoformat()
-            },
-            "strategist": {
-                "request_count": 0,
-                "total_response_time": 0.0,
-                "avg_response_time": 0.0,
-                "memory_usage": 0.0,
-                "current_model": "Claude 3.5 Sonnet",
-                "last_request_time": None,
-                "timestamp": datetime.now().isoformat()
-            },
-            "executor": {
-                "request_count": 0,
-                "total_response_time": 0.0,
-                "avg_response_time": 0.0,
-                "memory_usage": 0.0,
-                "current_model": "Claude 3.5 Sonnet",
-                "last_request_time": None,
-                "timestamp": datetime.now().isoformat()
-            }
-        }
-    
-    def track_request(self, agent_id: str, response_time: float = None):
-        """Track a request for an agent"""
-        if agent_id in self.metrics:
-            self.metrics[agent_id]["request_count"] += 1
-            self.metrics[agent_id]["last_request_time"] = datetime.now().isoformat()
-            self.metrics[agent_id]["timestamp"] = datetime.now().isoformat()
-            
-            if response_time is not None:
-                self.metrics[agent_id]["total_response_time"] += response_time
-                self.metrics[agent_id]["avg_response_time"] = (
-                    self.metrics[agent_id]["total_response_time"] / 
-                    self.metrics[agent_id]["request_count"]
-                )
-            
-            # Update memory usage (simulate realistic values)
-            self.metrics[agent_id]["memory_usage"] = round(random.uniform(250, 350), 2)
-    
-    def get_metrics(self, agent_id: str):
-        """Get metrics for an agent"""
-        if agent_id in self.metrics:
-            return self.metrics[agent_id]
-        return None
-
-# Global metrics tracker
-metrics_tracker = MetricsTracker()
+# Metrics are now handled by individual MCP agents via their tools
 
 # Pydantic models for API requests/responses
 class MoveRequest(BaseModel):
@@ -206,11 +148,14 @@ async def make_move(move_data: MoveRequest):
         result = await coordinator.process_player_move(move_data.row, move_data.col)
         end_time = time.time()
         
-        # Track metrics for all agents involved in the move
+        # Track metrics for all agents involved in the move via MCP
         response_time = end_time - start_time
-        metrics_tracker.track_request("scout", response_time)
-        metrics_tracker.track_request("strategist", response_time)
-        metrics_tracker.track_request("executor", response_time)
+        if scout_agent:
+            scout_agent.track_request(response_time)
+        if strategist_agent:
+            strategist_agent.track_request(response_time)
+        if executor_agent:
+            executor_agent.track_request(response_time)
         
         return result
     except Exception as e:
@@ -267,16 +212,19 @@ async def get_mcp_logs():
 
 @app.get("/agents/{agent_id}/metrics")
 async def get_agent_metrics(agent_id: str):
-    """Get performance metrics for a specific agent"""
+    """Get performance metrics for a specific agent via MCP"""
     try:
-        if agent_id not in ["scout", "strategist", "executor"]:
+        agents = {
+            "scout": scout_agent,
+            "strategist": strategist_agent,
+            "executor": executor_agent
+        }
+        
+        if agent_id not in agents or agents[agent_id] is None:
             raise HTTPException(status_code=404, detail="Agent not found")
         
-        # Get metrics from our tracker
-        metrics = metrics_tracker.get_metrics(agent_id)
-        if metrics is None:
-            raise HTTPException(status_code=404, detail="Agent metrics not found")
-        
+        # Get metrics from the agent's MCP tool
+        metrics = await agents[agent_id].get_performance_metrics()
         return metrics
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting agent metrics: {str(e)}")
