@@ -577,11 +577,11 @@ def main():
             st.write("Debug: Game Controls section loaded")
             st.write("Debug: About to create buttons...")
             
-            # Try different button approaches
+            # Working Streamlit buttons
             st.write("Debug: Creating NEW GAME button...")
             
-            # Method 1: Simple button without styling
-            if st.button("🔄 NEW GAME", key="new_game_simple"):
+            # Main NEW GAME button
+            if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_main"):
                 st.write("NEW GAME button clicked!")
                 result = reset_game()
                 st.write(f"reset_game() returned: {result}")
@@ -589,25 +589,9 @@ def main():
                     st.success("Game reset successfully!")
                     st.rerun()
             
-            # Method 2: Button in columns
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                if st.button("Test Reset", key="test_reset"):
-                    st.write("Test Reset button clicked!")
-            
-            # Method 3: HTML button
-            st.markdown("""
-            <button onclick="alert('HTML button clicked!')" style="
-                background-color: #00ff88;
-                color: black;
-                padding: 10px 20px;
-                border: none;
-                border-radius: 5px;
-                font-size: 16px;
-                cursor: pointer;
-                margin: 10px 0;
-            ">🔄 HTML NEW GAME</button>
-            """, unsafe_allow_html=True)
+            # Test button
+            if st.button("Test Reset", key="test_reset"):
+                st.write("Test Reset button clicked!")
             
             st.write("Debug: Finished creating buttons")
             
