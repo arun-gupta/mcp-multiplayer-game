@@ -628,15 +628,8 @@ def main():
                 else:
                     st.info("No moves yet - click a cell to start!")
                 
-                # Add game outcome to move history if game is over
-                if game_over and winner:
-                    st.markdown("---")
-                    if winner == "player":
-                        st.success("🎉 **You Win! Congratulations!**")
-                    elif winner == "ai":
-                        st.error("🤖 **AI Wins! Better luck next time!**")
-                    elif winner == "draw":
-                        st.info("🤝 **It's a Draw! Good game!**")
+                # Game outcome is already shown at the top of the game board
+                # No need to duplicate it in the move history
         else:
             st.error("Failed to load game state")
     
