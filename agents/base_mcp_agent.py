@@ -154,12 +154,12 @@ class BaseMCPAgent(Agent, ABC):
         mcp_port = self.__dict__.get('mcp_port', 0)
         
         return {
-            "agent_id": agent_id,
-            "role": self.role,
-            "is_running": is_running,
-            "current_model": current_model,
-            "mcp_port": mcp_port,
-            "memory_size": self._get_memory_size()
+            "agent_id": str(agent_id),
+            "role": str(self.role) if hasattr(self, 'role') else 'Unknown',
+            "is_running": bool(is_running),
+            "current_model": str(current_model),
+            "mcp_port": int(mcp_port),
+            "memory_size": int(self._get_memory_size())
         }
     
     async def get_agent_memory(self) -> Dict:
