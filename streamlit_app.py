@@ -883,8 +883,6 @@ def main():
             st.error("Failed to load MCP logs")
     
     with tab4:
-        st.markdown("### 📊 Performance Analytics")
-        
         # Agent metrics
         render_agent_metrics()
     
