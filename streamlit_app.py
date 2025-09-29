@@ -317,10 +317,11 @@ def render_game_board(board, game_over=False):
         margin: 20px 0;
     }
     
-    /* Make buttons span full column width with fluorescent green borders */
+    /* Make buttons span full column width with fluorescent green borders - SAME SIZE FOR ALL */
     .stButton > button {
         width: 100% !important;
         min-height: 100px !important;
+        height: 100px !important;
         font-size: 24px !important;
         font-weight: bold !important;
         border: 3px solid #00ff88 !important;
