@@ -447,6 +447,9 @@ def render_game_board(board, game_over=False):
         border-color: #00ff88;
         box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
         cursor: default;
+        font-size: 32px !important;
+        font-weight: 900 !important;
+        font-family: 'Arial Black', Arial, sans-serif !important;
     }
     
     .game-cell.empty:hover {
