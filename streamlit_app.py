@@ -600,37 +600,31 @@ def main():
                         st.error("Failed to reset game")
             
             with col2:
-                st.markdown("### 📝 Player Moves")
+                st.markdown("### 📝 Move History")
                 
-                # Show move history
-                # Debug: Show what's actually in game_state
-                st.write("Debug - Game State Keys:", list(game_state.keys()))
+                # Show move history from current board state
+                moves = []
+                for row_idx, row in enumerate(board):
+                    for col_idx, cell in enumerate(row):
+                        if cell:
+                            moves.append({
+                                'symbol': cell,
+                                'row': row_idx,
+                                'col': col_idx
+                            })
                 
-                # Try different possible field names for move history
-                move_history = None
-                if 'move_history' in game_state:
-                    move_history = game_state.get('move_history', [])
-                elif 'game_history' in game_state:
-                    move_history = game_state.get('game_history', [])
-                elif 'moves' in game_state:
-                    move_history = game_state.get('moves', [])
-                
-                if move_history:
-                    st.write(f"Debug - Move history found: {len(move_history)} moves")
-                    for i, move in enumerate(move_history, 1):
-                        player = move.get('player', 'Unknown')
-                        position = move.get('position', {})
-                        row = position.get('row', '?')
-                        col = position.get('col', '?')
-                        st.write(f"**Move {i}:** {player} at ({row}, {col})")
+                if moves:
+                    for i, move in enumerate(moves, 1):
+                        symbol = move['symbol']
+                        row = move['row']
+                        col = move['col']
+                        
+                        if symbol == 'X':
+                            st.write(f"{i}. 👤 You placed X at ({row}, {col})")
+                        else:
+                            st.write(f"{i}. 🤖 AI placed O at ({row}, {col})")
                 else:
-                    st.info("No move history found in game state")
-                    # Show current board state as fallback
-                    st.write("**Current Board State:**")
-                    for row_idx, row in enumerate(board):
-                        for col_idx, cell in enumerate(row):
-                            if cell:
-                                st.write(f"  {cell} at ({row_idx}, {col_idx})")
+                    st.info("No moves yet - click a cell to start!")
                 
         else:
             st.error("Failed to load game state")
