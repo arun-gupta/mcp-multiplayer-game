@@ -621,6 +621,17 @@ def render_game_board(board, game_over=False):
     
     # Single NEW GAME button - spans across the board
     if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="secondary", use_container_width=True):
+        # Reset backend game state
+        try:
+            response = requests.post(f"{API_BASE}/reset-game")
+            if response.status_code == 200:
+                st.success("🎮 New game started!")
+            else:
+                st.error("Failed to reset game on server")
+        except Exception as e:
+            st.error(f"Error resetting game: {e}")
+        
+        # Reset frontend session state
         st.session_state.board = [['', '', ''] for _ in range(3)]
         st.session_state.current_player = 'X'
         st.session_state.game_over = False
