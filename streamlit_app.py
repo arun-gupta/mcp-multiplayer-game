@@ -245,7 +245,6 @@ def get_agent_metrics(agent_id):
 
 def render_game_board(board):
     """Render the Tic Tac Toe board with proper styling"""
-    st.markdown("### 🎮 Game Board")
     
     # Add custom CSS for game board styling
     st.markdown("""
