@@ -428,7 +428,19 @@ def render_game_board(board, game_over=False):
         padding: 0 !important;
     }
     
-    /* Style the game board buttons directly */
+    /* Force exact button dimensions - no size changes allowed */
+    .game-board-container .stButton {
+        width: 100px !important;
+        height: 100px !important;
+        min-width: 100px !important;
+        max-width: 100px !important;
+        min-height: 100px !important;
+        max-height: 100px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        flex: none !important;
+    }
+    
     .game-board-container .stButton > button {
         width: 100px !important;
         height: 100px !important;
@@ -450,6 +462,8 @@ def render_game_board(board, game_over=False):
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        flex: none !important;
+        box-sizing: border-box !important;
     }
     
     .game-board-container .stButton > button:hover {
@@ -462,6 +476,19 @@ def render_game_board(board, game_over=False):
         color: #000 !important;
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), inset 0 0 20px rgba(0, 255, 136, 0.3) !important;
         cursor: default !important;
+        width: 100px !important;
+        height: 100px !important;
+        min-width: 100px !important;
+        max-width: 100px !important;
+        min-height: 100px !important;
+        max-height: 100px !important;
+    }
+    
+    /* Prevent any content-based resizing */
+    .game-board-container .stButton > button * {
+        max-width: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
     }
     
     </style>
