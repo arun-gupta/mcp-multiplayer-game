@@ -323,7 +323,7 @@ def render_game_board(board):
     
     # Create 3x3 grid using Streamlit columns
     for row in range(3):
-                cols = st.columns(3)
+        cols = st.columns(3)
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
