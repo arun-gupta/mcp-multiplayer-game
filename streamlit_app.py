@@ -566,21 +566,57 @@ def main():
             else:
                 st.info(f"Current Player: {current_player} | Move: {move_number}")
             
-            # Render game board
-            render_game_board(board)
+            # Create two-column layout: Game Board (50%) and Player Moves (50%)
+            col1, col2 = st.columns([1, 1])
             
-            # Add New Game button below the game board
-            st.markdown("---")
-            st.markdown("### Game Controls")
+            with col1:
+                st.markdown("### 🎮 Game Board")
+                # Render game board
+                render_game_board(board)
+                
+                # Add New Game button below the game board
+                st.markdown("---")
+                st.markdown("### Game Controls")
+                
+                # NEW GAME button
+                if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
+                    result = reset_game()
+                    if result:
+                        st.success("Game reset successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to reset game")
             
-            # NEW GAME button
-            if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
-                result = reset_game()
-                if result:
-                    st.success("Game reset successfully!")
-                    st.rerun()
+            with col2:
+                st.markdown("### 📝 Player Moves")
+                
+                # Show move history
+                if 'move_history' in game_state:
+                    move_history = game_state.get('move_history', [])
+                    if move_history:
+                        for i, move in enumerate(move_history, 1):
+                            player = move.get('player', 'Unknown')
+                            position = move.get('position', {})
+                            row = position.get('row', '?')
+                            col = position.get('col', '?')
+                            st.write(f"**Move {i}:** {player} at ({row}, {col})")
+                    else:
+                        st.info("No moves yet")
                 else:
-                    st.error("Failed to reset game")
+                    st.info("Move history not available")
+                
+                # Show current game status
+                st.markdown("---")
+                st.markdown("### 📊 Game Status")
+                st.write(f"**Current Player:** {current_player}")
+                st.write(f"**Move Number:** {move_number}")
+                if game_over:
+                    if winner:
+                        st.success(f"🎉 **Winner:** {winner}")
+                    else:
+                        st.info("🤝 **Game Over:** It's a draw!")
+                else:
+                    st.info("🔄 **Game in Progress**")
         else:
             st.error("Failed to load game state")
     
