@@ -557,17 +557,6 @@ def main():
             game_over = game_state.get('game_over', False)
             winner = game_state.get('winner')
             
-            # Game status - only show if game has started
-            if move_number > 0:
-                if game_over:
-                    if winner:
-                        st.success(f"🎉 Game Over! Winner: {winner}")
-                    else:
-                        st.info("🤝 Game Over! It's a draw!")
-                else:
-                    st.info(f"Current Player: {current_player} | Move: {move_number}")
-            else:
-                st.info("🎮 Game Not Yet Started - Click a cell to begin!")
             
             # Create two-column layout: Game Board (50%) and Player Moves (50%)
             col1, col2 = st.columns([1, 1])
