@@ -11,7 +11,7 @@ import asyncio
 
 # Configure page
 st.set_page_config(
-    page_title="MCP CrewAI Tic Tac Toe",
+    page_title="Agentic Tic-Tac-Toe: MCP Protocol Showcase",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -440,7 +440,7 @@ def render_model_switching():
 def main():
     """Main Streamlit app"""
     # Header
-    st.markdown('<h1 class="mcp-header">🤖 MCP CrewAI Tic Tac Toe</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="mcp-header">🤖 Agentic Tic-Tac-Toe: MCP Protocol Showcase</h1>', unsafe_allow_html=True)
     st.markdown('<p class="mcp-sub-header">Multi-Agent Game with MCP Protocol Communication</p>', unsafe_allow_html=True)
     
     # Check API connection
