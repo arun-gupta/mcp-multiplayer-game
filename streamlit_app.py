@@ -317,6 +317,29 @@ def render_game_board(board, game_over=False):
         margin: 20px 0;
     }
     
+    /* Make empty buttons more visible */
+    .stButton > button {
+        min-height: 60px !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        background-color: #ffffff !important;
+        color: #6c757d !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    }
+    
+    .stButton > button:disabled {
+        background-color: #f8f9fa !important;
+        color: #2c3e50 !important;
+        border-color: #dee2e6 !important;
+    }
+    
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -481,13 +504,13 @@ def render_game_board(board, game_over=False):
                 else:
                     # Empty cell - clickable button
                     if not game_over:
-                        if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})"):
+                        if st.button("•", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})"):
                             result = make_move(row, col)
                             if result:
                                 st.rerun()
                     else:
                         # Disabled empty cell
-                        st.button(" ", key=f"disabled_{row}_{col}", disabled=True)
+                        st.button("•", key=f"disabled_{row}_{col}", disabled=True)
     
     # Single NEW GAME button
     if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary"):
