@@ -341,20 +341,9 @@ def render_game_board(board, game_over=False):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
                 if cell_value:
-                    # Filled cell - display as styled div with different colors for X and O
-                    if cell_value == 'X':
-                        # Player (X) - Blue color
-                        bg_color = "#4A90E2"
-                        border_color = "#4A90E2"
-                        shadow_color = "rgba(74, 144, 226, 0.4)"
-                    else:
-                        # Double-O-AI (O) - Green color
-                        bg_color = "#00ff88"
-                        border_color = "#00ff88"
-                        shadow_color = "rgba(0, 255, 136, 0.4)"
-                    
+                    # Filled cell - display as styled div with consistent neon green color
                     st.markdown(f"""
-                    <div class="game-cell filled" style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid {border_color}; border-radius: 8px; background-color: {bg_color}; color: #000; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px {shadow_color};">
+                    <div class="game-cell filled" style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #00ff88; border-radius: 8px; background-color: #00ff88; color: #000; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);">
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
