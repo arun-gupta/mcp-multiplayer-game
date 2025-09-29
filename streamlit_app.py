@@ -231,30 +231,11 @@ def switch_agent_model(agent_id, model):
         return None
 
 def get_agent_metrics(agent_id):
-    """Get agent performance metrics with fallback for static API data"""
+    """Get agent performance metrics"""
     try:
         response = requests.get(f"{API_BASE}/agents/{agent_id}/metrics")
         if response.status_code == 200:
-            metrics = response.json()
-            
-            # If API returns static data (all zeros), provide realistic fallback
-            if (metrics.get('request_count', 0) == 0 and 
-                metrics.get('avg_response_time', 0) == 0):
-                
-                # Generate realistic metrics based on game activity
-                import random
-                import time
-                
-                # Simulate realistic metrics
-                metrics.update({
-                    'request_count': random.randint(3, 8),  # 3-8 requests
-                    'avg_response_time': round(random.uniform(0.5, 2.5), 3),  # 0.5-2.5s
-                    'memory_usage': round(random.uniform(250, 350), 2),  # 250-350 MB
-                    'current_model': 'Claude 3.5 Sonnet',
-                    'timestamp': time.strftime('%Y-%m-%dT%H:%M:%S.%f')
-                })
-            
-            return metrics
+            return response.json()
         else:
             st.error(f"Error fetching metrics: {response.status_code}")
             return None
@@ -266,7 +247,7 @@ def render_game_board(board, game_over=False):
     """Render the Tic Tac Toe board with proper styling"""
     
     # Add custom CSS for game board styling
-    st.markdown("""
+        st.markdown("""
     <style>
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
@@ -448,7 +429,7 @@ def render_game_board(board, game_over=False):
         width: 80px;
         height: 80px;
         border: 2px solid #333;
-        border-radius: 8px;
+                    border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -601,8 +582,8 @@ def render_game_board(board, game_over=False):
                         if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", use_container_width=True):
                             result = make_move(row, col)
                             if result:
-                                st.rerun()
-                    else:
+                                    st.rerun()
+                                else:
                         # Disabled empty cell
                         st.button("", key=f"disabled_{row}_{col}", disabled=True, use_container_width=True)
     
@@ -659,7 +640,7 @@ def render_agent_status(agent_status):
                         st.markdown(f"**LLM Model:** {model_name}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
                     # Remove memory size as it's not relevant
-        else:
+                            else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
 def render_mcp_logs(logs_data):
@@ -679,8 +660,8 @@ def render_mcp_logs(logs_data):
         timestamp = log.get('timestamp', 'Unknown')
         agent = log.get('agent', 'Unknown')
         message_type = log.get('message_type', 'Unknown')
-        data = log.get('data', {})
-        
+                    data = log.get('data', {})
+                    
         # Format timestamp
         try:
             dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
@@ -702,7 +683,7 @@ def render_mcp_logs(logs_data):
             st.markdown(f"**Timestamp:** {timestamp}")
             st.markdown(f"**Agent:** {agent}")
             st.markdown(f"**Message Type:** {message_type}")
-            st.markdown("**Data:**")
+                                st.markdown("**Data:**")
             st.json(data)
 
 def render_agent_metrics():
@@ -721,7 +702,7 @@ def render_agent_metrics():
         if metrics:
             with st.expander(f"{agent_names.get(agent_id, agent_id)} Metrics", expanded=True):
                 col1, col2, col3 = st.columns(3)
-                
+            
                 with col1:
                     st.metric(
                         "Request Count",
@@ -889,7 +870,7 @@ def main():
                 
                 # Game outcome is already shown at the top of the game board
                 # No need to duplicate it in the move history
-        else:
+                else:
             st.error("Failed to load game state")
     
     with tab2:
@@ -897,7 +878,7 @@ def main():
         agent_status = get_agent_status()
         if agent_status:
             render_agent_status(agent_status)
-        else:
+                else:
             st.error("Failed to load agent status")
     
     with tab3:
@@ -905,7 +886,7 @@ def main():
         logs_data = get_mcp_logs()
         if logs_data:
             render_mcp_logs(logs_data)
-        else:
+                else:
             st.error("Failed to load MCP logs")
     
     with tab4:
