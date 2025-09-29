@@ -460,39 +460,34 @@ Example: 1,1 for center position
     async def _get_llm_move(self, available_moves: List[Dict]) -> Dict:
         """Get AI move using LLM directly"""
         try:
-            # Create a simple prompt for the LLM
+            # First, check for immediate blocking or winning moves using logic
+            blocking_move = self._find_blocking_move()
+            if blocking_move:
+                print(f"AI BLOCKING: {blocking_move}")
+                return blocking_move
+            
+            winning_move = self._find_winning_move()
+            if winning_move:
+                print(f"AI WINNING: {winning_move}")
+                return winning_move
+            
+            # If no immediate threats/wins, use LLM for strategic positioning
             board_str = self._board_to_string(self.game_state.board)
             
             prompt = f"""
-You are an expert Tic-Tac-Toe AI (O) playing against a human (X). Your goal is to WIN or at minimum FORCE A DRAW.
+You are playing Tic-Tac-Toe as AI (O) vs Human (X). 
 
-CURRENT BOARD STATE:
+BOARD:
 {board_str}
 
 AVAILABLE MOVES: {available_moves}
 
-STRATEGIC ANALYSIS REQUIRED:
-1. **IMMEDIATE THREAT CHECK**: Look for any row, column, or diagonal where the human (X) has 2 pieces and can win on their next turn. If found, you MUST block it immediately.
+STRATEGY:
+1. Take center (1,1) if available
+2. Take corners (0,0), (0,2), (2,0), (2,2) 
+3. Take any available position
 
-2. **WINNING OPPORTUNITY CHECK**: Look for any row, column, or diagonal where you (O) have 2 pieces and can win on this turn. If found, take that winning move.
-
-3. **STRATEGIC POSITIONING**: If no immediate threats or wins:
-   - Take center (1,1) if available (most powerful position)
-   - Take corners (0,0), (0,2), (2,0), (2,2) if available
-   - Avoid edges unless necessary
-
-4. **FORK CREATION**: Try to create situations where you have two winning opportunities that the human cannot block both.
-
-5. **FORK PREVENTION**: If the human can create a fork, block it by taking a position that prevents them from having two winning opportunities.
-
-CRITICAL RULES:
-- ALWAYS block if human has 2 in a row
-- ALWAYS win if you have 2 in a row  
-- Center is most valuable, then corners, then edges
-- Think 2 moves ahead
-- Force draws when you cannot win
-
-Analyze the board systematically and choose the OPTIMAL move. Return only JSON: {{"row": X, "col": Y}}
+Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
 """
             
             # Use the first available agent's LLM
@@ -529,6 +524,88 @@ Analyze the board systematically and choose the OPTIMAL move. Return only JSON: 
         except Exception as e:
             print(f"Error getting LLM move: {e}")
             return None
+    
+    def _find_blocking_move(self) -> Dict:
+        """Find if human has 2 in a row and block it"""
+        board = self.game_state.board
+        
+        # Check rows
+        for row in range(3):
+            x_count = sum(1 for col in range(3) if board[row][col] == "X")
+            o_count = sum(1 for col in range(3) if board[row][col] == "O")
+            if x_count == 2 and o_count == 0:
+                for col in range(3):
+                    if board[row][col] == "":
+                        return {"row": row, "col": col}
+        
+        # Check columns
+        for col in range(3):
+            x_count = sum(1 for row in range(3) if board[row][col] == "X")
+            o_count = sum(1 for row in range(3) if board[row][col] == "O")
+            if x_count == 2 and o_count == 0:
+                for row in range(3):
+                    if board[row][col] == "":
+                        return {"row": row, "col": col}
+        
+        # Check diagonals
+        # Main diagonal (0,0) to (2,2)
+        x_count = sum(1 for i in range(3) if board[i][i] == "X")
+        o_count = sum(1 for i in range(3) if board[i][i] == "O")
+        if x_count == 2 and o_count == 0:
+            for i in range(3):
+                if board[i][i] == "":
+                    return {"row": i, "col": i}
+        
+        # Anti-diagonal (0,2) to (2,0)
+        x_count = sum(1 for i in range(3) if board[i][2-i] == "X")
+        o_count = sum(1 for i in range(3) if board[i][2-i] == "O")
+        if x_count == 2 and o_count == 0:
+            for i in range(3):
+                if board[i][2-i] == "":
+                    return {"row": i, "col": 2-i}
+        
+        return None
+    
+    def _find_winning_move(self) -> Dict:
+        """Find if AI has 2 in a row and can win"""
+        board = self.game_state.board
+        
+        # Check rows
+        for row in range(3):
+            x_count = sum(1 for col in range(3) if board[row][col] == "X")
+            o_count = sum(1 for col in range(3) if board[row][col] == "O")
+            if o_count == 2 and x_count == 0:
+                for col in range(3):
+                    if board[row][col] == "":
+                        return {"row": row, "col": col}
+        
+        # Check columns
+        for col in range(3):
+            x_count = sum(1 for row in range(3) if board[row][col] == "X")
+            o_count = sum(1 for row in range(3) if board[row][col] == "O")
+            if o_count == 2 and x_count == 0:
+                for row in range(3):
+                    if board[row][col] == "":
+                        return {"row": row, "col": col}
+        
+        # Check diagonals
+        # Main diagonal (0,0) to (2,2)
+        x_count = sum(1 for i in range(3) if board[i][i] == "X")
+        o_count = sum(1 for i in range(3) if board[i][i] == "O")
+        if o_count == 2 and x_count == 0:
+            for i in range(3):
+                if board[i][i] == "":
+                    return {"row": i, "col": i}
+        
+        # Anti-diagonal (0,2) to (2,0)
+        x_count = sum(1 for i in range(3) if board[i][2-i] == "X")
+        o_count = sum(1 for i in range(3) if board[i][2-i] == "O")
+        if o_count == 2 and x_count == 0:
+            for i in range(3):
+                if board[i][2-i] == "":
+                    return {"row": i, "col": 2-i}
+        
+        return None
     
     def _board_to_string(self, board: List[List[str]]) -> str:
         """Convert board to string representation"""
