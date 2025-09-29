@@ -898,8 +898,6 @@ def main():
         render_agent_metrics()
     
     with tab5:
-        st.markdown("### ⚙️ MCP Configuration")
-        
         # Model switching
         render_model_switching()
         
