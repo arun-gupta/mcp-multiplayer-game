@@ -235,7 +235,10 @@ def get_agent_metrics(agent_id):
     try:
         response = requests.get(f"{API_BASE}/agents/{agent_id}/metrics")
         if response.status_code == 200:
-            return response.json()
+            metrics = response.json()
+            # Debug: show what we're getting from the API
+            st.write(f"Debug - {agent_id} metrics:", metrics)
+            return metrics
         else:
             st.error(f"Error fetching metrics: {response.status_code}")
             return None
