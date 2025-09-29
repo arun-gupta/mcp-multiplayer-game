@@ -582,8 +582,8 @@ def render_game_board(board, game_over=False):
                         if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", use_container_width=True):
                             result = make_move(row, col)
                             if result:
-                                    st.rerun()
-                                else:
+                                st.rerun()
+                    else:
                         # Disabled empty cell
                         st.button("", key=f"disabled_{row}_{col}", disabled=True, use_container_width=True)
     
