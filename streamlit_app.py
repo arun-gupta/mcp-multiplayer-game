@@ -317,91 +317,6 @@ def render_game_board(board, game_over=False):
         margin: 20px 0;
     }
     
-    .game-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        grid-template-rows: repeat(3, 1fr);
-        gap: 8px;
-        width: 300px;
-        height: 300px;
-        background: transparent;
-        margin-bottom: 20px;
-    }
-    
-    .game-cell {
-        width: 100%;
-        height: 100%;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        background-color: #ffffff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .game-cell:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    .game-cell.filled {
-        background-color: #ffffff;
-        color: #2c3e50;
-        cursor: default;
-    }
-    
-    .game-cell.empty {
-        color: #6c757d;
-    }
-    
-    .new-game-btn {
-        background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 24px;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 4px 8px rgba(0,255,136,0.3);
-        width: 100%;
-        max-width: 300px;
-    }
-    
-    .new-game-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,255,136,0.4);
-    }
-    
-    /* Make Streamlit buttons fill entire column and be same size */
-    .stButton > button {
-        width: 100% !important;
-        height: 100% !important;
-        border: 2px solid #e0e0e0 !important;
-        border-radius: 8px !important;
-        background-color: #ffffff !important;
-        color: #6c757d !important;
-        font-size: 28px !important;
-        font-weight: bold !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-        transition: all 0.2s ease !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-    }
-    
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -550,41 +465,31 @@ def render_game_board(board, game_over=False):
     
     
     </style>
-    """, unsafe_allow_html=True)    # Create clean 3x3 grid using CSS Grid
+    """, unsafe_allow_html=True)    # Simple 3x3 grid using Streamlit columns
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
-    st.markdown('<div class="game-grid">', unsafe_allow_html=True)
     
-    # Create 3x3 grid cells
+    # Create 3x3 grid using Streamlit columns
     for row in range(3):
+        cols = st.columns(3)
         for col in range(3):
-            cell_value = board[row][col] if board[row][col] else ""
-            
-            if cell_value:
-                # Filled cell - clean white with subtle glow
-                st.markdown(f"""
-                <div class="game-cell filled">
-                    {cell_value}
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                # Empty cell - directly clickable button
-                if not game_over:
-                    if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
-                        result = make_move(row, col)
-                        if result:
-                            st.rerun()
+            with cols[col]:
+                cell_value = board[row][col] if board[row][col] else ""
+                
+                if cell_value:
+                    # Filled cell - show the value
+                    st.button(cell_value, key=f"filled_{row}_{col}", disabled=True, type="primary")
                 else:
-                    # Disabled empty cell - same exact dimensions
-                    st.markdown(f"""
-                    <div class="game-cell empty" style="opacity: 0.5; cursor: not-allowed;">
-                        &nbsp;
-                    </div>
-                    """, unsafe_allow_html=True)
+                    # Empty cell - clickable button
+                    if not game_over:
+                        if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})"):
+                            result = make_move(row, col)
+                            if result:
+                                st.rerun()
+                    else:
+                        # Disabled empty cell
+                        st.button(" ", key=f"disabled_{row}_{col}", disabled=True)
     
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Add NEW GAME button
-    st.markdown('<div style="margin-top: 20px; display: flex; justify-content: center;">', unsafe_allow_html=True)
+    # Single NEW GAME button
     if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary"):
         st.session_state.board = [['', '', ''] for _ in range(3)]
         st.session_state.current_player = 'X'
@@ -592,7 +497,6 @@ def render_game_board(board, game_over=False):
         st.session_state.winner = None
         st.session_state.move_history = []
         st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
