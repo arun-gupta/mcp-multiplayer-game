@@ -429,19 +429,19 @@ def render_game_board(board, game_over=False):
         border: none !important;
     }
     
-    /* NEW GAME button styling */
+    /* NEW GAME button styling - bright green */
     .stButton > button[kind="primary"] {
-        background-color: #00ff88 !important;
-        color: #000 !important;
-        border: 2px solid #00ff88 !important;
-        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
+        background-color: #00ff00 !important;
+        color: white !important;
+        border: 3px solid #00ff00 !important;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.4) !important;
         font-weight: bold !important;
     }
     
     .stButton > button[kind="primary"]:hover {
-        background-color: #00ff88 !important;
-        color: #000 !important;
-        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
+        background-color: #00ff00 !important;
+        color: white !important;
+        box-shadow: 0 0 30px rgba(0, 255, 0, 0.6) !important;
     }
     
     /* Game board button styling to match div size exactly */
