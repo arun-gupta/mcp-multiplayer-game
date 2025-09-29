@@ -249,9 +249,48 @@ def render_game_board(board, game_over=False):
     # Add custom CSS for game board styling
     st.markdown("""
     <style>
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Beautiful title styling */
+    h1 {
+        color: #2c3e50 !important;
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        margin-bottom: 2rem !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Modern button styling */
+    .stButton > button {
+        background: linear-gradient(45deg, #4CAF50, #45a049) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 12px 24px !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important;
+    }
+    
     .game-board-container {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         margin: 20px 0;
     }
     
@@ -412,9 +451,9 @@ def render_game_board(board, game_over=False):
                 cell_value = board[row][col] if board[row][col] else ""
                 # Use custom divs for filled cells to ensure neon green styling
                 if cell_value:
-                    # Filled cell - same style as empty cells
+                    # Filled cell - modern styling
                     st.markdown(f"""
-                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #fff; font-size: 28px; font-weight: bold;">
+                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background: linear-gradient(145deg, #f8f9fa, #e9ecef); color: #2c3e50; font-size: 36px; font-weight: 600; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: all 0.2s ease;">
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
@@ -424,7 +463,7 @@ def render_game_board(board, game_over=False):
                         # Create clickable div that triggers button click
                         st.markdown(f"""
                         <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
-                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; cursor: pointer; box-shadow: 0 0 5px rgba(102, 102, 102, 0.3); transition: all 0.2s ease;">
+                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background: linear-gradient(145deg, #ffffff, #f8f9fa); color: #6c757d; font-size: 36px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease; hover:box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
                             &nbsp;
                         </div>
                         """, unsafe_allow_html=True)
@@ -437,7 +476,7 @@ def render_game_board(board, game_over=False):
                     else:
                         # Disabled empty cell - same size as filled cells
                         st.markdown(f"""
-                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #666; font-size: 28px; font-weight: bold; opacity: 0.5;">
+                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background: linear-gradient(145deg, #f8f9fa, #e9ecef); color: #6c757d; font-size: 36px; font-weight: 600; opacity: 0.5;">
                             &nbsp;
                         </div>
                         """, unsafe_allow_html=True)
