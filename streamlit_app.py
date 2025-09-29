@@ -630,9 +630,16 @@ def render_agent_status(agent_status):
                     st.markdown(f"**Status:** {'🟢 Online' if agent_data.get('is_running') else '🔴 Offline'}")
                 
                 with col2:
-                    st.markdown(f"**Model:** {agent_data.get('current_model', 'Unknown')}")
+                    # Show specific LLM model instead of generic "LLM"
+                    model_name = agent_data.get('current_model', 'Unknown')
+                    if model_name == 'LLM' or model_name == 'Unknown':
+                        # Try to get the actual model name from the agent data
+                        actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'Claude 3.5 Sonnet'))
+                        st.markdown(f"**LLM Model:** {actual_model}")
+                    else:
+                        st.markdown(f"**LLM Model:** {model_name}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
-                    st.markdown(f"**Memory Size:** {agent_data.get('memory_size', 0)}")
+                    # Remove memory size as it's not relevant
         else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
