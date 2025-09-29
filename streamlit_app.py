@@ -317,7 +317,7 @@ def render_game_board(board, game_over=False):
         margin: 20px 0;
     }
     
-    /* Make buttons span full column width with fluorescent green borders - SAME SIZE FOR ALL */
+    /* Make buttons span full column width - SAME SIZE FOR ALL */
     .stButton > button {
         width: 100% !important;
         min-height: 100px !important;
@@ -327,11 +327,19 @@ def render_game_board(board, game_over=False):
         border: 3px solid #00ff88 !important;
         border-radius: 8px !important;
         background-color: #ffffff !important;
-        color: #00ff88 !important;
+        color: #6c757d !important;
         box-shadow: 0 0 10px rgba(0,255,136,0.3) !important;
         transition: all 0.2s ease !important;
         margin: 0 !important;
         padding: 0 !important;
+    }
+    
+    /* Filled cells should be bright green */
+    .stButton > button[type="primary"] {
+        background-color: #00ff88 !important;
+        color: white !important;
+        border: 3px solid #00ff88 !important;
+        box-shadow: 0 0 15px rgba(0,255,136,0.4) !important;
     }
     
     .stButton > button:hover {
