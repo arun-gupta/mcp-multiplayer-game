@@ -343,16 +343,27 @@ def render_game_board(board, game_over=False):
         transition: all 0.2s ease !important;
     }
     
-    /* Filled cells (disabled buttons) - neon green styling with higher specificity */
+    /* Filled cells (disabled buttons) - neon green styling with maximum specificity */
     .game-board-container .stButton > button[disabled],
-    .game-board-container .stButton > button:disabled {
+    .game-board-container .stButton > button:disabled,
+    .game-board-container button[disabled],
+    .game-board-container button:disabled {
         border: 2px solid #00ff88 !important;
         background-color: #00ff88 !important;
+        background: #00ff88 !important;
         color: #000 !important;
         box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
         opacity: 1 !important;
         cursor: default !important;
         font-weight: bold !important;
+    }
+    
+    /* Force override for any Streamlit default styling */
+    .stButton > button[disabled] {
+        background-color: #00ff88 !important;
+        background: #00ff88 !important;
+        border: 2px solid #00ff88 !important;
+        color: #000 !important;
     }
     
     /* Remove extra spacing */
