@@ -404,6 +404,21 @@ def render_game_board(board, game_over=False):
         font-size: 18px !important;
     }
     
+    /* Target the specific NEW GAME button by key */
+    button[key="new_game"],
+    button[key="new_game"]:hover,
+    button[key="new_game"]:focus,
+    button[key="new_game"]:active {
+        background: #00ff00 !important;
+        background-color: #00ff00 !important;
+        background-image: none !important;
+        color: white !important;
+        border: 3px solid #00ff00 !important;
+        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
+        font-weight: bold !important;
+        font-size: 18px !important;
+    }
+    
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -576,31 +591,7 @@ def render_game_board(board, game_over=False):
                         # Disabled empty cell
                         st.button("", key=f"disabled_{row}_{col}", disabled=True, use_container_width=True)
     
-    # Single NEW GAME button - spans across the board with inline CSS
-    st.markdown("""
-    <style>
-    .new-game-button {
-        background: #00ff00 !important;
-        background-color: #00ff00 !important;
-        color: white !important;
-        border: 3px solid #00ff00 !important;
-        border-radius: 12px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        padding: 15px 30px !important;
-        width: 100% !important;
-        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
-        transition: all 0.3s ease !important;
-    }
-    .new-game-button:hover {
-        background: #00ff00 !important;
-        background-color: #00ff00 !important;
-        transform: translateY(-3px) !important;
-        box-shadow: 0 0 30px rgba(0,255,0,0.6) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
+    # Single NEW GAME button - spans across the board
     if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="secondary", use_container_width=True):
         st.session_state.board = [['', '', ''] for _ in range(3)]
         st.session_state.current_player = 'X'
