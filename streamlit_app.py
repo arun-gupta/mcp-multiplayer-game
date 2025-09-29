@@ -330,6 +330,23 @@ def render_game_board(board, game_over=False):
         color: #000 !important;
         box-shadow: 0 0 20px rgba(0, 255, 136, 0.6) !important;
     }
+    
+    /* Game board button sizing to match filled cells */
+    .game-board-container .stButton > button {
+        width: 80px !important;
+        height: 80px !important;
+        min-width: 80px !important;
+        min-height: 80px !important;
+        max-width: 80px !important;
+        max-height: 80px !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 8px !important;
+        font-size: 28px !important;
+        font-weight: bold !important;
+    }
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
@@ -348,19 +365,19 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - clickable button (disabled if game over)
+                    # Empty cell - clickable button with consistent sizing
                     if st.button(
                         " ",
                         key=f"move_{row}_{col}",
                         help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
-                                       use_container_width=True,
+                        use_container_width=True,
                         disabled=game_over
                     ):
                         # Make the move (only if game is not over)
                         if not game_over:
                             result = make_move(row, col)
                             if result:
-                                    st.rerun()
+                                st.rerun()
         
     st.markdown('</div>', unsafe_allow_html=True)
 
