@@ -742,6 +742,8 @@ def render_model_switching():
     
     # Available models (mock data for now)
     available_models = [
+        "gpt-5",
+        "gpt-5-mini",
         "gpt-4",
         "gpt-3.5-turbo", 
         "claude-3-sonnet",
