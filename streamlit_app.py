@@ -244,28 +244,77 @@ def get_agent_metrics(agent_id):
         return None
 
 def render_game_board(board):
-    """Render the Tic Tac Toe board"""
+    """Render the Tic Tac Toe board with enhanced styling"""
     st.markdown("### 🎮 Game Board")
     
-    # Create 3x3 grid
+    # Add custom CSS for game board styling
+    st.markdown("""
+    <style>
+    .game-board-cell {
+        width: 80px;
+        height: 80px;
+        border: 2px solid #333;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        margin: 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .game-board-cell.filled {
+        background-color: #00ff88;
+        color: #000;
+        border-color: #00ff88;
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+    
+    .game-board-cell.empty {
+        background-color: #ffffff;
+        color: #333;
+        border-color: #ddd;
+        cursor: pointer;
+    }
+    
+    .game-board-cell.empty:hover {
+        background-color: #f0f0f0;
+        border-color: #00ff88;
+        box-shadow: 0 0 5px rgba(0, 255, 136, 0.2);
+    }
+    
+    .game-board-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        max-width: 260px;
+        margin: 20px auto;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Create 3x3 grid with enhanced styling
     for row in range(3):
         cols = st.columns(3)
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
                 if cell_value:
-                    st.button(
-                        cell_value,
-                        key=f"board_{row}_{col}",
-                        disabled=True,
-                        use_container_width=True
-                    )
+                    # Filled cell with green highlighting
+                    st.markdown(f"""
+                    <div class="game-board-cell filled">
+                        {cell_value}
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
+                    # Empty cell with white background
                     if st.button(
                         " ",
                         key=f"move_{row}_{col}",
                         use_container_width=True,
-                        help=f"Click to place X at ({row}, {col})"
+                        help=f"Click to place X at ({row}, {col})",
+                        type="secondary"
                     ):
                         # Make the move
                         result = make_move(row, col)
@@ -441,7 +490,7 @@ def main():
     """Main Streamlit app"""
     # Header
     st.markdown('<h1 class="mcp-header">🤖 Agentic Tic-Tac-Toe: MCP Protocol Showcase</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="mcp-sub-header">Multi-Agent Game with MCP Protocol Communication</p>', unsafe_allow_html=True)
+    st.markdown('<p class="mcp-sub-header">Watch three AI agents work together using CrewAI and MCP protocol!</p>', unsafe_allow_html=True)
     
     # Check API connection
     try:
@@ -472,7 +521,7 @@ def main():
         # Game controls
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("🔄 Reset Game", use_container_width=True):
+            if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
                 result = reset_game()
                 if result:
                     st.success("Game reset successfully!")
