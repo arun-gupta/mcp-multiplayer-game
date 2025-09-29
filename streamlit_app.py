@@ -300,8 +300,8 @@ def render_game_board(board):
         transform: scale(0.95);
     }
     
-    /* Hide the default Streamlit button styling */
-    .stButton > button {
+    /* Game board buttons only - not all buttons */
+    .game-board .stButton > button {
         background-color: transparent !important;
         border: none !important;
         color: transparent !important;
@@ -311,7 +311,7 @@ def render_game_board(board):
         margin: 0 !important;
     }
     
-    .stButton > button:hover {
+    .game-board .stButton > button:hover {
         background-color: transparent !important;
         border: none !important;
     }
