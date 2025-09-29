@@ -634,7 +634,7 @@ def render_agent_status(agent_status):
                     model_name = agent_data.get('current_model', 'Unknown')
                     if model_name == 'LLM' or model_name == 'Unknown':
                         # Try to get the actual model name from the agent data
-                        actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'Claude 3.5 Sonnet'))
+                        actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'gpt-5-mini'))
                         st.markdown(f"**LLM Model:** {actual_model}")
                     else:
                         st.markdown(f"**LLM Model:** {model_name}")
@@ -725,7 +725,7 @@ def render_agent_metrics():
                 model_name = metrics.get('current_model', 'Unknown')
                 if model_name == 'LLM' or model_name == 'Unknown':
                     # Try to get the actual model name from the metrics data
-                    actual_model = metrics.get('model_name', metrics.get('llm_model', 'Claude 3.5 Sonnet'))
+                    actual_model = metrics.get('model_name', metrics.get('llm_model', 'gpt-5-mini'))
                     st.markdown(f"**Current Model:** {actual_model}")
                 else:
                     st.markdown(f"**Current Model:** {model_name}")
@@ -763,7 +763,7 @@ def render_model_switching():
             current_model = agent_data.get('current_model', 'Unknown')
             if current_model == 'LLM' or current_model == 'Unknown':
                 # Try to get the actual model name from other fields
-                actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'Claude 3.5 Sonnet'))
+                actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'gpt-5-mini'))
                 current_model = actual_model
             
             with st.expander(f"{agent_names.get(agent_id, agent_id)} - Current: {current_model}", expanded=False):
