@@ -89,6 +89,8 @@ async def startup_event():
         print("✅ Scout MCP Agent created")
     except Exception as e:
         print(f"❌ Error creating Scout MCP Agent: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         scout_agent = None
     
     try:
@@ -96,6 +98,8 @@ async def startup_event():
         print("✅ Strategist MCP Agent created")
     except Exception as e:
         print(f"❌ Error creating Strategist MCP Agent: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         strategist_agent = None
     
     try:
@@ -103,18 +107,38 @@ async def startup_event():
         print("✅ Executor MCP Agent created")
     except Exception as e:
         print(f"❌ Error creating Executor MCP Agent: {e}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         executor_agent = None
+
+    print(f"🔍 Agent status: scout={scout_agent is not None}, strategist={strategist_agent is not None}, executor={executor_agent is not None}")
 
     # Start MCP servers
     if scout_agent:
-        await scout_agent.start_mcp_server()
+        try:
+            await scout_agent.start_mcp_server()
+            print("✅ Scout MCP Server started")
+        except Exception as e:
+            print(f"❌ Error starting Scout MCP Server: {e}")
     if strategist_agent:
-        await strategist_agent.start_mcp_server()
+        try:
+            await strategist_agent.start_mcp_server()
+            print("✅ Strategist MCP Server started")
+        except Exception as e:
+            print(f"❌ Error starting Strategist MCP Server: {e}")
     if executor_agent:
-        await executor_agent.start_mcp_server()
+        try:
+            await executor_agent.start_mcp_server()
+            print("✅ Executor MCP Server started")
+        except Exception as e:
+            print(f"❌ Error starting Executor MCP Server: {e}")
     
     # Initialize coordinator connections
-    await coordinator.initialize_agents()
+    try:
+        await coordinator.initialize_agents()
+        print("✅ Coordinator initialized")
+    except Exception as e:
+        print(f"❌ Error initializing coordinator: {e}")
     
     print("🎉 MCP CrewAI system initialized!")
 
