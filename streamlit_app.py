@@ -553,14 +553,6 @@ def main():
     ])
     
     with tab1:
-        # Game controls
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
-                result = reset_game()
-                if result:
-                    st.success("Game reset successfully!")
-                    st.rerun()
         
         # Get and display game state
         game_state = get_game_state()
