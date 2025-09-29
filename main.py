@@ -85,21 +85,21 @@ async def startup_event():
     
     # Initialize agents with MCP servers
     try:
-        scout_agent = ScoutMCPAgent({"model": "gpt-4"})
+        scout_agent = ScoutMCPAgent({"model": "gpt-5-mini"})
         print("✅ Scout MCP Agent created")
     except Exception as e:
         print(f"❌ Error creating Scout MCP Agent: {e}")
         scout_agent = None
     
     try:
-        strategist_agent = StrategistMCPAgent({"model": "gpt-4"})
+        strategist_agent = StrategistMCPAgent({"model": "gpt-5-mini"})
         print("✅ Strategist MCP Agent created")
     except Exception as e:
         print(f"❌ Error creating Strategist MCP Agent: {e}")
         strategist_agent = None
     
     try:
-        executor_agent = ExecutorMCPAgent({"model": "gpt-4"})
+        executor_agent = ExecutorMCPAgent({"model": "gpt-5-mini"})
         print("✅ Executor MCP Agent created")
     except Exception as e:
         print(f"❌ Error creating Executor MCP Agent: {e}")
