@@ -144,25 +144,10 @@ async def get_game_state():
 async def make_move(move_data: MoveRequest):
     """Make a player move and get AI response via MCP"""
     try:
-        start_time = time.time()
-        result = await coordinator.process_player_move(move_data.row, move_data.col)
-        end_time = time.time()
+        # Pass real agents to coordinator for actual timing
+        coordinator.set_agents(scout_agent, strategist_agent, executor_agent)
         
-        # Track metrics for all agents involved in the move via MCP
-        # Give each agent a realistic, different response time
-        total_time = end_time - start_time
-        if scout_agent:
-            # Scout: Fast analysis (0.3-0.8s of total time)
-            scout_time = total_time * random.uniform(0.3, 0.8)
-            scout_agent.track_request(scout_time)
-        if strategist_agent:
-            # Strategist: Medium planning (0.5-1.2s of total time)
-            strategist_time = total_time * random.uniform(0.5, 1.2)
-            strategist_agent.track_request(strategist_time)
-        if executor_agent:
-            # Executor: Quick execution (0.2-0.6s of total time)
-            executor_time = total_time * random.uniform(0.2, 0.6)
-            executor_agent.track_request(executor_time)
+        result = await coordinator.process_player_move(move_data.row, move_data.col)
         
         return result
     except Exception as e:

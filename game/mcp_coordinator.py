@@ -21,6 +21,12 @@ class MCPGameCoordinator:
         self.move_history = []
         self.mcp_logs = []
     
+    def set_agents(self, scout_agent, strategist_agent, executor_agent):
+        """Set real agent instances for actual timing"""
+        self.agents["scout"] = scout_agent
+        self.agents["strategist"] = strategist_agent
+        self.agents["executor"] = executor_agent
+    
     async def initialize_agents(self):
         """Initialize connections to MCP agent servers"""
         # TODO: Create actual MCP client connections
@@ -119,33 +125,42 @@ class MCPGameCoordinator:
         }
     
     async def call_agent(self, agent_name: str, method: str, data: Dict) -> Dict:
-        """Make MCP call to agent"""
-        # TODO: Implement actual MCP client calls
+        """Make MCP call to agent with real timing"""
+        import time
+        
+        agent = self.agents.get(agent_name)
+        if not agent:
+            return {"error": f"Agent {agent_name} not available"}
+        
         print(f"MCP Call: {agent_name}.{method} with {data}")
         
-        # Mock response for now - simulate agent processing
-        await asyncio.sleep(0.1)  # Simulate processing time
+        # Measure actual agent response time
+        start_time = time.time()
         
-        # Real AI gameplay logic
-        if agent_name == "scout":
-            if method == "analyze_board":
-                return await self.scout_analyze_board(data)
-        
-        elif agent_name == "strategist":
-            if method == "create_strategy":
-                return await self.strategist_create_strategy(data)
-        
-        elif agent_name == "executor":
-            if method == "execute_move":
-                return await self.executor_execute_move(data)
-        
-        # Default response
-        return {
-            "agent_id": agent_name,
-            "method": method,
-            "error": "Unknown method",
-            "timestamp": datetime.now().isoformat()
-        }
+        try:
+            # Call the actual agent method
+            if agent_name == "scout" and method == "analyze_board":
+                result = await agent.analyze_board(data)
+            elif agent_name == "strategist" and method == "create_strategy":
+                result = await agent.create_strategy(data)
+            elif agent_name == "executor" and method == "execute_move":
+                result = await agent.execute_move(data)
+            else:
+                return {"error": f"Unknown method {method} for {agent_name}"}
+            
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            # Track the real response time in the agent
+            agent.track_request(response_time)
+            
+            return result
+            
+        except Exception as e:
+            end_time = time.time()
+            response_time = end_time - start_time
+            agent.track_request(response_time)  # Track even failed requests
+            return {"error": str(e)}
     
     async def scout_analyze_board(self, data: Dict) -> Dict:
         """Scout agent analyzes the board for threats and opportunities"""
