@@ -579,15 +579,6 @@ def main():
             with col1:
                 st.markdown("### 🎮 Game Board")
                 
-                # Display winner if game is over
-                if game_over and winner:
-                    if winner == "player":
-                        st.success("🎉 You Win! Congratulations!")
-                    elif winner == "ai":
-                        st.error("🤖 AI Wins! Better luck next time!")
-                    elif winner == "draw":
-                        st.info("🤝 It's a Draw! Good game!")
-                
                 # Render game board
                 render_game_board(board, game_over)
                 
@@ -600,6 +591,15 @@ def main():
                         st.rerun()
                     else:
                         st.error("Failed to reset game")
+                
+                # Display winner if game is over (after NEW GAME button)
+                if game_over and winner:
+                    if winner == "player":
+                        st.success("🎉 You Win! Congratulations!")
+                    elif winner == "ai":
+                        st.error("🤖 AI Wins! Better luck next time!")
+                    elif winner == "draw":
+                        st.info("🤝 It's a Draw! Good game!")
             
             with col2:
                 st.markdown("### 📝 Move History")
