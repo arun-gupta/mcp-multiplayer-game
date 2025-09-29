@@ -149,7 +149,7 @@ async def reset_game():
     """Reset the game to initial state"""
     try:
         coordinator.reset_game()
-        return {"message": "Game reset successfully", "board": coordinator.game_state.get_board()}
+        return {"message": "Game reset successfully", "board": coordinator.game_state.board}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error resetting game: {str(e)}")
 

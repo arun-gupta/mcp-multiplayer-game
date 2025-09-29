@@ -579,6 +579,7 @@ def main():
             
             # Simple NEW GAME button
             st.write("Debug: Creating NEW GAME button...")
+            st.markdown('<div style="background-color: #00ff88; padding: 10px; border-radius: 5px; margin: 10px 0;">', unsafe_allow_html=True)
             if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_simple"):
                 st.write("NEW GAME button clicked!")
                 result = reset_game()
@@ -586,6 +587,7 @@ def main():
                 if result:
                     st.success("Game reset successfully!")
                     st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
             
             # Also add a regular button to test
             st.write("Debug: Creating Test Reset button...")
