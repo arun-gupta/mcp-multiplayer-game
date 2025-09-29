@@ -534,10 +534,10 @@ def render_model_switching():
                 
                 if st.button(f"Switch {agent_id} to {selected_model}", key=f"switch_{agent_id}"):
                     result = switch_agent_model(agent_id, selected_model)
-                                if result and result.get('success'):
+                    if result and result.get('success'):
                         st.success(f"Successfully switched {agent_id} to {selected_model}")
-                                    st.rerun()
-                                else:
+                        st.rerun()
+                    else:
                         st.error(f"Failed to switch {agent_id} model")
 
 def main():
@@ -552,7 +552,7 @@ def main():
         if health_response.status_code == 200:
             health_data = health_response.json()
             st.success("✅ AI Team Ready - Three agents are online and ready to play!")
-                            else:
+        else:
             st.error("❌ AI Team Offline - Backend connection failed")
             return
     except Exception as e:
