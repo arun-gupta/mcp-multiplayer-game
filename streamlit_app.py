@@ -377,6 +377,29 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 6px 12px rgba(0,255,136,0.4);
     }
     
+    /* Make Streamlit buttons same size as filled cells */
+    .stButton > button {
+        width: 80px !important;
+        height: 80px !important;
+        border: 2px solid #e0e0e0 !important;
+        border-radius: 8px !important;
+        background-color: #ffffff !important;
+        color: #6c757d !important;
+        font-size: 28px !important;
+        font-weight: bold !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        transition: all 0.2s ease !important;
+        margin: 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    }
+    
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -543,7 +566,7 @@ def render_game_board(board, game_over=False):
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - directly clickable button
+                    # Empty cell - directly clickable button with exact same size
                     if not game_over:
                         if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
                             result = make_move(row, col)
@@ -556,17 +579,6 @@ def render_game_board(board, game_over=False):
                             &nbsp;
                         </div>
                         """, unsafe_allow_html=True)
-    
-    # Add NEW GAME button
-    st.markdown('<div style="margin-top: 20px; display: flex; justify-content: center;">', unsafe_allow_html=True)
-    if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary"):
-        st.session_state.board = [['', '', ''] for _ in range(3)]
-        st.session_state.current_player = 'X'
-        st.session_state.game_over = False
-        st.session_state.winner = None
-        st.session_state.move_history = []
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
