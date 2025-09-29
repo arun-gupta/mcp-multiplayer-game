@@ -79,7 +79,9 @@ class MCPGameCoordinator:
         })
         
         if "error" in observation:
-            return {"error": "Scout analysis failed", "details": observation}
+            print(f"Scout analysis failed: {observation}")
+            # Fallback to simple random move
+            return await self._fallback_ai_move()
         
         # Log MCP communication
         self.log_mcp_message("scout", "analyze_board", observation)
@@ -88,7 +90,9 @@ class MCPGameCoordinator:
         strategy = await self.call_agent("strategist", "create_strategy", observation)
         
         if "error" in strategy:
-            return {"error": "Strategy creation failed", "details": strategy}
+            print(f"Strategy creation failed: {strategy}")
+            # Fallback to simple random move
+            return await self._fallback_ai_move()
         
         # Log MCP communication
         self.log_mcp_message("strategist", "create_strategy", strategy)
@@ -97,7 +101,9 @@ class MCPGameCoordinator:
         execution = await self.call_agent("executor", "execute_move", strategy)
         
         if "error" in execution:
-            return {"error": "Move execution failed", "details": execution}
+            print(f"Move execution failed: {execution}")
+            # Fallback to simple random move
+            return await self._fallback_ai_move()
         
         # Log MCP communication
         self.log_mcp_message("executor", "execute_move", execution)
@@ -404,4 +410,27 @@ Example: 1,1 for center position
         self.game_state = TicTacToeGameState()
         self.move_history = []
         self.mcp_logs = []
+    
+    async def _fallback_ai_move(self) -> Dict:
+        """Fallback AI move when agents fail"""
+        import random
+        
+        available_moves = self.get_available_moves(self.game_state.board)
+        if not available_moves:
+            return {"error": "No available moves"}
+        
+        # Pick a random move
+        ai_move = random.choice(available_moves)
+        
+        # Make the move
+        move_success = self.game_state.make_move(ai_move["row"], ai_move["col"], "ai")
+        if not move_success:
+            return {"error": "Failed to make fallback AI move"}
+        
+        return {
+            "success": True,
+            "ai_move": ai_move,
+            "fallback": True,
+            "message": "Used fallback random move"
+        }
         print("Game reset via MCP coordinator")
