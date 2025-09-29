@@ -37,7 +37,7 @@ class MCPGameCoordinator:
         """Process player move and orchestrate AI response via MCP"""
         
         # 1. Update game state with player move
-        move_success = self.game_state.make_move(row, col, "X")
+        move_success = self.game_state.make_move(row, col, "player")
         if not move_success:
             return {"success": False, "error": "Invalid move or game over"}
         
@@ -92,7 +92,7 @@ class MCPGameCoordinator:
         # Apply the move to game state
         move = execution.get("move_executed", {})
         if move:
-            self.game_state.make_move(move["row"], move["col"], "O")
+            self.game_state.make_move(move["row"], move["col"], "ai")
             self.move_history.append({
                 "player": "ai",
                 "move": move,
