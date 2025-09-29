@@ -562,7 +562,6 @@ def main():
             col1, col2 = st.columns([1, 1])
             
             with col1:
-                st.markdown("### 🎮 Game Board")
                 # Render game board
                 render_game_board(board)
                 
