@@ -369,13 +369,6 @@ def render_game_board(board, game_over=False):
         font-weight: bold !important;
     }
     
-    /* Force override for any Streamlit default styling */
-    .stButton > button[disabled] {
-        background-color: #00ff88 !important;
-        background: #00ff88 !important;
-        border: 2px solid #00ff88 !important;
-        color: #000 !important;
-    }
     
     /* Remove extra spacing */
     .game-board-container {
@@ -419,9 +412,9 @@ def render_game_board(board, game_over=False):
                 cell_value = board[row][col] if board[row][col] else ""
                 # Use custom divs for filled cells to ensure neon green styling
                 if cell_value:
-                    # Filled cell - display as styled div with neon green
+                    # Filled cell - same style as empty cells
                     st.markdown(f"""
-                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #00ff88; border-radius: 8px; background-color: #00ff88; color: #000; font-size: 28px; font-weight: bold; box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);">
+                    <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border: 2px solid #666; border-radius: 8px; background-color: #333; color: #fff; font-size: 28px; font-weight: bold;">
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
