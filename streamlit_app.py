@@ -289,17 +289,21 @@ def render_game_board(board, game_over=False):
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1) !important;
     }
     
-    /* Clean modern button styling - bright green */
+    /* Clean modern button styling - white with green borders for empty cells */
     .stButton > button {
-        background: linear-gradient(45deg, #00ff00, #00cc00) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 12px 24px !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 8px rgba(0,255,0,0.2) !important;
-        transition: all 0.3s ease !important;
+        background: #ffffff !important;
+        color: #6c757d !important;
+        border: 3px solid #00ff88 !important;
+        border-radius: 8px !important;
+        padding: 0 !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        box-shadow: 0 0 10px rgba(0,255,136,0.3) !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
+        min-height: 100px !important;
+        height: 100px !important;
+        margin: 0 !important;
     }
     
     .stButton > button:hover {
@@ -317,37 +321,12 @@ def render_game_board(board, game_over=False):
         margin: 20px 0;
     }
     
-    /* Make buttons span full column width - SAME SIZE FOR ALL */
-    .stButton > button {
-        width: 100% !important;
-        min-height: 100px !important;
-        height: 100px !important;
-        font-size: 24px !important;
-        font-weight: bold !important;
-        border: 3px solid #00ff88 !important;
-        border-radius: 8px !important;
-        background-color: #ffffff !important;
-        color: #6c757d !important;
-        box-shadow: 0 0 10px rgba(0,255,136,0.3) !important;
-        transition: all 0.2s ease !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* Filled cells should be bright green - only when they have content */
-    .stButton > button[type="primary"]:not(:empty) {
+    /* Filled cells should be bright green */
+    .stButton > button[type="primary"] {
         background-color: #00ff88 !important;
         color: white !important;
         border: 3px solid #00ff88 !important;
         box-shadow: 0 0 15px rgba(0,255,136,0.4) !important;
-    }
-    
-    /* Empty cells should stay white with green borders */
-    .stButton > button[type="secondary"] {
-        background-color: #ffffff !important;
-        color: #6c757d !important;
-        border: 3px solid #00ff88 !important;
-        box-shadow: 0 0 10px rgba(0,255,136,0.3) !important;
     }
     
     .stButton > button:hover {
