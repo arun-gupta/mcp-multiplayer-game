@@ -155,14 +155,17 @@ class MCPGameCoordinator:
         try:
             # Call the actual agent method
             if agent_name == "scout" and method == "analyze_board":
-                print(f"[DEBUG] Calling agent.analyze_board")
+                print(f"[DEBUG] Calling agent.analyze_board on {type(agent)}")
                 result = await agent.analyze_board(data)
+                print(f"[DEBUG] Scout result: {result}")
             elif agent_name == "strategist" and method == "create_strategy":
-                print(f"[DEBUG] Calling agent.create_strategy")
+                print(f"[DEBUG] Calling agent.create_strategy on {type(agent)}")
                 result = await agent.create_strategy(data)
+                print(f"[DEBUG] Strategist result: {result}")
             elif agent_name == "executor" and method == "execute_move":
-                print(f"[DEBUG] Calling agent.execute_move")
+                print(f"[DEBUG] Calling agent.execute_move on {type(agent)}")
                 result = await agent.execute_move(data)
+                print(f"[DEBUG] Executor result: {result}")
             else:
                 print(f"[DEBUG] Unknown method {method} for {agent_name}")
                 return {"error": f"Unknown method {method} for {agent_name}"}
@@ -180,8 +183,10 @@ class MCPGameCoordinator:
             end_time = time.time()
             response_time = end_time - start_time
             agent.track_request(response_time)  # Track even failed requests
-            print(f"[DEBUG] Agent call failed: {e}")
-            return {"error": str(e)}
+            print(f"[DEBUG] Agent call failed with exception: {type(e).__name__}: {e}")
+            import traceback
+            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+            return {"error": f"{type(e).__name__}: {str(e)}"}
     
     async def scout_analyze_board(self, data: Dict) -> Dict:
         """Scout agent analyzes the board for threats and opportunities"""
