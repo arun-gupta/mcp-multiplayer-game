@@ -247,7 +247,7 @@ def render_game_board(board):
     """Render the Tic Tac Toe board with proper styling"""
     
     # Add custom CSS for game board styling
-    st.markdown("""
+        st.markdown("""
     <style>
     .game-board-container {
         display: flex;
@@ -323,7 +323,7 @@ def render_game_board(board):
     
     # Create 3x3 grid using Streamlit columns
     for row in range(3):
-        cols = st.columns(3)
+                cols = st.columns(3)
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
@@ -334,7 +334,7 @@ def render_game_board(board):
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
-                else:
+                            else:
                     # Empty cell - clickable button
                     if st.button(
                         " ",
@@ -345,8 +345,8 @@ def render_game_board(board):
                         # Make the move
                         result = make_move(row, col)
                         if result:
-                            st.rerun()
-    
+                    st.rerun()
+        
     st.markdown('</div>', unsafe_allow_html=True)
 
 def render_agent_status(agent_status):
@@ -384,7 +384,7 @@ def render_agent_status(agent_status):
                     st.markdown(f"**Model:** {agent_data.get('current_model', 'Unknown')}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
                     st.markdown(f"**Memory Size:** {agent_data.get('memory_size', 0)}")
-        else:
+                    else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
 def render_mcp_logs(logs_data):
@@ -446,8 +446,8 @@ def render_agent_metrics():
         if metrics:
             with st.expander(f"{agent_names.get(agent_id, agent_id)} Metrics", expanded=True):
                 col1, col2, col3 = st.columns(3)
-                
-                with col1:
+                    
+                    with col1:
                     st.metric(
                         "Request Count",
                         metrics.get('request_count', 0)
@@ -470,8 +470,8 @@ def render_agent_metrics():
 
 def render_model_switching():
     """Render model switching interface"""
-    st.markdown("### 🔄 Model Switching")
-    
+                        st.markdown("### 🔄 Model Switching")
+                        
     agent_status = get_agent_status()
     if not agent_status:
         st.error("Failed to load agent status")
@@ -508,10 +508,10 @@ def render_model_switching():
                 
                 if st.button(f"Switch {agent_id} to {selected_model}", key=f"switch_{agent_id}"):
                     result = switch_agent_model(agent_id, selected_model)
-                    if result and result.get('success'):
+                                if result and result.get('success'):
                         st.success(f"Successfully switched {agent_id} to {selected_model}")
-                        st.rerun()
-                    else:
+                                    st.rerun()
+                                else:
                         st.error(f"Failed to switch {agent_id} model")
 
 def main():
@@ -526,7 +526,7 @@ def main():
         if health_response.status_code == 200:
             health_data = health_response.json()
             st.success("✅ AI Team Ready - Three agents are online and ready to play!")
-        else:
+                else:
             st.error("❌ AI Team Offline - Backend connection failed")
             return
     except Exception as e:
@@ -562,6 +562,7 @@ def main():
             col1, col2 = st.columns([1, 1])
             
             with col1:
+                st.markdown("### 🎮 Game Board")
                 # Render game board
                 render_game_board(board)
                 
@@ -588,9 +589,9 @@ def main():
                             row = position.get('row', '?')
                             col = position.get('col', '?')
                             st.write(f"**Move {i}:** {player} at ({row}, {col})")
-                    else:
+                            else:
                         st.info("No moves yet")
-                else:
+                    else:
                     st.info("Move history not available")
                 
                 # Show game statistics
@@ -602,13 +603,13 @@ def main():
                     if game_over:
                         if winner:
                             st.success(f"🎉 **Winner:** {winner}")
-                        else:
+                            else:
                             st.info("🤝 **Game Over:** It's a draw!")
                     else:
                         st.info("🔄 **Game in Progress**")
-                else:
+                    else:
                     st.info("🎮 **Ready to Start**")
-        else:
+                else:
             st.error("Failed to load game state")
     
     with tab2:
@@ -628,7 +629,7 @@ def main():
         logs_data = get_mcp_logs()
         if logs_data:
             render_mcp_logs(logs_data)
-        else:
+                    else:
             st.error("Failed to load MCP logs")
     
     with tab4:
@@ -652,6 +653,6 @@ def main():
                 st.json(health_data)
         except Exception as e:
             st.error(f"Failed to get system info: {e}")
-
+    
 if __name__ == "__main__":
-    main()
+    main() 
