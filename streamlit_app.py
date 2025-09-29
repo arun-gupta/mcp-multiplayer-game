@@ -544,9 +544,11 @@ def main():
     ])
     
     with tab1:
+        print("DEBUG: Entering Game tab (tab1)")
         
         # Get and display game state
         game_state = get_game_state()
+        print(f"DEBUG: game_state = {game_state}")
         if game_state:
             board = game_state.get('board', [])
             current_player = game_state.get('current_player', 'player')
@@ -567,23 +569,32 @@ def main():
             render_game_board(board)
             
             # Add New Game button below the game board
+            print("DEBUG: Starting Game Controls section")
             st.markdown("---")  # Add a separator line
             st.markdown("### Game Controls")
             
             # Debug: Show that we're in the right place
             st.write("Debug: Game Controls section loaded")
+            print("DEBUG: Game Controls section loaded in UI")
             
             # Simple NEW GAME button
+            print("DEBUG: About to create NEW GAME button")
             if st.button("🔄 NEW GAME", use_container_width=True, type="primary", key="new_game_simple"):
+                print("DEBUG: NEW GAME button clicked!")
                 st.write("Button clicked!")
                 result = reset_game()
+                print(f"DEBUG: reset_game() returned: {result}")
                 if result:
                     st.success("Game reset successfully!")
                     st.rerun()
             
             # Also add a regular button to test
+            print("DEBUG: About to create Test Reset button")
             if st.button("Test Reset", key="test_reset"):
+                print("DEBUG: Test Reset button clicked!")
                 st.write("Test button clicked!")
+            
+            print("DEBUG: Finished Game Controls section")
         else:
             st.error("Failed to load game state")
     
