@@ -319,10 +319,62 @@ def render_game_board(board, game_over=False):
     
     .game-grid {
         display: grid;
-        grid-template-columns: repeat(3, 100px);
-        grid-template-rows: repeat(3, 100px);
-        gap: 10px;
+        grid-template-columns: repeat(3, 80px);
+        grid-template-rows: repeat(3, 80px);
+        gap: 4px;
         background: transparent;
+        margin-bottom: 20px;
+    }
+    
+    .game-cell {
+        width: 80px;
+        height: 80px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .game-cell:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .game-cell.filled {
+        background-color: #ffffff;
+        color: #2c3e50;
+        cursor: default;
+    }
+    
+    .game-cell.empty {
+        color: #6c757d;
+    }
+    
+    .new-game-btn {
+        background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0,255,136,0.3);
+        width: 100%;
+        max-width: 250px;
+    }
+    
+    .new-game-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,255,136,0.4);
     }
     
     .game-board {
@@ -473,7 +525,7 @@ def render_game_board(board, game_over=False):
     
     
     </style>
-    """, unsafe_allow_html=True)    # Create simple 3x3 grid without extra boxes
+    """, unsafe_allow_html=True)    # Create clean 3x3 grid
     st.markdown('<div class="game-board-container">', unsafe_allow_html=True)
     st.markdown('<div class="game-grid">', unsafe_allow_html=True)
     
@@ -483,19 +535,18 @@ def render_game_board(board, game_over=False):
             cell_value = board[row][col] if board[row][col] else ""
             
             if cell_value:
-                # Filled cell - clean white with subtle glow
+                # Filled cell
                 st.markdown(f"""
-                <div style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #2c3e50; font-size: 36px; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                <div class="game-cell filled">
                     {cell_value}
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                # Empty cell - same exact dimensions
+                # Empty cell
                 if not game_over:
                     # Create clickable div with JavaScript
                     st.markdown(f"""
-                    <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
-                         style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #6c757d; font-size: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+                    <div class="game-cell empty" onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()">
                         &nbsp;
                     </div>
                     """, unsafe_allow_html=True)
@@ -506,14 +557,24 @@ def render_game_board(board, game_over=False):
                         if result:
                             st.rerun()
                 else:
-                    # Disabled empty cell - same exact dimensions
+                    # Disabled empty cell
                     st.markdown(f"""
-                    <div style="display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #e0e0e0; border-radius: 12px; background-color: #ffffff; color: #6c757d; font-size: 36px; font-weight: bold; opacity: 0.5;">
+                    <div class="game-cell empty" style="opacity: 0.5; cursor: not-allowed;">
                         &nbsp;
                     </div>
                     """, unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Add NEW GAME button
+    if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary"):
+        st.session_state.board = [['', '', ''] for _ in range(3)]
+        st.session_state.current_player = 'X'
+        st.session_state.game_over = False
+        st.session_state.winner = None
+        st.session_state.move_history = []
+        st.rerun()
+    
     st.markdown('</div>', unsafe_allow_html=True)
 
 def render_agent_status(agent_status):
