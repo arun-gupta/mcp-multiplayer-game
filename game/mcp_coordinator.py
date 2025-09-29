@@ -464,20 +464,35 @@ Example: 1,1 for center position
             board_str = self._board_to_string(self.game_state.board)
             
             prompt = f"""
-You are playing Tic-Tac-Toe as the AI (O) against a human player (X). The current board state is:
+You are an expert Tic-Tac-Toe AI (O) playing against a human (X). Your goal is to WIN or at minimum FORCE A DRAW.
 
+CURRENT BOARD STATE:
 {board_str}
 
-Available moves: {available_moves}
+AVAILABLE MOVES: {available_moves}
 
-STRATEGY PRIORITIES:
-1. FIRST: Block the human from winning (if they have 2 in a row, block the 3rd)
-2. SECOND: Try to win (if you have 2 in a row, complete the 3rd)
-3. THIRD: Take center if available
-4. FOURTH: Take corners if available
-5. LAST: Take any available position
+STRATEGIC ANALYSIS REQUIRED:
+1. **IMMEDIATE THREAT CHECK**: Look for any row, column, or diagonal where the human (X) has 2 pieces and can win on their next turn. If found, you MUST block it immediately.
 
-Analyze the board carefully and choose the BEST strategic move. Return only the row and column numbers as JSON: {{"row": X, "col": Y}}
+2. **WINNING OPPORTUNITY CHECK**: Look for any row, column, or diagonal where you (O) have 2 pieces and can win on this turn. If found, take that winning move.
+
+3. **STRATEGIC POSITIONING**: If no immediate threats or wins:
+   - Take center (1,1) if available (most powerful position)
+   - Take corners (0,0), (0,2), (2,0), (2,2) if available
+   - Avoid edges unless necessary
+
+4. **FORK CREATION**: Try to create situations where you have two winning opportunities that the human cannot block both.
+
+5. **FORK PREVENTION**: If the human can create a fork, block it by taking a position that prevents them from having two winning opportunities.
+
+CRITICAL RULES:
+- ALWAYS block if human has 2 in a row
+- ALWAYS win if you have 2 in a row  
+- Center is most valuable, then corners, then edges
+- Think 2 moves ahead
+- Force draws when you cannot win
+
+Analyze the board systematically and choose the OPTIMAL move. Return only JSON: {{"row": X, "col": Y}}
 """
             
             # Use the first available agent's LLM
