@@ -48,11 +48,16 @@ class MCPGameCoordinator:
         # 3. Get AI response via MCP protocol
         ai_move_result = await self.get_ai_move()
         
+        # 4. Check if game is over after AI move
+        game_over = self.game_state.game_over
+        winner = self.game_state.winner
+        
         return {
             "player_move": {"row": row, "col": col},
             "ai_move": ai_move_result,
             "board": self.game_state.board,
-            "game_over": self.game_state._check_winner() is not None
+            "game_over": game_over,
+            "winner": winner
         }
     
     async def get_ai_move(self) -> Dict:

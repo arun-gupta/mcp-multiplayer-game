@@ -576,6 +576,16 @@ def main():
             
             with col1:
                 st.markdown("### 🎮 Game Board")
+                
+                # Display winner if game is over
+                if game_over and winner:
+                    if winner == "player":
+                        st.success("🎉 You Win! Congratulations!")
+                    elif winner == "ai":
+                        st.error("🤖 AI Wins! Better luck next time!")
+                    elif winner == "draw":
+                        st.info("🤝 It's a Draw! Good game!")
+                
                 # Render game board
                 render_game_board(board)
                 
