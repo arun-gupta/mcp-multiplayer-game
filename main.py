@@ -169,12 +169,17 @@ async def make_move(move_data: MoveRequest):
     """Make a player move and get AI response via MCP"""
     try:
         # Pass real agents to coordinator for actual timing
+        print(f"[DEBUG] Setting agents: scout={scout_agent is not None}, strategist={strategist_agent is not None}, executor={executor_agent is not None}")
         coordinator.set_agents(scout_agent, strategist_agent, executor_agent)
+        print(f"[DEBUG] Agents set in coordinator: {list(coordinator.agents.keys())}")
         
         result = await coordinator.process_player_move(move_data.row, move_data.col)
         
         return result
     except Exception as e:
+        print(f"[DEBUG] Error in make_move: {e}")
+        import traceback
+        print(f"[DEBUG] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error making move: {str(e)}")
 
 @app.post("/reset-game")
@@ -225,6 +230,18 @@ async def get_mcp_logs():
         return {"mcp_logs": coordinator.get_mcp_logs()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting MCP logs: {str(e)}")
+
+@app.get("/debug/agents")
+async def debug_agents():
+    """Debug endpoint to check agent creation status"""
+    return {
+        "scout_agent": scout_agent is not None,
+        "strategist_agent": strategist_agent is not None, 
+        "executor_agent": executor_agent is not None,
+        "scout_type": str(type(scout_agent)) if scout_agent else None,
+        "strategist_type": str(type(strategist_agent)) if strategist_agent else None,
+        "executor_type": str(type(executor_agent)) if executor_agent else None
+    }
 
 @app.get("/agents/{agent_id}/metrics")
 async def get_agent_metrics(agent_id: str):
