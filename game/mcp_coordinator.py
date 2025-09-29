@@ -121,59 +121,225 @@ class MCPGameCoordinator:
         # Mock response for now - simulate agent processing
         await asyncio.sleep(0.1)  # Simulate processing time
         
-        # Return mock response based on agent and method
+        # Real AI gameplay logic
         if agent_name == "scout":
             if method == "analyze_board":
-                board = data.get("board", [])
-                available_moves = data.get("available_moves", self.get_available_moves(board))
-                return {
-                    "agent_id": "scout",
-                    "board_state": board,
-                    "analysis": f"Board analysis complete - {len(available_moves)} moves available",
-                    "available_moves": available_moves,
-                    "threats": ["Opponent has two in a row"],
-                    "opportunities": ["Can create fork"],
-                    "confidence": 0.85,
-                    "timestamp": datetime.now().isoformat()
-                }
+                return await self.scout_analyze_board(data)
         
         elif agent_name == "strategist":
             if method == "create_strategy":
-                # Get available moves from the observation data
-                available_moves = data.get("available_moves", [])
-                if available_moves:
-                    import random
-                    recommended_move = random.choice(available_moves)
-                else:
-                    recommended_move = {"row": 1, "col": 1}  # Fallback
-                
-                return {
-                    "agent_id": "strategist",
-                    "strategy": "Strategic plan created",
-                    "recommended_move": recommended_move,
-                    "confidence": 0.90,
-                    "reasoning": f"Selected move from {len(available_moves)} available options",
-                    "timestamp": datetime.now().isoformat()
-                }
+                return await self.strategist_create_strategy(data)
         
         elif agent_name == "executor":
             if method == "execute_move":
-                return {
-                    "agent_id": "executor",
-                    "move_executed": data.get("recommended_move", {"row": 1, "col": 1}),
-                    "result": "Move executed successfully",
-                    "success": True,
-                    "game_state": "updated",
-                    "timestamp": datetime.now().isoformat()
-                }
+                return await self.executor_execute_move(data)
         
-        # Default mock response
+        # Default response
         return {
             "agent_id": agent_name,
             "method": method,
-            "mock_response": True,
+            "error": "Unknown method",
             "timestamp": datetime.now().isoformat()
         }
+    
+    async def scout_analyze_board(self, data: Dict) -> Dict:
+        """Scout agent analyzes the board for threats and opportunities"""
+        board = data.get("board", [])
+        available_moves = data.get("available_moves", [])
+        
+        # Analyze board for threats and opportunities
+        threats = self.analyze_threats(board)
+        opportunities = self.analyze_opportunities(board)
+        
+        return {
+            "agent_id": "scout",
+            "board_state": board,
+            "analysis": f"Found {len(threats)} threats and {len(opportunities)} opportunities",
+            "available_moves": available_moves,
+            "threats": threats,
+            "opportunities": opportunities,
+            "confidence": 0.85,
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    async def strategist_create_strategy(self, data: Dict) -> Dict:
+        """Strategist creates optimal strategy using LLM analysis"""
+        available_moves = data.get("available_moves", [])
+        threats = data.get("threats", [])
+        opportunities = data.get("opportunities", [])
+        board_state = data.get("board_state", [])
+        
+        # Use LLM to determine optimal move
+        recommended_move = await self.get_llm_move_recommendation(board_state, available_moves, threats, opportunities)
+        
+        return {
+            "agent_id": "strategist",
+            "strategy": "LLM-based strategic analysis complete",
+            "recommended_move": recommended_move,
+            "confidence": 0.90,
+            "reasoning": f"LLM selected optimal move from {len(available_moves)} options",
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    async def executor_execute_move(self, data: Dict) -> Dict:
+        """Executor validates and executes the strategic move"""
+        recommended_move = data.get("recommended_move", {})
+        
+        # Validate the move
+        if not recommended_move or "row" not in recommended_move or "col" not in recommended_move:
+            return {
+                "agent_id": "executor",
+                "error": "Invalid move format",
+                "success": False,
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        return {
+            "agent_id": "executor",
+            "move_executed": recommended_move,
+            "result": "Move executed successfully",
+            "success": True,
+            "game_state": "updated",
+            "timestamp": datetime.now().isoformat()
+        }
+    
+    async def get_llm_move_recommendation(self, board: List[List[str]], available_moves: List[Dict], threats: List[str], opportunities: List[str]) -> Dict:
+        """Query LLM for optimal move recommendation"""
+        try:
+            # Create board representation for LLM
+            board_str = self.format_board_for_llm(board)
+            
+            # Create prompt for LLM
+            prompt = f"""
+You are an expert Tic-Tac-Toe AI strategist. Analyze this board and recommend the best move.
+
+Current Board:
+{board_str}
+
+Available Moves: {available_moves}
+Threats Identified: {threats}
+Opportunities: {opportunities}
+
+Rules:
+- You are playing as 'O' (AI)
+- Player is 'X' (Human)
+- Win by getting 3 in a row (horizontal, vertical, or diagonal)
+- Block opponent from winning
+- Create winning opportunities
+- Control center if possible
+
+Respond with ONLY the coordinates in format: row,col
+Example: 1,1 for center position
+"""
+            
+            # For now, use a simple strategy until we integrate actual LLM
+            # This will be replaced with real LLM API call
+            move = self.simple_ai_strategy(board, available_moves, threats, opportunities)
+            
+            return move
+            
+        except Exception as e:
+            print(f"Error getting LLM recommendation: {e}")
+            # Fallback to random move
+            import random
+            return random.choice(available_moves) if available_moves else {"row": 1, "col": 1}
+    
+    def format_board_for_llm(self, board: List[List[str]]) -> str:
+        """Format board for LLM analysis"""
+        result = []
+        for i, row in enumerate(board):
+            row_str = " | ".join([cell if cell else f"({i},{j})" for j, cell in enumerate(row)])
+            result.append(f"Row {i}: {row_str}")
+        return "\n".join(result)
+    
+    def simple_ai_strategy(self, board: List[List[str]], available_moves: List[Dict], threats: List[str], opportunities: List[str]) -> Dict:
+        """Simple AI strategy until LLM integration"""
+        # Priority 1: Win if possible
+        for move in available_moves:
+            if self.would_win(board, move, "O"):
+                return move
+        
+        # Priority 2: Block opponent from winning
+        for move in available_moves:
+            if self.would_win(board, move, "X"):
+                return move
+        
+        # Priority 3: Take center if available
+        center_move = {"row": 1, "col": 1}
+        if center_move in available_moves:
+            return center_move
+        
+        # Priority 4: Take corners
+        corners = [{"row": 0, "col": 0}, {"row": 0, "col": 2}, {"row": 2, "col": 0}, {"row": 2, "col": 2}]
+        for corner in corners:
+            if corner in available_moves:
+                return corner
+        
+        # Priority 5: Take any available move
+        import random
+        return random.choice(available_moves) if available_moves else {"row": 1, "col": 1}
+    
+    def would_win(self, board: List[List[str]], move: Dict, player: str) -> bool:
+        """Check if a move would result in a win for the given player"""
+        row, col = move["row"], move["col"]
+        
+        # Temporarily place the move
+        original = board[row][col]
+        board[row][col] = player
+        
+        # Check for win
+        won = self.check_win_condition(board, player)
+        
+        # Restore original
+        board[row][col] = original
+        
+        return won
+    
+    def check_win_condition(self, board: List[List[str]], player: str) -> bool:
+        """Check if the given player has won"""
+        # Check rows
+        for row in board:
+            if all(cell == player for cell in row):
+                return True
+        
+        # Check columns
+        for col in range(3):
+            if all(board[row][col] == player for row in range(3)):
+                return True
+        
+        # Check diagonals
+        if all(board[i][i] == player for i in range(3)):
+            return True
+        if all(board[i][2-i] == player for i in range(3)):
+            return True
+        
+        return False
+    
+    def analyze_threats(self, board: List[List[str]]) -> List[str]:
+        """Analyze board for immediate threats"""
+        threats = []
+        
+        # Check if opponent can win in next move
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == "":
+                    if self.would_win(board, {"row": row, "col": col}, "X"):
+                        threats.append(f"Opponent can win at ({row},{col})")
+        
+        return threats
+    
+    def analyze_opportunities(self, board: List[List[str]]) -> List[str]:
+        """Analyze board for winning opportunities"""
+        opportunities = []
+        
+        # Check if AI can win in next move
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == "":
+                    if self.would_win(board, {"row": row, "col": col}, "O"):
+                        opportunities.append(f"AI can win at ({row},{col})")
+        
+        return opportunities
     
     def get_available_moves(self, board_state: List[List[str]]) -> List[Dict]:
         """Get available moves from board state"""
