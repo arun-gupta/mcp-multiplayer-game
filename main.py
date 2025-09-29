@@ -99,7 +99,7 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Error creating Executor MCP Agent: {e}")
         executor_agent = None
-    
+
     # Start MCP servers
     if scout_agent:
         await scout_agent.start_mcp_server()
@@ -164,7 +164,7 @@ async def get_agent_status():
             "coordinator": coordinator.get_agent_status()
         }
         return status
-    except Exception as e:
+            except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting agent status: {str(e)}")
 
 @app.post("/agents/{agent_id}/switch-model")
@@ -215,7 +215,7 @@ async def get_agent_metrics(agent_id: str):
 async def health_check():
     """Health check endpoint"""
     return {
-        "status": "healthy",
+        "status": "healthy", 
         "version": "2.0.0",
         "architecture": "MCP + CrewAI Protocol",
         "agents": {
@@ -233,4 +233,4 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
         log_level="info"
-    )
+    ) 

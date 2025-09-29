@@ -247,7 +247,7 @@ def render_game_board(board, game_over=False):
     """Render the Tic Tac Toe board with proper styling"""
     
     # Add custom CSS for game board styling
-    st.markdown("""
+        st.markdown("""
     <style>
     .game-board-container {
         display: flex;
@@ -336,7 +336,7 @@ def render_game_board(board, game_over=False):
     
     # Create 3x3 grid using Streamlit columns
     for row in range(3):
-        cols = st.columns(3)
+                cols = st.columns(3)
         for col in range(3):
             with cols[col]:
                 cell_value = board[row][col] if board[row][col] else ""
@@ -353,14 +353,14 @@ def render_game_board(board, game_over=False):
                         " ",
                         key=f"move_{row}_{col}",
                         help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
-                        use_container_width=True,
+                                       use_container_width=True,
                         disabled=game_over
                     ):
                         # Make the move (only if game is not over)
                         if not game_over:
                             result = make_move(row, col)
                             if result:
-                                st.rerun()
+                                    st.rerun()
         
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -399,7 +399,7 @@ def render_agent_status(agent_status):
                     st.markdown(f"**Model:** {agent_data.get('current_model', 'Unknown')}")
                     st.markdown(f"**MCP Port:** {agent_data.get('mcp_port', 'Unknown')}")
                     st.markdown(f"**Memory Size:** {agent_data.get('memory_size', 0)}")
-        else:
+            else:
             st.warning(f"{agent_names.get(agent_id, agent_id)}: Not available")
 
 def render_mcp_logs(logs_data):
@@ -461,8 +461,8 @@ def render_agent_metrics():
         if metrics:
             with st.expander(f"{agent_names.get(agent_id, agent_id)} Metrics", expanded=True):
                 col1, col2, col3 = st.columns(3)
-                
-                with col1:
+                    
+                    with col1:
                     st.metric(
                         "Request Count",
                         metrics.get('request_count', 0)
@@ -485,7 +485,7 @@ def render_agent_metrics():
 
 def render_model_switching():
     """Render model switching interface"""
-    st.markdown("### 🔄 Model Switching")
+                        st.markdown("### 🔄 Model Switching")
                         
     agent_status = get_agent_status()
     if not agent_status:
@@ -523,10 +523,10 @@ def render_model_switching():
                 
                 if st.button(f"Switch {agent_id} to {selected_model}", key=f"switch_{agent_id}"):
                     result = switch_agent_model(agent_id, selected_model)
-                    if result and result.get('success'):
+                                if result and result.get('success'):
                         st.success(f"Successfully switched {agent_id} to {selected_model}")
-                        st.rerun()
-                    else:
+                                    st.rerun()
+                                else:
                         st.error(f"Failed to switch {agent_id} model")
 
 def main():
@@ -541,7 +541,7 @@ def main():
         if health_response.status_code == 200:
             health_data = health_response.json()
             st.success("✅ AI Team Ready - Three agents are online and ready to play!")
-        else:
+                else:
             st.error("❌ AI Team Offline - Backend connection failed")
             return
     except Exception as e:
@@ -628,6 +628,15 @@ def main():
                 else:
                     st.info("No moves yet - click a cell to start!")
                 
+                # Add game outcome to move history if game is over
+                if game_over and winner:
+                    st.markdown("---")
+                    if winner == "player":
+                        st.success("🎉 **You Win! Congratulations!**")
+                    elif winner == "ai":
+                        st.error("🤖 **AI Wins! Better luck next time!**")
+                    elif winner == "draw":
+                        st.info("🤝 **It's a Draw! Good game!**")
         else:
             st.error("Failed to load game state")
     
@@ -638,7 +647,7 @@ def main():
         agent_status = get_agent_status()
         if agent_status:
             render_agent_status(agent_status)
-        else:
+                    else:
             st.error("Failed to load agent status")
     
     with tab3:
@@ -648,7 +657,7 @@ def main():
         logs_data = get_mcp_logs()
         if logs_data:
             render_mcp_logs(logs_data)
-        else:
+                    else:
             st.error("Failed to load MCP logs")
     
     with tab4:
