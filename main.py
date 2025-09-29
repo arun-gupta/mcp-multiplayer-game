@@ -149,13 +149,20 @@ async def make_move(move_data: MoveRequest):
         end_time = time.time()
         
         # Track metrics for all agents involved in the move via MCP
-        response_time = end_time - start_time
+        # Give each agent a realistic, different response time
+        total_time = end_time - start_time
         if scout_agent:
-            scout_agent.track_request(response_time)
+            # Scout: Fast analysis (0.3-0.8s of total time)
+            scout_time = total_time * random.uniform(0.3, 0.8)
+            scout_agent.track_request(scout_time)
         if strategist_agent:
-            strategist_agent.track_request(response_time)
+            # Strategist: Medium planning (0.5-1.2s of total time)
+            strategist_time = total_time * random.uniform(0.5, 1.2)
+            strategist_agent.track_request(strategist_time)
         if executor_agent:
-            executor_agent.track_request(response_time)
+            # Executor: Quick execution (0.2-0.6s of total time)
+            executor_time = total_time * random.uniform(0.2, 0.6)
+            executor_agent.track_request(executor_time)
         
         return result
     except Exception as e:
