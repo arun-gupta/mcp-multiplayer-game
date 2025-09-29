@@ -745,15 +745,7 @@ def main():
                 # Render game board
                 render_game_board(board, game_over)
                 
-                # Add New Game button below the game board
-                # NEW GAME button
-                if st.button("🔄 NEW GAME", use_container_width=True, type="primary"):
-                    result = reset_game()
-                    if result:
-                        st.success("Game reset successfully!")
-                        st.rerun()
-                    else:
-                        st.error("Failed to reset game")
+                # Game board already has NEW GAME button
                 
                 # Display winner if game is over (after NEW GAME button)
                 if game_over and winner:
