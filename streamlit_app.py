@@ -597,7 +597,16 @@ def render_game_board(board, game_over=False):
                 cell_value = board[row][col] if board[row][col] else ""
                 
                 if cell_value:
-                    # Filled cell - show the value
+                    # Filled cell - show the value with custom styling
+                    st.markdown(f"""
+                    <style>
+                    button[key="filled_{row}_{col}"] {{
+                        font-size: 32px !important;
+                        font-weight: 900 !important;
+                        font-family: 'Arial Black', Arial, sans-serif !important;
+                    }}
+                    </style>
+                    """, unsafe_allow_html=True)
                     st.button(cell_value, key=f"filled_{row}_{col}", disabled=True, type="primary", use_container_width=True)
                 else:
                     # Empty cell - clickable button
