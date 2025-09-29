@@ -385,7 +385,11 @@ Example: 1,1 for center position
         """Get status of all agents"""
         return {
             "coordinator_status": "running",
-            "agents": self.agents,
+            "agents_connected": {
+                "scout": self.agents["scout"] is not None,
+                "strategist": self.agents["strategist"] is not None,
+                "executor": self.agents["executor"] is not None
+            },
             "game_state": self.game_state.board,
             "move_count": len(self.move_history),
             "mcp_logs_count": len(self.mcp_logs)
