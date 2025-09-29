@@ -660,7 +660,7 @@ def render_mcp_logs(logs_data):
         timestamp = log.get('timestamp', 'Unknown')
         agent = log.get('agent', 'Unknown')
         message_type = log.get('message_type', 'Unknown')
-                    data = log.get('data', {})
+        data = log.get('data', {})
                     
         # Format timestamp
         try:
@@ -683,7 +683,7 @@ def render_mcp_logs(logs_data):
             st.markdown(f"**Timestamp:** {timestamp}")
             st.markdown(f"**Agent:** {agent}")
             st.markdown(f"**Message Type:** {message_type}")
-                                st.markdown("**Data:**")
+            st.markdown("**Data:**")
             st.json(data)
 
 def render_agent_metrics():
@@ -870,7 +870,7 @@ def main():
                 
                 # Game outcome is already shown at the top of the game board
                 # No need to duplicate it in the move history
-                else:
+        else:
             st.error("Failed to load game state")
     
     with tab2:
@@ -878,7 +878,7 @@ def main():
         agent_status = get_agent_status()
         if agent_status:
             render_agent_status(agent_status)
-                else:
+        else:
             st.error("Failed to load agent status")
     
     with tab3:
@@ -886,7 +886,7 @@ def main():
         logs_data = get_mcp_logs()
         if logs_data:
             render_mcp_logs(logs_data)
-                else:
+        else:
             st.error("Failed to load MCP logs")
     
     with tab4:
