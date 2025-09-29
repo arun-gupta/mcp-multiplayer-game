@@ -462,67 +462,11 @@ def render_game_board(board, game_over=False):
         position: relative !important;
     }
     
+    /* Hide buttons completely - use only custom divs */
     .game-board-container .stButton > button {
-        width: 100px !important;
-        height: 100px !important;
-        min-width: 100px !important;
-        max-width: 100px !important;
-        min-height: 100px !important;
-        max-height: 100px !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: 2px solid #00ff88 !important;
-        border-radius: 12px !important;
-        background-color: #000 !important;
-        color: #00ff88 !important;
-        font-size: 36px !important;
-        font-weight: bold !important;
-        cursor: pointer !important;
-        box-shadow: 0 0 10px rgba(0, 255, 136, 0.3) !important;
-        transition: all 0.2s ease !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        flex: none !important;
-        box-sizing: border-box !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        overflow: hidden !important;
+        display: none !important;
     }
     
-    .game-board-container .stButton > button:hover {
-        box-shadow: 0 0 15px rgba(0, 255, 136, 0.5) !important;
-        background-color: #001100 !important;
-    }
-    
-    .game-board-container .stButton > button:disabled {
-        background-color: #00ff88 !important;
-        color: #000 !important;
-        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), inset 0 0 20px rgba(0, 255, 136, 0.3) !important;
-        cursor: default !important;
-        width: 100px !important;
-        height: 100px !important;
-        min-width: 100px !important;
-        max-width: 100px !important;
-        min-height: 100px !important;
-        max-height: 100px !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        overflow: hidden !important;
-    }
-    
-    /* Prevent any content-based resizing */
-    .game-board-container .stButton > button * {
-        max-width: 100% !important;
-        max-height: 100% !important;
-        overflow: hidden !important;
-    }
     
     </style>
     """, unsafe_allow_html=True)    # Create the game board using Streamlit columns
@@ -536,26 +480,35 @@ def render_game_board(board, game_over=False):
                 cell_value = board[row][col] if board[row][col] else ""
                 # Use custom divs for filled cells to ensure neon green styling
                 if cell_value:
-                    # Filled cell - neon green cyberpunk style
+                    # Filled cell - custom div with exact dimensions
                     st.markdown(f"""
                     <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #00ff88; border-radius: 12px; background-color: #00ff88; color: #000; font-size: 36px; font-weight: bold; box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), inset 0 0 20px rgba(0, 255, 136, 0.3); transition: all 0.2s ease;">
                         {cell_value}
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    # Empty cell - just a clickable button
-                    if st.button(
-                        " ",
-                        key=f"move_{row}_{col}",
-                        help=f"Click to place X at ({row}, {col})" if not game_over else "Game Over - Click NEW GAME to restart",
-                        use_container_width=True,
-                        disabled=game_over
-                    ):
-                        # Make the move (only if game is not over)
-                        if not game_over:
+                    # Empty cell - custom div with same exact dimensions
+                    if not game_over:
+                        # Create clickable div with JavaScript
+                        st.markdown(f"""
+                        <div onclick="document.querySelector('[data-testid=\\"baseButton-secondary\\"][key=\\"move_{row}_{col}\\"]').click()" 
+                             style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #00ff88; border-radius: 12px; background-color: #000; color: #00ff88; font-size: 36px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); transition: all 0.2s ease;">
+                            &nbsp;
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Hidden button for functionality
+                        if st.button(" ", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", type="secondary"):
                             result = make_move(row, col)
                             if result:
                                 st.rerun()
+                    else:
+                        # Disabled empty cell - same exact dimensions
+                        st.markdown(f"""
+                        <div style="margin: 0 auto; display: flex; align-items: center; justify-content: center; width: 100px; height: 100px; border: 2px solid #00ff88; border-radius: 12px; background-color: #000; color: #00ff88; font-size: 36px; font-weight: bold; opacity: 0.5;">
+                            &nbsp;
+                        </div>
+                        """, unsafe_allow_html=True)
         
     st.markdown('</div>', unsafe_allow_html=True)
 
