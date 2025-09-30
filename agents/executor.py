@@ -8,6 +8,7 @@ from typing import Dict, List
 import asyncio
 from datetime import datetime
 from models.factory import ModelFactory
+from utils.config import config
 
 
 class ExecutorMCPAgent(BaseMCPAgent):
@@ -22,7 +23,7 @@ class ExecutorMCPAgent(BaseMCPAgent):
             goal="Execute moves and validate game state",
             backstory="""You are precise and decisive. You execute the strategic plans
             and ensure all moves are valid and properly implemented.""",
-            mcp_port=3003,
+            mcp_port=config.get_mcp_port("executor"),  # ✅ Load from config
             agent_id="executor",
             llm=llm
         )

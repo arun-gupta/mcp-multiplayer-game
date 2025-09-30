@@ -1,0 +1,28 @@
+{
+  "mcp": {
+    "ports": {
+      "scout": 3001,
+      "strategist": 3002,
+      "executor": 3003
+    },
+    "host": "localhost",
+    "protocol": "http"
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "streamlit": {
+    "host": "0.0.0.0",
+    "port": 8501
+  },
+  "models": {
+    "default": "gpt-5-mini",
+    "fallback": ["gpt-4", "claude-3-sonnet", "llama3.2:3b"]
+  },
+  "performance": {
+    "mcp_coordination_timeout": 15,
+    "agent_execution_timeout": 8,
+    "enable_metrics": true
+  }
+}

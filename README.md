@@ -108,6 +108,49 @@ The `quickstart.sh` script automatically:
 
 To use the AI agents, you'll need API keys for the LLM providers. See the **[User Guide](docs/USER_GUIDE.md)** for detailed setup instructions.
 
+## ⚙️ Configuration
+
+The application uses `config.json` for all configuration settings. Copy the example file and customize as needed:
+
+```bash
+cp config.example.json config.json
+```
+
+### Configuration Options:
+
+```json
+{
+  "mcp": {
+    "ports": {
+      "scout": 3001,       // MCP server port for Scout agent
+      "strategist": 3002,  // MCP server port for Strategist agent
+      "executor": 3003     // MCP server port for Executor agent
+    },
+    "host": "localhost",
+    "protocol": "http"
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 8000           // FastAPI server port
+  },
+  "streamlit": {
+    "host": "0.0.0.0",
+    "port": 8501           // Streamlit UI port
+  },
+  "models": {
+    "default": "gpt-5-mini",  // Default model for all agents
+    "fallback": ["gpt-4", "claude-3-sonnet", "llama3.2:3b"]
+  },
+  "performance": {
+    "mcp_coordination_timeout": 15,     // Timeout for MCP coordination (seconds)
+    "agent_execution_timeout": 8,       // Timeout for individual agent tasks (seconds)
+    "enable_metrics": true              // Enable/disable performance metrics
+  }
+}
+```
+
+**Note:** `config.json` is gitignored for security. Always use `config.example.json` as a template.
+
 ---
 
 ## 🏗️ Architecture

@@ -9,6 +9,7 @@ import json
 import asyncio
 from datetime import datetime
 from models.factory import ModelFactory
+from utils.config import config
 
 
 class ScoutMCPAgent(BaseMCPAgent):
@@ -24,7 +25,7 @@ class ScoutMCPAgent(BaseMCPAgent):
             backstory="""You are a keen observer with exceptional pattern recognition abilities.
             Your role is to thoroughly analyze the current game state and provide detailed
             observations that will help the team make strategic decisions.""",
-            mcp_port=3001,
+            mcp_port=config.get_mcp_port("scout"),  # ✅ Load from config
             agent_id="scout",
             llm=llm
         )

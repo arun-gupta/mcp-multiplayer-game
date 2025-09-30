@@ -8,6 +8,7 @@ from typing import Dict, List
 import asyncio
 from datetime import datetime
 from models.factory import ModelFactory
+from utils.config import config
 
 
 class StrategistMCPAgent(BaseMCPAgent):
@@ -22,7 +23,7 @@ class StrategistMCPAgent(BaseMCPAgent):
             goal="Create optimal strategies based on board analysis",
             backstory="""You are a master strategist with deep understanding of Tic Tac Toe
             tactics. You excel at creating winning strategies and tactical plans.""",
-            mcp_port=3002,
+            mcp_port=config.get_mcp_port("strategist"),  # ✅ Load from config
             agent_id="strategist",
             llm=llm
         )
