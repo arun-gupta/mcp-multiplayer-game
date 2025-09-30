@@ -81,6 +81,59 @@ st.markdown("""
         50% { opacity: 0.7; }
     }
     
+    /* Improve metrics text visibility */
+    .stMetric {
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+    }
+    
+    .stMetric > div > div {
+        color: #ffffff !important;
+    }
+    
+    .stMetric > div > div > div {
+        color: #ffffff !important;
+        font-weight: bold;
+    }
+    
+    .stMetric label {
+        color: #cccccc !important;
+        font-weight: 500;
+    }
+    
+    /* Make metric values more visible */
+    .stMetric [data-testid="metric-value"] {
+        color: #ffffff !important;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .stMetric [data-testid="metric-label"] {
+        color: #cccccc !important;
+        font-weight: 500;
+    }
+    
+    /* Improve section headers */
+    h4 {
+        color: #ffffff !important;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Make markdown text more visible */
+    .stMarkdown p {
+        color: #ffffff !important;
+    }
+    
+    .stMarkdown strong {
+        color: #ffffff !important;
+        font-weight: bold;
+    }
+    
     /* MCP Status Indicators */
     .mcp-status-online {
         color: #00ff88;
@@ -774,35 +827,38 @@ def render_agent_metrics():
                     max_time = metrics.get('max_response_time', 0)
                     st.metric("Max Time", f"{max_time:.6f}s")
                 
-                # LLM-Specific Metrics Section
-                st.markdown("#### 🤖 LLM Metrics")
-                col5, col6, col7, col8 = st.columns(4)
-                
-                with col5:
-                    st.metric("Total Tokens", metrics.get('total_tokens', 0))
-                
-                with col6:
-                    tokens_per_req = metrics.get('tokens_per_request', 0)
-                    st.metric("Tokens/Request", f"{tokens_per_req:.1f}")
-                
-                with col7:
-                    success_rate = metrics.get('api_success_rate', 100)
-                    st.metric("API Success", f"{success_rate:.1f}%")
-                
-                with col8:
-                    errors = metrics.get('api_error_count', 0)
-                    timeouts = metrics.get('timeout_count', 0)
-                    st.metric("Errors/Timeouts", f"{errors}/{timeouts}")
-                
-                # Model and Timestamp
-                st.markdown("---")
-                model_name = metrics.get('current_model', 'Unknown')
-                if model_name == 'LLM' or model_name == 'Unknown':
-                    actual_model = metrics.get('model_name', metrics.get('llm_model', 'gpt-5-mini'))
-                    st.markdown(f"**Current Model:** {actual_model}")
-                else:
-                    st.markdown(f"**Current Model:** {model_name}")
-                st.caption(f"Last updated: {metrics.get('timestamp', 'Unknown')}")
+        # LLM-Specific Metrics Section
+        st.markdown("#### 🤖 LLM Metrics")
+        col5, col6, col7, col8 = st.columns(4)
+        
+        with col5:
+            st.metric("Total Tokens", metrics.get('total_tokens', 0))
+        
+        with col6:
+            tokens_per_req = metrics.get('tokens_per_request', 0)
+            st.metric("Tokens/Request", f"{tokens_per_req:.1f}")
+        
+        with col7:
+            success_rate = metrics.get('api_success_rate', 100)
+            st.metric("API Success", f"{success_rate:.1f}%")
+        
+        with col8:
+            errors = metrics.get('api_error_count', 0)
+            timeouts = metrics.get('timeout_count', 0)
+            st.metric("Errors/Timeouts", f"{errors}/{timeouts}")
+        
+        # Model and Timestamp with better visibility
+        st.markdown("---")
+        model_name = metrics.get('current_model', 'Unknown')
+        if model_name == 'LLM' or model_name == 'Unknown':
+            actual_model = metrics.get('model_name', metrics.get('llm_model', 'gpt-5-mini'))
+            st.markdown(f"**Current Model:** {actual_model}")
+        else:
+            st.markdown(f"**Current Model:** {model_name}")
+        
+        # Make timestamp more visible
+        timestamp = metrics.get('timestamp', 'Unknown')
+        st.markdown(f"**Last updated:** {timestamp}")
 
 def render_model_switching():
     """Render model switching interface"""
