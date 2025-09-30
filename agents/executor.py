@@ -52,7 +52,10 @@ class ExecutorMCPAgent(BaseMCPAgent):
             )
             
             # Execute using CrewAI
-            execution_result = await asyncio.to_thread(self.execute, execution_task)
+            try:
+                execution_result = await asyncio.to_thread(self.execute, execution_task)
+            except AttributeError:
+                execution_result = await asyncio.to_thread(self.llm.call, execution_task.description)
             
             return {
                 "agent_id": "executor",
@@ -73,7 +76,10 @@ class ExecutorMCPAgent(BaseMCPAgent):
             expected_output="Move validation with legal and strategic assessment"
         )
         
-        result = await asyncio.to_thread(self.execute, validation_task)
+        try:
+            result = await asyncio.to_thread(self.execute, validation_task)
+        except AttributeError:
+            result = await asyncio.to_thread(self.llm.call, validation_task.description)
         
         return {
             "agent_id": "executor",
@@ -90,7 +96,10 @@ class ExecutorMCPAgent(BaseMCPAgent):
             expected_output="Updated game state confirmation"
         )
         
-        result = await asyncio.to_thread(self.execute, update_task)
+        try:
+            result = await asyncio.to_thread(self.execute, update_task)
+        except AttributeError:
+            result = await asyncio.to_thread(self.llm.call, update_task.description)
         
         return {
             "agent_id": "executor",
@@ -106,7 +115,10 @@ class ExecutorMCPAgent(BaseMCPAgent):
             expected_output="Execution confirmation with details"
         )
         
-        result = await asyncio.to_thread(self.execute, confirmation_task)
+        try:
+            result = await asyncio.to_thread(self.execute, confirmation_task)
+        except AttributeError:
+            result = await asyncio.to_thread(self.llm.call, confirmation_task.description)
         
         return {
             "agent_id": "executor",

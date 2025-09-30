@@ -27,17 +27,23 @@ class ModelFactory:
         """Internal method to create LLM from config"""
         try:
             if model_config.provider == ModelProvider.OPENAI:
-                return ChatOpenAI(
-                    model=model_config.model_id,
-                    temperature=model_config.temperature,
-                    max_tokens=model_config.max_tokens
-                )
+                # For newer models, don't use max_tokens or temperature parameters
+                if 'gpt-5' in model_config.model_id or 'gpt-4o' in model_config.model_id:
+                    return ChatOpenAI(
+                        model=model_config.model_id
+                    )
+                else:
+                    return ChatOpenAI(
+                        model=model_config.model_id,
+                        temperature=model_config.temperature,
+                        max_completion_tokens=model_config.max_tokens
+                    )
             
             elif model_config.provider == ModelProvider.ANTHROPIC:
                 return ChatAnthropic(
                     model=model_config.model_id,
                     temperature=model_config.temperature,
-                    max_tokens=model_config.max_tokens
+                    max_completion_tokens=model_config.max_tokens
                 )
             
             elif model_config.provider == ModelProvider.OLLAMA:

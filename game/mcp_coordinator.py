@@ -521,7 +521,7 @@ Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
                 return None
             
             # Get LLM response
-            response = await agent.llm.ainvoke(prompt)
+            response = await asyncio.to_thread(agent.llm.call, prompt)
             
             # Parse the response
             import json

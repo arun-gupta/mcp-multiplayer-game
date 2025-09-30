@@ -59,7 +59,11 @@ class StrategistMCPAgent(BaseMCPAgent):
             )
             
             # Execute using CrewAI
-            strategy_result = await asyncio.to_thread(self.execute, strategy_task)
+            try:
+                strategy_result = await asyncio.to_thread(self.execute, strategy_task)
+            except AttributeError:
+                # Fallback: use the LLM directly
+                strategy_result = await asyncio.to_thread(self.llm.call, strategy_task.description)
             
             return {
                 "agent_id": "strategist",
@@ -80,7 +84,10 @@ class StrategistMCPAgent(BaseMCPAgent):
             expected_output="Position evaluation with strategic assessment"
         )
         
-        result = await asyncio.to_thread(self.execute, evaluation_task)
+        try:
+            result = await asyncio.to_thread(self.execute, evaluation_task)
+        except AttributeError:
+            result = await asyncio.to_thread(self.llm.call, evaluation_task.description)
         
         return {
             "agent_id": "strategist",
@@ -96,7 +103,10 @@ class StrategistMCPAgent(BaseMCPAgent):
             expected_output="Move recommendation with detailed reasoning"
         )
         
-        result = await asyncio.to_thread(self.execute, recommendation_task)
+        try:
+            result = await asyncio.to_thread(self.execute, recommendation_task)
+        except AttributeError:
+            result = await asyncio.to_thread(self.llm.call, recommendation_task.description)
         
         return {
             "agent_id": "strategist",
@@ -113,7 +123,10 @@ class StrategistMCPAgent(BaseMCPAgent):
             expected_output="Win probability assessment with reasoning"
         )
         
-        result = await asyncio.to_thread(self.execute, probability_task)
+        try:
+            result = await asyncio.to_thread(self.execute, probability_task)
+        except AttributeError:
+            result = await asyncio.to_thread(self.llm.call, probability_task.description)
         
         return {
             "agent_id": "strategist",

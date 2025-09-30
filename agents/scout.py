@@ -62,7 +62,12 @@ class ScoutMCPAgent(BaseMCPAgent):
             )
             
             # Execute analysis using CrewAI
-            analysis_result = await asyncio.to_thread(self.execute, analysis_task)
+            try:
+                # Use the CrewAI agent's execute method
+                analysis_result = await asyncio.to_thread(self.execute, analysis_task)
+            except AttributeError:
+                # Fallback: use the LLM directly
+                analysis_result = await asyncio.to_thread(self.llm.call, analysis_task.description)
             
             # Structure the response for MCP protocol
             return {
