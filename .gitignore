@@ -270,6 +270,8 @@ model_cache/
 *.bak
 *.backup
 *.old
+*_backup.py
+*_backup.*
 
 # Test outputs
 test_outputs/
