@@ -288,9 +288,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Docker
-.dockerignore
-# Docker files should NOT be ignored - needed for CI builds and deployment
+# Docker (removed - not used in this project)
 
 # Terraform
 *.tfstate
