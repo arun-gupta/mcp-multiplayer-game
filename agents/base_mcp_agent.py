@@ -40,7 +40,16 @@ class BaseMCPAgent(Agent, ABC):
         self.__dict__['request_count'] = 0
         self.__dict__['total_response_time'] = 0.0
         self.__dict__['avg_response_time'] = 0.0
-        self.__dict__['memory_usage'] = 0.0
+        self.__dict__['min_response_time'] = float('inf')
+        self.__dict__['max_response_time'] = 0.0
+        
+        # LLM-specific metrics
+        self.__dict__['total_tokens'] = 0
+        self.__dict__['api_call_count'] = 0
+        self.__dict__['api_success_count'] = 0
+        self.__dict__['api_error_count'] = 0
+        self.__dict__['timeout_count'] = 0
+        
         # Get the actual model name from the LLM
         model_name = getattr(self.llm, 'model', None) or getattr(self.llm, 'model_name', None) or str(self.llm.__class__.__name__)
         self.__dict__['current_model'] = str(model_name)
@@ -80,8 +89,8 @@ class BaseMCPAgent(Agent, ABC):
         agent_id = self.__dict__.get('agent_id', 'unknown')
         print(f"Registered {endpoint} for {agent_id}")
     
-    def track_request(self, response_time: float = None):
-        """Track a request for this agent"""
+    def track_request(self, response_time: float = None, success: bool = True, tokens: int = 0):
+        """Track a request for this agent with enhanced metrics"""
         agent_id = self.__dict__.get('agent_id', 'unknown')
         current_count = self.__dict__.get('request_count', 0)
         print(f"[METRICS] {agent_id}.track_request called! Current count: {current_count}")
@@ -92,15 +101,40 @@ class BaseMCPAgent(Agent, ABC):
         
         print(f"[METRICS] {agent_id} new count: {self.__dict__['request_count']}")
         
+        # Track response time metrics
         if response_time is not None:
             self.__dict__['total_response_time'] += response_time
             self.__dict__['avg_response_time'] = (
                 self.__dict__['total_response_time'] / 
                 self.__dict__['request_count']
             )
-            print(f"[METRICS] {agent_id} avg response time: {self.__dict__['avg_response_time']:.6f}s")
+            # Track min/max response times
+            if response_time < self.__dict__['min_response_time']:
+                self.__dict__['min_response_time'] = response_time
+            if response_time > self.__dict__['max_response_time']:
+                self.__dict__['max_response_time'] = response_time
+            
+            print(f"[METRICS] {agent_id} avg: {self.__dict__['avg_response_time']:.6f}s, min: {self.__dict__['min_response_time']:.6f}s, max: {self.__dict__['max_response_time']:.6f}s")
         else:
             print(f"[METRICS] {agent_id} WARNING: response_time is None!")
+        
+        # Track API success/failure
+        self.__dict__['api_call_count'] += 1
+        if success:
+            self.__dict__['api_success_count'] += 1
+        else:
+            self.__dict__['api_error_count'] += 1
+        
+        # Track token usage
+        if tokens > 0:
+            self.__dict__['total_tokens'] += tokens
+            print(f"[METRICS] {agent_id} total tokens: {self.__dict__['total_tokens']}")
+    
+    def track_timeout(self):
+        """Track a timeout event"""
+        self.__dict__['timeout_count'] = self.__dict__.get('timeout_count', 0) + 1
+        agent_id = self.__dict__.get('agent_id', 'unknown')
+        print(f"[METRICS] {agent_id} timeout count: {self.__dict__['timeout_count']}")
     
     
     async def mcp_execute_task(self, task_data: Dict) -> Dict:
@@ -189,7 +223,7 @@ class BaseMCPAgent(Agent, ABC):
             return {"success": False, "error": str(e)}
     
     async def get_performance_metrics(self) -> Dict:
-        """Get agent performance metrics"""
+        """Get agent performance metrics with enhanced A/B testing data"""
         total_time = self.__dict__.get('total_response_time', 0.0)
         request_count = self.__dict__.get('request_count', 0)
         avg_response_time = (total_time / request_count if request_count > 0 else 0.0)
@@ -197,18 +231,43 @@ class BaseMCPAgent(Agent, ABC):
         agent_id = self.__dict__.get('agent_id', 'unknown')
         current_model = self.__dict__.get('current_model', 'unknown')
         
-        # Format response time to show microseconds if very small
-        if avg_response_time > 0 and avg_response_time < 0.001:
-            response_time_str = f"{avg_response_time * 1000:.3f}ms"
-        else:
-            response_time_str = f"{round(avg_response_time, 3)}s"
+        # Get min/max response times
+        min_time = self.__dict__.get('min_response_time', 0.0)
+        max_time = self.__dict__.get('max_response_time', 0.0)
+        
+        # Handle infinity case for min_time
+        if min_time == float('inf'):
+            min_time = 0.0
+        
+        # Calculate API success rate
+        api_call_count = self.__dict__.get('api_call_count', 0)
+        api_success_count = self.__dict__.get('api_success_count', 0)
+        success_rate = (api_success_count / api_call_count * 100 if api_call_count > 0 else 100.0)
+        
+        # Calculate tokens per request
+        total_tokens = self.__dict__.get('total_tokens', 0)
+        tokens_per_request = (total_tokens / request_count if request_count > 0 else 0)
         
         return {
             "agent_id": agent_id,
-            "request_count": request_count,
-            "avg_response_time": round(avg_response_time, 6),  # Use 6 decimals for microsecond precision
-            "avg_response_time_display": response_time_str,
             "current_model": current_model,
+            
+            # Performance metrics
+            "request_count": request_count,
+            "avg_response_time": round(avg_response_time, 6),
+            "min_response_time": round(min_time, 6),
+            "max_response_time": round(max_time, 6),
+            "total_processing_time": round(total_time, 6),
+            
+            # LLM-specific metrics
+            "total_tokens": total_tokens,
+            "tokens_per_request": round(tokens_per_request, 1),
+            "api_call_count": api_call_count,
+            "api_success_rate": round(success_rate, 1),
+            "api_error_count": self.__dict__.get('api_error_count', 0),
+            "timeout_count": self.__dict__.get('timeout_count', 0),
+            
+            # Memory (process-level)
             "memory_usage": self.get_memory_usage(),
             "timestamp": datetime.now().isoformat()
         }
