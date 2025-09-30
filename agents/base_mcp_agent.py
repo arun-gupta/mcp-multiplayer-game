@@ -41,7 +41,9 @@ class BaseMCPAgent(Agent, ABC):
         self.__dict__['total_response_time'] = 0.0
         self.__dict__['avg_response_time'] = 0.0
         self.__dict__['memory_usage'] = 0.0
-        self.__dict__['current_model'] = str(self.llm.__class__.__name__)
+        # Get the actual model name from the LLM
+        model_name = getattr(self.llm, 'model', None) or getattr(self.llm, 'model_name', None) or str(self.llm.__class__.__name__)
+        self.__dict__['current_model'] = str(model_name)
         self.__dict__['last_request_time'] = None
         self.__dict__['timestamp'] = datetime.now().isoformat()
         
@@ -80,9 +82,15 @@ class BaseMCPAgent(Agent, ABC):
     
     def track_request(self, response_time: float = None):
         """Track a request for this agent"""
+        agent_id = self.__dict__.get('agent_id', 'unknown')
+        current_count = self.__dict__.get('request_count', 0)
+        print(f"[METRICS] {agent_id}.track_request called! Current count: {current_count}")
+        
         self.__dict__['request_count'] += 1
         self.__dict__['last_request_time'] = datetime.now().isoformat()
         self.__dict__['timestamp'] = datetime.now().isoformat()
+        
+        print(f"[METRICS] {agent_id} new count: {self.__dict__['request_count']}")
         
         if response_time is not None:
             self.__dict__['total_response_time'] += response_time
@@ -90,21 +98,12 @@ class BaseMCPAgent(Agent, ABC):
                 self.__dict__['total_response_time'] / 
                 self.__dict__['request_count']
             )
+            print(f"[METRICS] {agent_id} avg response time: {self.__dict__['avg_response_time']:.6f}s")
         
         # Update memory usage (simulate realistic values)
         import random
         self.__dict__['memory_usage'] = round(random.uniform(250, 350), 2)
     
-    async def get_performance_metrics(self) -> Dict:
-        """Get performance metrics for this agent"""
-        return {
-            "agent_id": self.__dict__.get('agent_id', 'unknown'),
-            "request_count": self.__dict__.get('request_count', 0),
-            "avg_response_time": round(self.__dict__.get('avg_response_time', 0.0), 3),
-            "memory_usage": self.__dict__.get('memory_usage', 0.0),
-            "current_model": self.__dict__.get('current_model', 'Unknown'),
-            "timestamp": self.__dict__.get('timestamp', datetime.now().isoformat())
-        }
     
     async def mcp_execute_task(self, task_data: Dict) -> Dict:
         """Execute CrewAI task via MCP protocol"""

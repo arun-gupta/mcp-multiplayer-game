@@ -51,11 +51,18 @@ class ExecutorMCPAgent(BaseMCPAgent):
                 expected_output="Move execution confirmation and result"
             )
             
-            # Execute using CrewAI
+            # Execute using CrewAI with timeout
             try:
-                execution_result = await asyncio.to_thread(self.execute, execution_task)
-            except AttributeError:
-                execution_result = await asyncio.to_thread(self.llm.call, execution_task.description)
+                execution_result = await asyncio.wait_for(
+                    asyncio.to_thread(self.execute, execution_task), 
+                    timeout=8.0
+                )
+            except (AttributeError, asyncio.TimeoutError):
+                # Fallback: use the LLM directly with optimized prompt
+                short_prompt = f"""Execute Tic Tac Toe move: {json.dumps(recommended_move)}
+Confirm execution and provide result.
+Keep response concise."""
+                execution_result = await asyncio.to_thread(self.llm.call, short_prompt)
             
             return {
                 "agent_id": "executor",

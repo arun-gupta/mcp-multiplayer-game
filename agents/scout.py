@@ -61,13 +61,27 @@ class ScoutMCPAgent(BaseMCPAgent):
                 expected_output="Structured analysis with threats, opportunities, and recommendations"
             )
             
-            # Execute analysis using CrewAI
+            # Execute analysis using CrewAI with timeout
             try:
-                # Use the CrewAI agent's execute method
-                analysis_result = await asyncio.to_thread(self.execute, analysis_task)
-            except AttributeError:
-                # Fallback: use the LLM directly
-                analysis_result = await asyncio.to_thread(self.llm.call, analysis_task.description)
+                print(f"[DEBUG] Scout: Starting CrewAI execution")
+                # Use the CrewAI agent's execute method with timeout
+                analysis_result = await asyncio.wait_for(
+                    asyncio.to_thread(self.execute, analysis_task), 
+                    timeout=8.0
+                )
+                print(f"[DEBUG] Scout: CrewAI execution completed")
+            except (AttributeError, asyncio.TimeoutError) as e:
+                print(f"[DEBUG] Scout: CrewAI execution failed: {e}, using LLM fallback")
+                # Fallback: use the LLM directly with optimized prompt
+                short_prompt = f"""Analyze this Tic Tac Toe board: {json.dumps(board_state)}
+Current player: {current_player}
+Provide brief analysis focusing on:
+1. Immediate threats to block
+2. Winning opportunities
+3. Strategic positioning
+Keep response concise."""
+                analysis_result = await asyncio.to_thread(self.llm.call, short_prompt)
+                print(f"[DEBUG] Scout: LLM fallback completed")
             
             # Structure the response for MCP protocol
             return {

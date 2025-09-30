@@ -153,9 +153,13 @@ st.markdown("""
 def get_game_state():
     """Get current game state from MCP API"""
     try:
+        print(f"[DEBUG] Fetching game state from API")
         response = requests.get(f"{API_BASE}/state")
+        print(f"[DEBUG] Game state API response status: {response.status_code}")
         if response.status_code == 200:
-            return response.json()
+            result = response.json()
+            print(f"[DEBUG] Game state: {result}")
+            return result
         else:
             st.error(f"Error fetching game state: {response.status_code}")
             return None
@@ -192,10 +196,14 @@ def get_mcp_logs():
 def make_move(row, col):
     """Make a move via MCP API"""
     try:
+        print(f"[DEBUG] Making move: row={row}, col={col}")
         response = requests.post(f"{API_BASE}/make-move", 
                                json={"row": row, "col": col})
+        print(f"[DEBUG] API response status: {response.status_code}")
         if response.status_code == 200:
-            return response.json()
+            result = response.json()
+            print(f"[DEBUG] API response: {result}")
+            return result
         else:
             st.error(f"Error making move: {response.status_code}")
             return None
@@ -614,7 +622,10 @@ def render_game_board(board, game_over=False):
                         if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", use_container_width=True):
                             result = make_move(row, col)
                             if result:
+                                st.success(f"Move made at ({row}, {col})")
                                 st.rerun()
+                            else:
+                                st.error("Failed to make move")
                     else:
                         # Disabled empty cell
                         st.button("", key=f"disabled_{row}_{col}", disabled=True, use_container_width=True)
@@ -866,6 +877,26 @@ def main():
             move_number = game_state.get('move_number', 0)
             game_over = game_state.get('game_over', False)
             winner = game_state.get('winner')
+            
+            # Auto-trigger AI move if it's the AI's turn
+            if current_player == "ai" and not game_over:
+                st.info("🤖 AI is thinking...")
+                # Trigger AI move automatically
+                try:
+                    # Use dedicated AI move endpoint
+                    ai_result = requests.post(f"{API_BASE}/ai-move")
+                    if ai_result.status_code == 200:
+                        result = ai_result.json()
+                        if result.get("success"):
+                            st.success("🤖 AI made its move!")
+                            st.rerun()
+                        else:
+                            st.error(f"AI move failed: {result.get('error', 'Unknown error')}")
+                    else:
+                        st.error("Failed to trigger AI move")
+                except Exception as e:
+                    st.error(f"Error triggering AI move: {e}")
+                return
             
             
             # Create two-column layout: Game Board (50%) and Player Moves (50%)

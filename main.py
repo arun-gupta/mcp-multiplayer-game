@@ -182,6 +182,35 @@ async def make_move(move_data: MoveRequest):
         print(f"[DEBUG] Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error making move: {str(e)}")
 
+@app.post("/ai-move")
+async def ai_move():
+    """Trigger AI move when it's the AI's turn"""
+    try:
+        # Check if it's the AI's turn
+        if coordinator.game_state.current_player != "ai":
+            return {"success": False, "error": "Not AI's turn"}
+        
+        if coordinator.game_state.game_over:
+            return {"success": False, "error": "Game is over"}
+        
+        # Pass real agents to coordinator for metrics tracking
+        coordinator.set_agents(scout_agent, strategist_agent, executor_agent)
+        
+        # Get AI move via MCP coordination
+        ai_result = await coordinator.get_ai_move()
+        
+        if ai_result.get("success"):
+            return {
+                "success": True,
+                "move": ai_result.get("move"),
+                "reasoning": ai_result.get("reasoning", "AI strategic move")
+            }
+        else:
+            return {"success": False, "error": ai_result.get("error", "AI move failed")}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @app.post("/reset-game")
 async def reset_game():
     """Reset the game to initial state"""

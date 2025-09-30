@@ -124,7 +124,17 @@ The system uses **MCP (Multi-Context Protocol)** for distributed communication b
 - **🤖 MCP Agents**: Scout, Strategist, Executor (Ports 3001-3003)
 - **🌐 FastAPI Server**: Main application server (Port 8000)
 - **🎨 Streamlit UI**: Interactive game interface (Port 8501)
-- **📡 MCP Coordinator**: Orchestrates agent communication
+- **📡 MCP Coordinator**: Orchestrates agent communication with streamlined real-time coordination
+
+### **🚀 Streamlined MCP Coordination**
+
+For optimal real-time gaming performance, the system uses a **lightweight MCP coordination approach**:
+
+- **⚡ Fast Response Times**: Sub-second AI moves via optimized agent communication
+- **🎯 Strategic Logic**: Direct blocking/winning move detection for immediate threats
+- **📊 Real-Time Metrics**: Accurate request tracking with microsecond precision
+- **🔄 Auto-AI Moves**: Automatic AI turn triggering via dedicated `/ai-move` endpoint
+- **🎮 Seamless UX**: No delays or timeouts during gameplay
 
 ### **API Endpoints**
 
@@ -135,18 +145,60 @@ The system uses **MCP (Multi-Context Protocol)** for distributed communication b
 |----------|--------|-------------|
 | `/` | GET | Root endpoint |
 | `/state` | GET | Get current game state |
-| `/make-move` | POST | Make a player move |
+| `/make-move` | POST | Make a player move and get AI response |
+| `/ai-move` | POST | Trigger AI move (auto-called when AI's turn) |
 | `/reset-game` | POST | Reset game |
 | `/agents/status` | GET | Get all agent status |
 | `/agents/{agent_id}/switch-model` | POST | Switch agent model |
 | `/mcp-logs` | GET | Get MCP protocol logs |
-| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
+| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics (real-time) |
 | `/health` | GET | Health check |
 
 #### 🤖 **MCP Agent Server Tools** (Ports 3001-3003)
 *Individual agent MCP servers exposing tools for direct communication*
 
 > **📝 MCP Tools**: These are **tools** (actions/operations) that agents can perform, representing capabilities like "analyze", "create", "execute".
+
+### **🔍 Scout Agent MCP Server** (Port 3001)
+The Scout agent analyzes the game board and identifies patterns, threats, and opportunities.
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `analyze_board` | Analyze board state and provide comprehensive insights | `board`, `current_player`, `move_number` |
+| `detect_threats` | Identify immediate threats from opponent | `board_state` |
+| `identify_opportunities` | Find winning opportunities and strategic positions | `board_state` |
+| `get_pattern_analysis` | Analyze game patterns and trends | `board_state`, `move_history` |
+
+### **🧠 Strategist Agent MCP Server** (Port 3002)
+The Strategist agent creates game plans and recommends optimal moves.
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_strategy` | Generate strategic plan based on Scout's analysis | `observation_data` |
+| `evaluate_position` | Evaluate current position strength | `board_state`, `player` |
+| `recommend_move` | Recommend best move with detailed reasoning | `board_state`, `available_moves` |
+| `assess_win_probability` | Calculate win probability for current state | `board_state`, `player` |
+
+### **⚡ Executor Agent MCP Server** (Port 3003)
+The Executor agent validates and executes moves on the game board.
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `execute_move` | Execute strategic move on the board | `move_data`, `board_state` |
+| `validate_move` | Validate move legality and game rules | `move`, `board_state` |
+| `update_game_state` | Update game state after move execution | `move`, `current_state` |
+| `confirm_execution` | Confirm move execution and return results | `execution_result` |
+
+### **🔄 Common Agent Tools** (All Ports)
+All agents share these standard MCP capabilities:
+
+| Tool | Description | Purpose |
+|------|-------------|---------|
+| `execute_task` | Execute CrewAI task via MCP protocol | Task execution |
+| `get_status` | Get agent status and current state | Health monitoring |
+| `get_memory` | Retrieve agent memory and context | State management |
+| `switch_model` | Hot-swap LLM model without restart | Model switching |
+| `get_metrics` | Get real-time performance metrics | Performance tracking |
 
 **📚 [Complete Architecture & API Documentation](docs/ARCHITECTURE.md)** - Detailed architecture diagrams, communication flows, and complete API reference.
 

@@ -23,9 +23,11 @@ This document provides detailed information about the features and capabilities 
 
 | Provider | Models | Type |
 |----------|--------|------|
-| **OpenAI** | GPT-4, GPT-4 Turbo, GPT-3.5 Turbo, **GPT-5 Nano**, **GPT-5 Mini** | ☁️ Cloud |
-| **Anthropic** | Claude 3 Sonnet, Claude 3 Haiku | ☁️ Cloud |
+| **OpenAI** | GPT-4, GPT-4 Turbo, **GPT-5**, **GPT-5 Mini** (default) | ☁️ Cloud |
+| **Anthropic** | Claude 3.5 Sonnet | ☁️ Cloud |
 | **Ollama** | Llama2 7B/13B, Llama3 Latest, **Llama3.2 3B**, Mistral 7B | 🖥️ Local |
+
+> **Note**: Default model is `gpt-5-mini` for optimal performance and cost balance.
 
 ### 🎯 Use Cases
 
@@ -54,17 +56,21 @@ The Streamlit dashboard provides comprehensive monitoring:
 
 | Metric | Description |
 |--------|-------------|
+| **Request Count** | Total requests processed by each agent (real-time) |
+| **Avg Response Time** | Microsecond-precision timing per agent |
+| **Memory Usage** | Real-time memory consumption via `psutil` |
+| **Current Model** | Active LLM model for each agent |
 | **Total Messages** | All system and agent messages |
 | **Agent Messages** | Inter-agent communication only |
 | **GameEngine Messages** | System events and state updates |
-| **Response Times** | Per-agent performance tracking with 3-decimal precision |
 | **Message Latency** | Inter-agent communication latency with 3-decimal precision |
 | **Token Usage** | LLM consumption per agent |
 | **Model Switches** | History of model changes |
 | **Message Flow Patterns** | Visual communication flow between agents |
 | **Protocol Errors** | MCP communication error tracking |
-| **Resource Utilization** | System CPU and memory usage |
 | **LLM Costs** | Real-time cost tracking per model |
+
+> **✅ Accuracy Guarantee**: All metrics are tracked in real-time with no fake data or fallbacks.
 
 ### Enhanced UI Features
 

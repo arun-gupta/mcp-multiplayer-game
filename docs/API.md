@@ -13,12 +13,13 @@ The system has **two types of endpoints**:
 |----------|--------|-------------|
 | `/` | GET | Root endpoint |
 | `/state` | GET | Get current game state |
-| `/make-move` | POST | Make a player move |
+| `/make-move` | POST | Make a player move and get AI response |
+| `/ai-move` | POST | Trigger AI move (auto-called when AI's turn) |
 | `/reset-game` | POST | Reset game |
 | `/agents/status` | GET | Get all agent status |
 | `/agents/{agent_id}/switch-model` | POST | Switch agent model |
 | `/mcp-logs` | GET | Get MCP protocol logs |
-| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics |
+| `/agents/{agent_id}/metrics` | GET | Get agent performance metrics (real-time) |
 | `/health` | GET | Health check |
 
 ### 🤖 **MCP Agent Server Tools** (Ports 3001-3003)
@@ -57,13 +58,19 @@ The system has **two types of endpoints**:
 # Get game state
 curl http://localhost:8000/state
 
-# Make a move
+# Make a player move (AI responds automatically)
 curl -X POST http://localhost:8000/make-move \
   -H "Content-Type: application/json" \
   -d '{"row": 0, "col": 0}'
 
+# Trigger AI move manually (auto-called by frontend)
+curl -X POST http://localhost:8000/ai-move
+
 # Get agent status
 curl http://localhost:8000/agents/status
+
+# Get real-time metrics for Scout agent
+curl http://localhost:8000/agents/scout/metrics
 
 # Switch Scout agent model
 curl -X POST http://localhost:8000/agents/scout/switch-model \

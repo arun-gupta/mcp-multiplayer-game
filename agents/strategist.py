@@ -58,12 +58,20 @@ class StrategistMCPAgent(BaseMCPAgent):
                 expected_output="Detailed strategic plan with prioritized moves"
             )
             
-            # Execute using CrewAI
+            # Execute using CrewAI with timeout
             try:
-                strategy_result = await asyncio.to_thread(self.execute, strategy_task)
-            except AttributeError:
-                # Fallback: use the LLM directly
-                strategy_result = await asyncio.to_thread(self.llm.call, strategy_task.description)
+                strategy_result = await asyncio.wait_for(
+                    asyncio.to_thread(self.execute, strategy_task), 
+                    timeout=8.0
+                )
+            except (AttributeError, asyncio.TimeoutError):
+                # Fallback: use the LLM directly with optimized prompt
+                short_prompt = f"""Create strategy for Tic Tac Toe.
+Board: {json.dumps(board_state)}
+Analysis: {analysis}
+Recommend the best move with reasoning.
+Keep response concise."""
+                strategy_result = await asyncio.to_thread(self.llm.call, short_prompt)
             
             return {
                 "agent_id": "strategist",
