@@ -96,8 +96,6 @@ The `quickstart.sh` script automatically:
 ### **📖 Guides & Tutorials**
 - **[📋 Quick Start Guide](docs/QUICKSTART.md)** - Complete setup and troubleshooting
 - **[🎨 Streamlit UI Guide](docs/README_STREAMLIT.md)** - Frontend features and customization
-- **[🐳 Docker Deployment](docs/DOCKER_README.md)** - Containerized deployment options
-- **[⚡ GitHub Actions CI/CD](docs/GITHUB_ACTIONS_SETUP.md)** - Automated testing and deployment
 
 ### **📚 Reference Documentation**
 - **[🏗️ Architecture](docs/ARCHITECTURE.md)** - System architecture and design
@@ -105,12 +103,6 @@ The `quickstart.sh` script automatically:
 - **[🎮 User Guide](docs/USER_GUIDE.md)** - Game experience and setup instructions
 - **[🚀 Features](docs/FEATURES.md)** - Detailed feature explanations and capabilities
 - **[🛠️ Development](docs/DEVELOPMENT.md)** - Development workflow and contribution guidelines
-
-### **🔧 Development & Deployment**
-- **Local Development**: Use the quickstart script or manual setup
-- **Docker Deployment**: Containerized deployment with API key management
-- **CI/CD Pipeline**: Automated testing, building, and Docker image publishing
-- **Production Ready**: Security best practices and monitoring included
 
 ## 🔑 API Keys Setup
 
