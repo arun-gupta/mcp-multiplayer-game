@@ -21,9 +21,29 @@ import random
 try:
     from dotenv import load_dotenv
     load_dotenv()
+    print("[INFO] Environment variables loaded from .env file")
 except ImportError:
     # python-dotenv not installed, that's okay
-    pass
+    print("[INFO] python-dotenv not installed, using system environment variables")
+except Exception as e:
+    print(f"[WARNING] Failed to load .env file: {e}")
+
+# Check for API keys and provide helpful messages
+import os
+missing_keys = []
+if not os.getenv("OPENAI_API_KEY"):
+    missing_keys.append("OPENAI_API_KEY")
+if not os.getenv("ANTHROPIC_API_KEY"):
+    missing_keys.append("ANTHROPIC_API_KEY")
+
+if missing_keys:
+    print(f"[WARNING] Missing API keys: {', '.join(missing_keys)}")
+    print("[INFO] Cloud models (OpenAI/Anthropic) will not be available")
+    print("[INFO] To enable cloud models, create .env file with your API keys:")
+    print("[INFO]   cp .env.example .env")
+    print("[INFO]   # Edit .env and add your API keys")
+else:
+    print("[INFO] API keys found - cloud models will be available")
 
 # Import MCP modules
 from game.mcp_coordinator import MCPGameCoordinator
@@ -83,10 +103,31 @@ async def startup_event():
     
     print("🚀 Starting MCP CrewAI system...")
     
+    # Determine best available model
+    available_models = ModelFactory.get_default_models()
+    print(f"🔍 Available models: {available_models}")
+    
+    # Try to get the best available model
+    default_model = "gpt-5-mini"  # Default fallback
+    
+    # Check if gpt-5-mini is available, otherwise use first available
+    if available_models.get("scout"):
+        default_model = available_models["scout"]
+        print(f"✅ Using {default_model} as default model")
+    else:
+        # Try to find any available model
+        for model_name in ["gpt-5-mini", "gpt-4", "claude-3-sonnet", "llama3.2:3b"]:
+            if ModelFactory.create_llm(model_name) is not None:
+                default_model = model_name
+                print(f"✅ Fallback to {default_model}")
+                break
+        else:
+            print("⚠️ No models available - agents will be created but may not function")
+    
     # Initialize agents with MCP servers
     try:
-        scout_agent = ScoutMCPAgent({"model": "gpt-5-mini"})
-        print("✅ Scout MCP Agent created")
+        scout_agent = ScoutMCPAgent({"model": default_model})
+        print(f"✅ Scout MCP Agent created with {default_model}")
     except Exception as e:
         print(f"❌ Error creating Scout MCP Agent: {e}")
         import traceback
@@ -94,8 +135,8 @@ async def startup_event():
         scout_agent = None
     
     try:
-        strategist_agent = StrategistMCPAgent({"model": "gpt-5-mini"})
-        print("✅ Strategist MCP Agent created")
+        strategist_agent = StrategistMCPAgent({"model": default_model})
+        print(f"✅ Strategist MCP Agent created with {default_model}")
     except Exception as e:
         print(f"❌ Error creating Strategist MCP Agent: {e}")
         import traceback
@@ -103,8 +144,8 @@ async def startup_event():
         strategist_agent = None
     
     try:
-        executor_agent = ExecutorMCPAgent({"model": "gpt-5-mini"})
-        print("✅ Executor MCP Agent created")
+        executor_agent = ExecutorMCPAgent({"model": default_model})
+        print(f"✅ Executor MCP Agent created with {default_model}")
     except Exception as e:
         print(f"❌ Error creating Executor MCP Agent: {e}")
         import traceback
@@ -139,6 +180,19 @@ async def startup_event():
         print("✅ Coordinator initialized")
     except Exception as e:
         print(f"❌ Error initializing coordinator: {e}")
+    
+    # Show model availability summary
+    print("\n" + "="*50)
+    print("MODEL AVAILABILITY SUMMARY")
+    print("="*50)
+    if scout_agent is not None:
+        print(f"✅ All agents using: {default_model}")
+    else:
+        print("❌ No working models available - AI features will be limited")
+        print("💡 To enable AI features:")
+        print("   1. Add API keys to .env file, OR")
+        print("   2. Install Ollama and pull models")
+    print("="*50 + "\n")
     
     print("🎉 MCP CrewAI system initialized!")
 

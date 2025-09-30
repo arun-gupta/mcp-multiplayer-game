@@ -141,6 +141,189 @@ cleanup_processes() {
     fi
 }
 
+# Function to check API keys and environment setup
+check_api_keys() {
+    print_info "Checking API key configuration..."
+    
+    local has_openai_key=false
+    local has_anthropic_key=false
+    local has_ollama=false
+    local missing_keys=()
+    
+    # Check for OpenAI API key
+    if [ -n "$OPENAI_API_KEY" ]; then
+        has_openai_key=true
+        print_status "OpenAI API key found"
+    else
+        missing_keys+=("OpenAI")
+        print_warning "OpenAI API key not found"
+    fi
+    
+    # Check for Anthropic API key
+    if [ -n "$ANTHROPIC_API_KEY" ]; then
+        has_anthropic_key=true
+        print_status "Anthropic API key found"
+    else
+        missing_keys+=("Anthropic")
+        print_warning "Anthropic API key not found"
+    fi
+    
+    # Check for Ollama
+    if command -v ollama &> /dev/null; then
+        has_ollama=true
+        print_status "Ollama found - local models available"
+    else
+        print_warning "Ollama not found - local models unavailable"
+    fi
+    
+    # Determine available model types
+    if [ "$has_openai_key" = true ] || [ "$has_anthropic_key" = true ]; then
+        print_status "Cloud models will be available"
+    else
+        print_warning "No cloud models available (missing API keys)"
+    fi
+    
+    if [ "$has_ollama" = true ]; then
+        print_status "Local models will be available"
+    else
+        print_warning "No local models available (Ollama not installed)"
+    fi
+    
+    # Check if any models are available
+    if [ "$has_openai_key" = false ] && [ "$has_anthropic_key" = false ] && [ "$has_ollama" = false ]; then
+        print_error "No models available! You need either:"
+        print_info "1. API keys for cloud models (OpenAI/Anthropic), OR"
+        print_info "2. Ollama installed with local models"
+        echo ""
+        
+        # Interactive setup prompt
+        if [ ${#missing_keys[@]} -gt 0 ] && [ -f ".env.example" ]; then
+            echo ""
+            print_info "🔧 Would you like to set up API keys now?"
+            echo ""
+            print_info "This will:"
+            print_info "  1. Copy .env.example to .env"
+            print_info "  2. Open .env in your default editor"
+            print_info "  3. Wait for you to add your API keys"
+            echo ""
+            read -p "Set up API keys now? (y/n): " -n 1 -r
+            echo ""
+            
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                setup_env_file
+                # Reload environment variables
+                if [ -f ".env" ]; then
+                    print_info "Reloading environment variables..."
+                    set -a  # automatically export all variables
+                    source .env
+                    set +a
+                    print_status "Environment variables reloaded"
+                    
+                    # Re-check API keys
+                    return check_api_keys
+                fi
+            fi
+        fi
+        
+        # Show setup instructions
+        print_info "Setup instructions:"
+        if [ ${#missing_keys[@]} -gt 0 ]; then
+            print_info "• Create .env file with API keys:"
+            print_info "  cp .env.example .env"
+            print_info "  # Edit .env and add your API keys"
+        fi
+        if [ "$has_ollama" = false ]; then
+            print_info "• Install Ollama: https://ollama.ai/"
+            print_info "  ollama pull llama3.2:3b"
+        fi
+        echo ""
+        
+        # Ask if user wants to continue anyway
+        print_warning "⚠️  Without models, the AI features won't work properly."
+        echo ""
+        read -p "Continue anyway? (y/n): " -n 1 -r
+        echo ""
+        
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_info "Setup cancelled. Please set up models and try again."
+            exit 1
+        fi
+        
+        print_warning "Continuing with limited functionality..."
+        return 1
+    fi
+    
+    # Show setup recommendations for missing keys
+    if [ ${#missing_keys[@]} -gt 0 ]; then
+        echo ""
+        print_info "💡 To enable cloud models, create .env file:"
+        print_info "   cp .env.example .env"
+        print_info "   # Edit .env and add your API keys"
+        echo ""
+    fi
+    
+    return 0
+}
+
+# Function to set up .env file interactively
+setup_env_file() {
+    print_info "Setting up .env file..."
+    
+    # Copy .env.example to .env
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        print_status "Copied .env.example to .env"
+    else
+        print_error ".env.example not found!"
+        return 1
+    fi
+    
+    # Determine the best editor to use
+    local editor=""
+    if command -v code &> /dev/null; then
+        editor="code"
+    elif command -v nano &> /dev/null; then
+        editor="nano"
+    elif command -v vim &> /dev/null; then
+        editor="vim"
+    else
+        print_warning "No suitable editor found. Please edit .env manually."
+        print_info "Open .env in your preferred editor and add your API keys:"
+        print_info "  OPENAI_API_KEY=your-key-here"
+        print_info "  ANTHROPIC_API_KEY=your-key-here"
+        return 0
+    fi
+    
+    print_info "Opening .env in $editor..."
+    print_info "Please add your API keys and save the file."
+    echo ""
+    print_info "Required keys:"
+    print_info "  OPENAI_API_KEY=sk-proj-..."
+    print_info "  ANTHROPIC_API_KEY=sk-ant-..."
+    echo ""
+    print_info "Press Enter when you're ready to open the editor..."
+    read -r
+    
+    # Open editor
+    $editor .env
+    
+    print_info "Editor closed. Checking if API keys were added..."
+    
+    # Check if keys were added
+    if grep -q "your-.*-api-key-here" .env; then
+        print_warning "It looks like you still have placeholder values in .env"
+        print_info "Please edit .env again and replace the placeholder values with your actual API keys."
+        echo ""
+        read -p "Open editor again? (y/n): " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            $editor .env
+        fi
+    fi
+    
+    print_status ".env setup completed"
+}
+
 # Function to validate environment
 validate_environment() {
     # Check if virtual environment is activated
@@ -165,12 +348,16 @@ validate_environment() {
         exit 1
     fi
     
-    if [ ! -f "run_streamlit.py" ]; then
-        print_error "run_streamlit.py not found!"
+    if [ ! -f ".env.example" ]; then
+        print_error ".env.example not found!"
+        print_info "This file is required for API key setup."
         exit 1
     fi
     
-    print_status "All required MCP hybrid files found"
+    print_status "All required files found"
+    
+    # Check API keys and model availability
+    check_api_keys
 }
 
 # Function to start the MCP application
@@ -227,6 +414,13 @@ main() {
                 echo "  --skip-setup      Skip environment setup (assumes venv exists)"
                 echo "  --help, -h        Show this help message"
                 echo ""
+                echo "API Key Setup:"
+                echo "  The script will check for API keys and prompt you to set them up if missing."
+                echo "  You can either:"
+                echo "    1. Add API keys to .env file (recommended)"
+                echo "    2. Install Ollama for local models"
+                echo "    3. Continue with limited functionality"
+                echo ""
                 echo "Architecture:"
                 echo "  MCP Protocol:    CrewAI agents with MCP distributed communication"
                 echo "                   - Scout Agent (MCP Server on port 3001)"
@@ -239,6 +433,11 @@ main() {
                 echo "  $0                # Full setup and launch MCP system"
                 echo "  $0 --skip-setup   # Launch only (venv must exist)"
                 echo "  $0 --skip-cleanup # Setup and launch without cleanup"
+                echo ""
+                echo "First Time Setup:"
+                echo "  1. Run: $0"
+                echo "  2. Follow prompts to set up API keys"
+                echo "  3. Or install Ollama for local models"
                 exit 0
                 ;;
             *)

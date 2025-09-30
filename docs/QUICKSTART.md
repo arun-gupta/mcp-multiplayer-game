@@ -104,10 +104,43 @@ OPENAI_API_KEY=your-actual-openai-api-key-here
 ANTHROPIC_API_KEY=your-actual-anthropic-api-key-here
 ```
 
+> **💡 Note:** If you don't have API keys, the application will still run but with limited AI functionality. You can use local models with Ollama instead.
+
 ### 6. Test Installation
 ```bash
 python test_installation.py
 ```
+
+### 7. Running Without API Keys
+
+If you don't have API keys, the application will still work with some limitations:
+
+**What works:**
+- ✅ Web interface loads
+- ✅ Game board displays
+- ✅ Human can make moves
+- ✅ Local models (if Ollama is installed)
+
+**What doesn't work:**
+- ❌ AI won't make moves (no cloud models)
+- ❌ MCP coordination will be limited
+- ❌ Some features may show errors
+
+**To enable full functionality:**
+1. **Add API keys** (recommended):
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+2. **Use local models** (alternative):
+   ```bash
+   # Install Ollama
+   curl -fsSL https://ollama.ai/install.sh | sh
+   
+   # Pull a model
+   ollama pull llama3.2:3b
+   ```
 
 ### 7. Run the Application
 
