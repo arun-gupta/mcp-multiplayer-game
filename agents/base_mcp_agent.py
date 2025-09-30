@@ -99,10 +99,8 @@ class BaseMCPAgent(Agent, ABC):
                 self.__dict__['request_count']
             )
             print(f"[METRICS] {agent_id} avg response time: {self.__dict__['avg_response_time']:.6f}s")
-        
-        # Update memory usage (simulate realistic values)
-        import random
-        self.__dict__['memory_usage'] = round(random.uniform(250, 350), 2)
+        else:
+            print(f"[METRICS] {agent_id} WARNING: response_time is None!")
     
     
     async def mcp_execute_task(self, task_data: Dict) -> Dict:
@@ -199,10 +197,17 @@ class BaseMCPAgent(Agent, ABC):
         agent_id = self.__dict__.get('agent_id', 'unknown')
         current_model = self.__dict__.get('current_model', 'unknown')
         
+        # Format response time to show microseconds if very small
+        if avg_response_time > 0 and avg_response_time < 0.001:
+            response_time_str = f"{avg_response_time * 1000:.3f}ms"
+        else:
+            response_time_str = f"{round(avg_response_time, 3)}s"
+        
         return {
             "agent_id": agent_id,
             "request_count": request_count,
-            "avg_response_time": round(avg_response_time, 3),
+            "avg_response_time": round(avg_response_time, 6),  # Use 6 decimals for microsecond precision
+            "avg_response_time_display": response_time_str,
             "current_model": current_model,
             "memory_usage": self.get_memory_usage(),
             "timestamp": datetime.now().isoformat()

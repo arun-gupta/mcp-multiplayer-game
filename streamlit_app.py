@@ -764,9 +764,11 @@ def render_agent_metrics():
                     )
                 
                 with col2:
+                    # Show microsecond precision (6 decimal places)
+                    avg_time = metrics.get('avg_response_time', 0)
                     st.metric(
                         "Avg Response Time",
-                        f"{metrics.get('avg_response_time', 0):.3f}s"
+                        f"{avg_time:.6f}s"
                     )
                 
                 with col3:
