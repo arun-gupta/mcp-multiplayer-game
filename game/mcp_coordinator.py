@@ -90,7 +90,9 @@ class MCPGameCoordinator:
             print(f"[METRICS] Blocking move response time: {response_time:.6f}s")
             for agent_name in ["scout", "strategist", "executor"]:
                 if self.agents.get(agent_name):
-                    self.agents[agent_name].track_request(response_time)
+                    # Estimate tokens for strategic decision (small prompt + response)
+                    estimated_tokens = 50  # Blocking move is a quick strategic decision
+                    self.agents[agent_name].track_request(response_time, success=True, tokens=estimated_tokens)
             
             return {"success": True, "move": blocking_move, "reasoning": "Blocking move"}
         
@@ -107,7 +109,9 @@ class MCPGameCoordinator:
             print(f"[METRICS] Winning move response time: {response_time:.6f}s")
             for agent_name in ["scout", "strategist", "executor"]:
                 if self.agents.get(agent_name):
-                    self.agents[agent_name].track_request(response_time)
+                    # Estimate tokens for strategic decision (small prompt + response)
+                    estimated_tokens = 50  # Winning move is a quick strategic decision
+                    self.agents[agent_name].track_request(response_time, success=True, tokens=estimated_tokens)
             
             return {"success": True, "move": winning_move, "reasoning": "Winning move"}
         
@@ -209,7 +213,9 @@ class MCPGameCoordinator:
             response_time = end_time - start_time
             if self.agents.get("scout"):
                 print(f"[DEBUG] Tracking scout request: {response_time:.6f}s")
-                self.agents["scout"].track_request(response_time)
+                # Estimate tokens for board analysis (small prompt + response)
+                estimated_tokens = 75  # Board analysis involves more reasoning
+                self.agents["scout"].track_request(response_time, success=True, tokens=estimated_tokens)
             else:
                 print(f"[DEBUG] Scout agent not available for tracking")
             
@@ -221,7 +227,8 @@ class MCPGameCoordinator:
             end_time = time.time()
             response_time = end_time - start_time
             if self.agents.get("scout"):
-                self.agents["scout"].track_request(response_time)
+                # Track failed request with minimal tokens
+                self.agents["scout"].track_request(response_time, success=False, tokens=10)
             return {"error": str(e), "agent_id": "scout"}
     
     async def _quick_strategy_creation(self, observation: Dict) -> Dict:
@@ -264,7 +271,9 @@ class MCPGameCoordinator:
             end_time = time.time()
             response_time = end_time - start_time
             if self.agents.get("strategist"):
-                self.agents["strategist"].track_request(response_time)
+                # Estimate tokens for strategy creation (medium prompt + response)
+                estimated_tokens = 100  # Strategy creation involves more reasoning
+                self.agents["strategist"].track_request(response_time, success=True, tokens=estimated_tokens)
             
             return result
             
@@ -274,7 +283,8 @@ class MCPGameCoordinator:
             end_time = time.time()
             response_time = end_time - start_time
             if self.agents.get("strategist"):
-                self.agents["strategist"].track_request(response_time)
+                # Track failed request with minimal tokens
+                self.agents["strategist"].track_request(response_time, success=False, tokens=10)
             return {"error": str(e), "agent_id": "strategist"}
     
     async def _quick_move_execution(self, strategy: Dict) -> Dict:
@@ -300,7 +310,9 @@ class MCPGameCoordinator:
             end_time = time.time()
             response_time = end_time - start_time
             if self.agents.get("executor"):
-                self.agents["executor"].track_request(response_time)
+                # Estimate tokens for move execution (small prompt + response)
+                estimated_tokens = 60  # Move execution is straightforward
+                self.agents["executor"].track_request(response_time, success=True, tokens=estimated_tokens)
             
             return result
             
@@ -312,7 +324,8 @@ class MCPGameCoordinator:
             end_time = time.time()
             response_time = end_time - start_time
             if self.agents.get("executor"):
-                self.agents["executor"].track_request(response_time)
+                # Track failed request with minimal tokens
+                self.agents["executor"].track_request(response_time, success=False, tokens=10)
             return {"error": str(e), "agent_id": "executor"}
     
     def _extract_move_from_response(self, response: str) -> Dict:
@@ -474,8 +487,10 @@ Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
             end_time = time.time()
             response_time = end_time - start_time
             
-            # Track the real response time in the agent
-            agent.track_request(response_time)
+            # Track the real response time in the agent with estimated tokens
+            # For real LLM calls, we'd get actual token count, but for streamlined calls we estimate
+            estimated_tokens = 80  # Average for agent coordination
+            agent.track_request(response_time, success=True, tokens=estimated_tokens)
             
             print(f"[DEBUG] Agent call successful, response time: {response_time:.3f}s")
             return result
@@ -483,7 +498,8 @@ Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
         except Exception as e:
             end_time = time.time()
             response_time = end_time - start_time
-            agent.track_request(response_time)  # Track even failed requests
+            # Track failed request with minimal tokens
+            agent.track_request(response_time, success=False, tokens=10)
             print(f"[DEBUG] Agent call failed with exception: {type(e).__name__}: {e}")
             import traceback
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
