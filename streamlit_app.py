@@ -838,8 +838,8 @@ def render_model_switching():
 def main():
     """Main Streamlit app"""
     # Header
-    st.markdown('<h1 class="mcp-header">🤖 Agentic Tic-Tac-Toe: MCP Protocol Showcase</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="mcp-sub-header">Watch three AI agents work together using CrewAI and MCP protocol!</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="mcp-header">🎮 Agentic Tic-Tac-Toe with CrewAI and MCP</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="mcp-sub-header">Watch three AI agents collaborate using CrewAI framework and MCP protocol!</p>', unsafe_allow_html=True)
     
     # Check API connection
     try:

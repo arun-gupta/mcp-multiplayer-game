@@ -1,8 +1,10 @@
-# 🎮 Agentic Tic-Tac-Toe: MCP Protocol
+# 🎮 Agentic Tic-Tac-Toe with CrewAI and MCP
 
 [![YouTube Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/6kMry-zlO3U)
+[![Version](https://img.shields.io/badge/Demo%20Version-v1.0-orange?style=for-the-badge)](https://youtu.be/6kMry-zlO3U)
+[![Latest](https://img.shields.io/badge/Current-v2.0-brightgreen?style=for-the-badge)](#-quick-overview)
 
-A **Multi-Context Protocol (MCP) demonstration** featuring an interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** as the agent framework and **MCP** for distributed communication. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs as both a CrewAI Agent and an MCP Server.
+An interactive Tic Tac Toe game where **three AI agents work together** using **CrewAI** as the agent framework and **MCP (Multi-Context Protocol)** for distributed communication. This project showcases how multiple LLMs can collaborate through structured communication protocols - each agent runs as both a CrewAI Agent and an MCP Server.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)

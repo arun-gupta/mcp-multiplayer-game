@@ -1,6 +1,6 @@
 # 📡 API Documentation
 
-This document provides comprehensive information about the API architecture and endpoints for the MCP Protocol Tic Tac Toe game.
+This document provides comprehensive information about the API architecture and endpoints for Agentic Tic-Tac-Toe with CrewAI and MCP.
 
 ## 📡 API Architecture
 
