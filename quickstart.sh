@@ -379,7 +379,7 @@ start_application() {
     if curl -s http://localhost:8000/health > /dev/null; then
         print_status "✅ MCP API is ready!"
         print_info "🎨 Starting MCP Streamlit UI..."
-        python run_streamlit.py
+        streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
     else
         print_error "❌ MCP API failed to start"
         kill $API_PID 2>/dev/null || true
