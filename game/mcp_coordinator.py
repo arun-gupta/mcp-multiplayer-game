@@ -73,6 +73,9 @@ class MCPGameCoordinator:
         print(f"[DEBUG] Starting MCP AI move coordination")
         print(f"[DEBUG] Available agents: {list(self.agents.keys())}")
         
+        # Track total time for all move paths
+        total_start_time = time.time()
+        
         # First, check for immediate blocking or winning moves using logic
         blocking_move = self._find_blocking_move()
         if blocking_move:
@@ -80,6 +83,15 @@ class MCPGameCoordinator:
             # Apply the move to game state
             row, col = blocking_move.get("row"), blocking_move.get("col")
             self.game_state.make_move(row, col, "ai")
+            
+            # Track metrics for all agents (instant strategic decision)
+            end_time = time.time()
+            response_time = end_time - total_start_time
+            print(f"[METRICS] Blocking move response time: {response_time:.6f}s")
+            for agent_name in ["scout", "strategist", "executor"]:
+                if self.agents.get(agent_name):
+                    self.agents[agent_name].track_request(response_time)
+            
             return {"success": True, "move": blocking_move, "reasoning": "Blocking move"}
         
         winning_move = self._find_winning_move()
@@ -88,6 +100,15 @@ class MCPGameCoordinator:
             # Apply the move to game state
             row, col = winning_move.get("row"), winning_move.get("col")
             self.game_state.make_move(row, col, "ai")
+            
+            # Track metrics for all agents (instant strategic decision)
+            end_time = time.time()
+            response_time = end_time - total_start_time
+            print(f"[METRICS] Winning move response time: {response_time:.6f}s")
+            for agent_name in ["scout", "strategist", "executor"]:
+                if self.agents.get(agent_name):
+                    self.agents[agent_name].track_request(response_time)
+            
             return {"success": True, "move": winning_move, "reasoning": "Winning move"}
         
         # Try MCP coordination with timeout
