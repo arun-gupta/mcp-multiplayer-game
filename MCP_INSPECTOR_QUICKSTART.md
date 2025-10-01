@@ -15,11 +15,11 @@ npx @modelcontextprotocol/inspector
 ### **Step 3: Connect to an Agent**
 
 In the MCP Inspector web UI:
-- **Transport**: Select "SSE"
+- **Transport**: Select "HTTP"
 - **Server URL**: Enter one of:
-  - Scout: `http://localhost:3001/mcp`
-  - Strategist: `http://localhost:3002/mcp`
-  - Executor: `http://localhost:3003/mcp`
+  - Scout: `http://localhost:8000/mcp/scout`
+  - Strategist: `http://localhost:8000/mcp/strategist`
+  - Executor: `http://localhost:8000/mcp/executor`
 - Click **"Connect"**
 
 ## 🎯 Quick Test
@@ -48,9 +48,9 @@ In the MCP Inspector web UI:
 
 | Agent | MCP Inspector URL | Tools |
 |-------|-------------------|-------|
-| **Scout** | http://localhost:3001/mcp | Board analysis, threat detection |
-| **Strategist** | http://localhost:3002/mcp | Strategy creation, move recommendation |
-| **Executor** | http://localhost:3003/mcp | Move execution, validation |
+| **Scout** | http://localhost:8000/mcp/scout | Board analysis, threat detection |
+| **Strategist** | http://localhost:8000/mcp/strategist | Strategy creation, move recommendation |
+| **Executor** | http://localhost:8000/mcp/executor | Move execution, validation |
 
 ## 📚 Full Documentation
 

@@ -200,9 +200,147 @@ async def startup_event():
 async def root():
     return {"message": "MCP CrewAI Tic Tac Toe Game", "version": "2.0.0"}
 
-@app.get("/favicon.ico")
-async def favicon():
-    return FileResponse("static/favicon.ico")
+@app.get("/mcp/{agent_id}")
+async def mcp_inspector_endpoint(agent_id: str):
+    """MCP Inspector endpoint - list tools for a specific agent"""
+    try:
+        # Get the agent
+        agent = None
+        if agent_id == "scout":
+            agent = scout_agent
+        elif agent_id == "strategist":
+            agent = strategist_agent
+        elif agent_id == "executor":
+            agent = executor_agent
+        else:
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
+        
+        if agent is None:
+            raise HTTPException(status_code=503, detail=f"Agent '{agent_id}' not initialized")
+        
+        # Get tools registry from agent
+        tools_registry = agent.__dict__.get('tools_registry', {})
+        
+        # Convert to MCP tools format
+        tools = []
+        for tool_name, tool_info in tools_registry.items():
+            tools.append({
+                "name": tool_name,
+                "description": tool_info.get('description', ''),
+                "inputSchema": tool_info.get('inputSchema', {})
+            })
+        
+        return {
+            "jsonrpc": "2.0",
+            "result": {
+                "tools": tools
+            }
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/mcp/{agent_id}")
+async def mcp_tool_call(agent_id: str, request: dict):
+    """MCP Inspector endpoint - call a tool on a specific agent"""
+    try:
+        # Get the agent
+        agent = None
+        if agent_id == "scout":
+            agent = scout_agent
+        elif agent_id == "strategist":
+            agent = strategist_agent
+        elif agent_id == "executor":
+            agent = executor_agent
+        else:
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
+        
+        if agent is None:
+            raise HTTPException(status_code=503, detail=f"Agent '{agent_id}' not initialized")
+        
+        # Extract tool name and arguments from MCP request
+        method = request.get("method")
+        params = request.get("params", {})
+        
+        if method == "tools/list":
+            # Return list of tools
+            tools_registry = agent.__dict__.get('tools_registry', {})
+            tools = []
+            for tool_name, tool_info in tools_registry.items():
+                tools.append({
+                    "name": tool_name,
+                    "description": tool_info.get('description', ''),
+                    "inputSchema": tool_info.get('inputSchema', {})
+                })
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {"tools": tools}
+            }
+        
+        elif method == "tools/call":
+            # Call a specific tool
+            tool_name = params.get("name")
+            arguments = params.get("arguments", {})
+            
+            tools_registry = agent.__dict__.get('tools_registry', {})
+            if tool_name not in tools_registry:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "error": {
+                        "code": -32601,
+                        "message": f"Tool '{tool_name}' not found"
+                    }
+                }
+            
+            # Execute the tool
+            handler = tools_registry[tool_name]['handler']
+            # Call handler with arguments if it accepts them, otherwise call without
+            import inspect
+            sig = inspect.signature(handler)
+            if len(sig.parameters) > 0:
+                result = await handler(arguments)
+            else:
+                result = await handler()
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(result)
+                        }
+                    ]
+                }
+            }
+        
+        else:
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "error": {
+                    "code": -32601,
+                    "message": f"Method '{method}' not supported"
+                }
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id", 1),
+            "error": {
+                "code": -32603,
+                "message": str(e)
+            }
+        }
 
 @app.get("/state")
 async def get_game_state():

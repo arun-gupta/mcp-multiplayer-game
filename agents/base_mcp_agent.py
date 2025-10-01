@@ -115,15 +115,13 @@ class BaseMCPAgent(Agent, ABC):
                     text=json.dumps({"error": str(e)})
                 )]
         
-        # Start HTTP server for MCP Inspector access
-        http_server = MCPHTTPServer(mcp_server, agent_id, mcp_port)
-        await http_server.start()
-        self.__dict__['mcp_http_server'] = http_server
+        # Note: HTTP server will be started separately via FastAPI
+        # to avoid port conflicts with multiple uvicorn instances
         
         self.__dict__['is_running'] = True
-        print(f"✅ MCP Server started for {agent_id} on port {mcp_port}")
+        print(f"✅ MCP Server initialized for {agent_id} (port {mcp_port})")
         print(f"   MCP Protocol: {len(self.__dict__.get('tools_registry', {}))} tools registered")
-        print(f"   🔍 MCP Inspector URL: http://localhost:{mcp_port}/mcp")
+        print(f"   🔍 MCP Inspector URL: http://localhost:8000/mcp/{agent_id}")
     
     def setup_mcp_endpoints(self):
         """Register MCP tools - both standard and agent-specific"""
