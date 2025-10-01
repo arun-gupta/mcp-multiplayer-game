@@ -105,11 +105,9 @@ The `quickstart.sh` script automatically:
 - **[🛠️ Development](docs/DEVELOPMENT.md)** - Development workflow and contribution guidelines
 
 ### **🔗 MCP Protocol Documentation**
-- **[🌐 REST API Guide](docs/MCP_REST_API_GUIDE.md)** - Direct HTTP access to MCP agents (Recommended)
-- **[🔍 MCP Query Guide](docs/MCP_QUERY_GUIDE.md)** - Multiple methods to query MCP servers
+- **[🔍 MCP Query Guide](docs/MCP_QUERY_GUIDE.md)** - All methods to query MCP servers (Recommended starting point)
+- **[🌐 REST API Guide](docs/MCP_REST_API_GUIDE.md)** - Detailed REST/HTTP API reference with Python examples
 - **[📋 MCP Protocol](docs/MCP_PROTOCOL.md)** - Complete MCP protocol implementation details
-- **[🛠️ MCP Inspector Guide](docs/MCP_INSPECTOR_GUIDE.md)** - GUI tool for MCP exploration (WIP)
-- **[⚡ MCP Quickstart](docs/MCP_INSPECTOR_QUICKSTART.md)** - Quick start for MCP Inspector
 
 ## 🔑 API Keys Setup
 

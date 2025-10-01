@@ -45,22 +45,81 @@ curl http://localhost:8000/mcp/executor
 
 If you prefer a graphical interface for exploring MCP servers:
 
+### **Quick Start**
 ```bash
-# Install MCP Inspector
+# Install and launch MCP Inspector
 npm install -g @modelcontextprotocol/inspector
-
-# Connect to Scout Agent
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8000/mcp/scout
-
-# Connect to Strategist Agent  
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8000/mcp/strategist
-
-# Connect to Executor Agent
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8000/mcp/executor
-
-# CLI Mode (for scripting)
-npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8000/mcp/scout --cli
+npx @modelcontextprotocol/inspector
 ```
+
+This opens a web interface (usually http://localhost:5173) where you can:
+- Browse all available tools with their schemas
+- Execute tools interactively
+- View real-time responses
+- Monitor protocol messages
+
+### **Connection Settings**
+
+When the inspector opens, use these settings:
+
+1. **Transport Type**: `HTTP` or `Streamable HTTP`
+2. **Server URL**: `http://localhost:8000/mcp/scout` (or strategist/executor)
+3. **Connection Type**: `Direct` (NOT "Via Proxy")
+4. **Authentication**: Leave empty
+
+### **What You Can Do**
+
+**Tools Tab**
+- List all tools (8 per agent)
+- View input/output schemas
+- Execute tools with custom inputs
+- See real-time results
+
+**Resources Tab**
+- Browse resources like `agent://scout/metrics`
+- View agent status and memory
+- Monitor performance data
+
+**Prompts Tab**
+- Explore prompt templates
+- Test prompt generation
+
+### **Example Workflow**
+
+1. **Connect** to Scout agent
+2. **List Tools** - see analyze_board, detect_threats, etc.
+3. **Select** a tool like `analyze_board`
+4. **Input** test data:
+   ```json
+   {
+     "board": [["X","O","X"],["","O",""],["","",""]],
+     "current_player": "ai"
+   }
+   ```
+5. **Execute** and view the analysis
+
+### **Multi-Agent Testing**
+
+Open 3 Inspector windows to test full agent coordination:
+1. **Scout**: Execute `analyze_board`
+2. **Strategist**: Use Scout's output in `create_strategy`
+3. **Executor**: Use Strategist's output in `execute_move`
+
+### **Troubleshooting**
+
+**Connection Error**
+```bash
+# Check if backend is running
+curl http://localhost:8000/health
+
+# Start backend
+python main.py
+```
+
+**Tools Not Appearing**
+- Ensure you're using the correct URL with `/mcp/` prefix
+- Check connection type is "Direct" not "Via Proxy"
+- Verify application is running
 
 ## 📡 **Method 3: Direct HTTP/JSON-RPC Calls**
 
