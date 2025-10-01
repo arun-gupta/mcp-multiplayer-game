@@ -31,11 +31,82 @@ class ScoutMCPAgent(BaseMCPAgent):
         )
     
     def register_agent_specific_endpoints(self):
-        """Register Scout-specific MCP endpoints"""
-        self.register_handler("analyze_board", self.analyze_board)
-        self.register_handler("detect_threats", self.detect_threats)
-        self.register_handler("identify_opportunities", self.identify_opportunities)
-        self.register_handler("get_pattern_analysis", self.get_pattern_analysis)
+        """Register Scout-specific MCP tools with proper schemas"""
+        self.register_mcp_tool(
+            "analyze_board",
+            self.analyze_board,
+            "Analyze Tic-Tac-Toe board state and provide comprehensive insights",
+            {
+                "type": "object",
+                "properties": {
+                    "board": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    },
+                    "current_player": {
+                        "type": "string",
+                        "description": "Current player (player or ai)"
+                    },
+                    "move_number": {
+                        "type": "integer",
+                        "description": "Current move number"
+                    }
+                },
+                "required": ["board"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "detect_threats",
+            self.detect_threats,
+            "Identify immediate threats from opponent on the board",
+            {
+                "type": "object",
+                "properties": {
+                    "board": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    }
+                },
+                "required": ["board"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "identify_opportunities",
+            self.identify_opportunities,
+            "Find winning opportunities and strategic positions",
+            {
+                "type": "object",
+                "properties": {
+                    "board": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    }
+                },
+                "required": ["board"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "get_pattern_analysis",
+            self.get_pattern_analysis,
+            "Analyze game patterns, trends, and strategic themes",
+            {
+                "type": "object",
+                "properties": {
+                    "board": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    },
+                    "move_history": {
+                        "type": "array",
+                        "description": "History of moves played"
+                    }
+                },
+                "required": ["board"]
+            }
+        )
     
     async def analyze_board(self, board_data: Dict) -> Dict:
         """Analyze board state and return comprehensive observation"""

@@ -11,6 +11,11 @@ from abc import ABC, abstractmethod
 import psutil
 import os
 
+# MCP Protocol imports
+from mcp.server import Server
+from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
+
 
 class BaseMCPAgent(Agent, ABC):
     """Base class combining CrewAI Agent with MCP Server capabilities"""
@@ -32,9 +37,10 @@ class BaseMCPAgent(Agent, ABC):
         # Use __dict__ to bypass Pydantic validation issues
         self.__dict__['mcp_port'] = mcp_port
         self.__dict__['agent_id'] = agent_id
-        self.__dict__['mcp_server'] = None
+        self.__dict__['mcp_server'] = Server(f"{agent_id}-mcp-server")  # ✨ Real MCP Server
         self.__dict__['mcp_clients'] = {}
         self.__dict__['is_running'] = False
+        self.__dict__['tools_registry'] = {}  # Store tool metadata
         
         # Performance metrics
         self.__dict__['request_count'] = 0
@@ -57,37 +63,130 @@ class BaseMCPAgent(Agent, ABC):
         self.__dict__['timestamp'] = datetime.now().isoformat()
         
     async def start_mcp_server(self):
-        """Start MCP server and register endpoints"""
-        # TODO: Implement actual MCP server initialization
-        # For now, simulate with a simple HTTP server or use FastAPI
-        self.setup_mcp_endpoints()
-        self.__dict__['is_running'] = True
+        """Start real MCP server with protocol support"""
         agent_id = self.__dict__.get('agent_id', 'unknown')
         mcp_port = self.__dict__.get('mcp_port', 0)
-        print(f"MCP Server started for {agent_id} on port {mcp_port}")
+        mcp_server = self.__dict__.get('mcp_server')
+        
+        # Setup MCP protocol endpoints
+        self.setup_mcp_endpoints()
+        
+        # Register MCP protocol handlers
+        @mcp_server.list_tools()
+        async def list_tools() -> list[Tool]:
+            """List all available tools via MCP protocol"""
+            tools = []
+            tools_registry = self.__dict__.get('tools_registry', {})
+            
+            for tool_name, tool_info in tools_registry.items():
+                tools.append(Tool(
+                    name=tool_name,
+                    description=tool_info.get('description', ''),
+                    inputSchema=tool_info.get('inputSchema', {})
+                ))
+            
+            print(f"[MCP] {agent_id}: Listed {len(tools)} tools via MCP protocol")
+            return tools
+        
+        @mcp_server.call_tool()
+        async def call_tool(name: str, arguments: dict) -> list[TextContent]:
+            """Call a tool via MCP protocol"""
+            print(f"[MCP] {agent_id}: Tool '{name}' called with args: {arguments}")
+            
+            tools_registry = self.__dict__.get('tools_registry', {})
+            if name not in tools_registry:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({"error": f"Tool '{name}' not found"})
+                )]
+            
+            handler = tools_registry[name]['handler']
+            try:
+                result = await handler(arguments)
+                return [TextContent(
+                    type="text",
+                    text=json.dumps(result)
+                )]
+            except Exception as e:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({"error": str(e)})
+                )]
+        
+        self.__dict__['is_running'] = True
+        print(f"✅ MCP Server started for {agent_id} on port {mcp_port}")
+        print(f"   MCP Protocol: {len(self.__dict__.get('tools_registry', {}))} tools registered")
     
     def setup_mcp_endpoints(self):
-        """Register MCP endpoints - to be implemented with actual MCP library"""
-        # Standard endpoints all agents should expose
-        self.register_handler("execute_task", self.mcp_execute_task)
-        self.register_handler("get_status", self.get_agent_status)
-        self.register_handler("get_memory", self.get_agent_memory)
-        self.register_handler("switch_model", self.switch_llm_model)
-        self.register_handler("get_metrics", self.get_performance_metrics)
+        """Register MCP tools - both standard and agent-specific"""
+        # Standard tools all agents should expose
+        self.register_mcp_tool(
+            "execute_task",
+            self.mcp_execute_task,
+            "Execute a CrewAI task via MCP protocol",
+            {
+                "type": "object",
+                "properties": {
+                    "description": {"type": "string"},
+                    "expected_output": {"type": "string"},
+                    "context": {"type": "array"}
+                },
+                "required": ["description"]
+            }
+        )
         
-        # Agent-specific endpoints
+        self.register_mcp_tool(
+            "get_status",
+            self.get_agent_status,
+            "Get current agent status and information",
+            {"type": "object", "properties": {}}
+        )
+        
+        self.register_mcp_tool(
+            "get_memory",
+            self.get_agent_memory,
+            "Get agent memory contents",
+            {"type": "object", "properties": {}}
+        )
+        
+        self.register_mcp_tool(
+            "get_metrics",
+            self.get_performance_metrics,
+            "Get agent performance metrics",
+            {"type": "object", "properties": {}}
+        )
+        
+        # Agent-specific tools
         self.register_agent_specific_endpoints()
     
     @abstractmethod
     def register_agent_specific_endpoints(self):
-        """Each agent registers its specific MCP endpoints"""
+        """Each agent registers its specific MCP tools"""
         pass
     
-    def register_handler(self, endpoint: str, handler):
-        """Register MCP endpoint handler"""
-        # TODO: Implement with actual MCP library
+    def register_mcp_tool(self, name: str, handler, description: str, input_schema: dict):
+        """Register a tool with the MCP server"""
         agent_id = self.__dict__.get('agent_id', 'unknown')
-        print(f"Registered {endpoint} for {agent_id}")
+        tools_registry = self.__dict__.get('tools_registry', {})
+        
+        tools_registry[name] = {
+            'handler': handler,
+            'description': description,
+            'inputSchema': input_schema
+        }
+        
+        self.__dict__['tools_registry'] = tools_registry
+        print(f"[MCP] Registered tool '{name}' for {agent_id}")
+    
+    # Alias for backward compatibility
+    def register_handler(self, endpoint: str, handler):
+        """Alias for register_mcp_tool (backward compatibility)"""
+        self.register_mcp_tool(
+            endpoint,
+            handler,
+            f"{endpoint.replace('_', ' ').title()}",
+            {"type": "object", "properties": {}}
+        )
     
     def track_request(self, response_time: float = None, success: bool = True, tokens: int = 0):
         """Track a request for this agent with enhanced metrics"""
