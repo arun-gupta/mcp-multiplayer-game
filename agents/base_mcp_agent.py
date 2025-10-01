@@ -3,7 +3,7 @@ Base MCP Agent Class
 Combines CrewAI Agent capabilities with MCP Server communication
 """
 from crewai import Agent, Task
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Callable
 import asyncio
 import json
 from datetime import datetime

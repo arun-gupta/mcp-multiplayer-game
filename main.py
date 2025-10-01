@@ -2,10 +2,11 @@
 Main FastAPI Application with MCP Protocol
 Multi-Agent Game Simulation using CrewAI + MCP
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import uvicorn
@@ -241,6 +242,22 @@ async def mcp_inspector_endpoint(agent_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/mcp/{agent_id}")
+async def mcp_info_endpoint(agent_id: str):
+    """Info endpoint for MCP agent (HTTP transport)"""
+    return {
+        "jsonrpc": "2.0",
+        "result": {
+            "message": f"MCP endpoint for {agent_id} agent",
+            "transport": "http",
+            "endpoints": {
+                "tools": f"/mcp/{agent_id} (POST)",
+                "resources": f"/mcp/{agent_id} (POST)",
+                "prompts": f"/mcp/{agent_id} (POST)"
+            }
+        }
+    }
 
 @app.post("/mcp/{agent_id}")
 async def mcp_tool_call(agent_id: str, request: dict):
