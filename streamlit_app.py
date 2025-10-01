@@ -9,6 +9,9 @@ import json
 from datetime import datetime
 import asyncio
 
+# Load configuration first (before page config)
+from utils.config import config
+
 # Configure page
 st.set_page_config(
     page_title="Agentic Tic-Tac-Toe: MCP Protocol Showcase",
@@ -17,8 +20,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# API Configuration
-API_BASE = "http://localhost:8000"
+# API Configuration from config file
+api_config = config.get_api_config()
+API_BASE = f"http://localhost:{api_config['port']}"
 
 # Enhanced CSS for MCP theme
 st.markdown("""

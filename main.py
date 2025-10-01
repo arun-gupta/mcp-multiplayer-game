@@ -361,10 +361,15 @@ async def health_check():
     }
 
 if __name__ == "__main__":
+    from utils.config import config
+    
+    # Get API config from config file
+    api_config = config.get_api_config()
+    
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=api_config.get('host', '0.0.0.0'),
+        port=api_config.get('port', 8000),
         reload=True,
         log_level="info"
     ) 

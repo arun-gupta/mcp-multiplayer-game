@@ -122,11 +122,32 @@ setup_environment() {
     print_status "Environment setup completed!"
 }
 
+# Function to load configuration
+load_config() {
+    # Load ports from config.json if it exists
+    if [ -f "config.json" ]; then
+        API_PORT=$(python -c "import json; print(json.load(open('config.json'))['api']['port'])" 2>/dev/null || echo "8000")
+        STREAMLIT_PORT=$(python -c "import json; print(json.load(open('config.json'))['streamlit']['port'])" 2>/dev/null || echo "8501")
+    elif [ -f "config.example.json" ]; then
+        API_PORT=$(python -c "import json; print(json.load(open('config.example.json'))['api']['port'])" 2>/dev/null || echo "8000")
+        STREAMLIT_PORT=$(python -c "import json; print(json.load(open('config.example.json'))['streamlit']['port'])" 2>/dev/null || echo "8501")
+    else
+        API_PORT=8000
+        STREAMLIT_PORT=8501
+    fi
+    
+    print_info "Using ports - API: $API_PORT, Streamlit: $STREAMLIT_PORT"
+}
+
 # Function to clean up existing processes
 cleanup_processes() {
     print_info "Cleaning up existing processes..."
-    kill_port 8000
-    kill_port 8501
+    
+    # Load config to get ports
+    load_config
+    
+    kill_port $API_PORT
+    kill_port $STREAMLIT_PORT
     
     # Wait for processes to fully terminate
     print_info "Waiting for processes to terminate..."
@@ -134,9 +155,9 @@ cleanup_processes() {
     
     # Verify ports are free
     print_info "Verifying ports are free..."
-    if ! check_port 8000 || ! check_port 8501; then
+    if ! check_port $API_PORT || ! check_port $STREAMLIT_PORT; then
         print_error "Failed to free up ports. Please manually kill processes and try again."
-        print_info "You can try: lsof -ti:8000,8501 | xargs kill -9"
+        print_info "You can try: lsof -ti:$API_PORT,$STREAMLIT_PORT | xargs kill -9"
         exit 1
     fi
 }
@@ -375,11 +396,11 @@ start_application() {
     print_info "⏳ Waiting for MCP API to start..."
     sleep 5
     
-    # Check if API is running
-    if curl -s http://localhost:8000/health > /dev/null; then
+    # Check if API is running (use configured port)
+    if curl -s http://localhost:$API_PORT/health > /dev/null; then
         print_status "✅ MCP API is ready!"
         print_info "🎨 Starting MCP Streamlit UI..."
-        streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+        streamlit run streamlit_app.py --server.port $STREAMLIT_PORT --server.address 0.0.0.0
     else
         print_error "❌ MCP API failed to start"
         kill $API_PID 2>/dev/null || true
