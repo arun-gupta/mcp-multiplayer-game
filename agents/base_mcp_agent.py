@@ -15,6 +15,7 @@ import os
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
+from .mcp_http_server import MCPHTTPServer
 
 
 class BaseMCPAgent(Agent, ABC):
@@ -38,6 +39,7 @@ class BaseMCPAgent(Agent, ABC):
         self.__dict__['mcp_port'] = mcp_port
         self.__dict__['agent_id'] = agent_id
         self.__dict__['mcp_server'] = Server(f"{agent_id}-mcp-server")  # ✨ Real MCP Server
+        self.__dict__['mcp_http_server'] = None  # HTTP wrapper for Inspector
         self.__dict__['mcp_clients'] = {}
         self.__dict__['is_running'] = False
         self.__dict__['tools_registry'] = {}  # Store tool metadata
@@ -113,9 +115,15 @@ class BaseMCPAgent(Agent, ABC):
                     text=json.dumps({"error": str(e)})
                 )]
         
+        # Start HTTP server for MCP Inspector access
+        http_server = MCPHTTPServer(mcp_server, agent_id, mcp_port)
+        await http_server.start()
+        self.__dict__['mcp_http_server'] = http_server
+        
         self.__dict__['is_running'] = True
         print(f"✅ MCP Server started for {agent_id} on port {mcp_port}")
         print(f"   MCP Protocol: {len(self.__dict__.get('tools_registry', {}))} tools registered")
+        print(f"   🔍 MCP Inspector URL: http://localhost:{mcp_port}/mcp")
     
     def setup_mcp_endpoints(self):
         """Register MCP tools - both standard and agent-specific"""
