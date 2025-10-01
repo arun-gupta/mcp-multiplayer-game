@@ -29,11 +29,82 @@ class ExecutorMCPAgent(BaseMCPAgent):
         )
     
     def register_agent_specific_endpoints(self):
-        """Register Executor-specific MCP endpoints"""
-        self.register_handler("execute_move", self.execute_move)
-        self.register_handler("validate_move", self.validate_move)
-        self.register_handler("update_game_state", self.update_game_state)
-        self.register_handler("confirm_execution", self.confirm_execution)
+        """Register Executor-specific MCP tools with proper schemas"""
+        self.register_mcp_tool(
+            "execute_move",
+            self.execute_move,
+            "Execute strategic move on the game board",
+            {
+                "type": "object",
+                "properties": {
+                    "strategy_data": {
+                        "type": "object",
+                        "description": "Strategy data from Strategist agent"
+                    },
+                    "recommended_move": {
+                        "type": "object",
+                        "description": "Move coordinates {row, col}"
+                    }
+                },
+                "required": ["strategy_data"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "validate_move",
+            self.validate_move,
+            "Validate move legality and game rule compliance",
+            {
+                "type": "object",
+                "properties": {
+                    "move": {
+                        "type": "object",
+                        "description": "Move coordinates {row, col}"
+                    },
+                    "board_state": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    }
+                },
+                "required": ["move", "board_state"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "update_game_state",
+            self.update_game_state,
+            "Update game state after move execution",
+            {
+                "type": "object",
+                "properties": {
+                    "move": {
+                        "type": "object",
+                        "description": "Move coordinates {row, col}"
+                    },
+                    "current_state": {
+                        "type": "object",
+                        "description": "Current game state"
+                    }
+                },
+                "required": ["move", "current_state"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "confirm_execution",
+            self.confirm_execution,
+            "Confirm move execution and return final results",
+            {
+                "type": "object",
+                "properties": {
+                    "execution_result": {
+                        "type": "object",
+                        "description": "Result of move execution"
+                    }
+                },
+                "required": ["execution_result"]
+            }
+        )
     
     async def execute_move(self, strategy_data: Dict) -> Dict:
         """Execute the strategic move"""

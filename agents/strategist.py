@@ -29,11 +29,82 @@ class StrategistMCPAgent(BaseMCPAgent):
         )
     
     def register_agent_specific_endpoints(self):
-        """Register Strategist-specific MCP endpoints"""
-        self.register_handler("create_strategy", self.create_strategy)
-        self.register_handler("evaluate_position", self.evaluate_position)
-        self.register_handler("recommend_move", self.recommend_move)
-        self.register_handler("assess_win_probability", self.assess_win_probability)
+        """Register Strategist-specific MCP tools with proper schemas"""
+        self.register_mcp_tool(
+            "create_strategy",
+            self.create_strategy,
+            "Generate optimal strategic plan based on board analysis",
+            {
+                "type": "object",
+                "properties": {
+                    "observation_data": {
+                        "type": "object",
+                        "description": "Board analysis from Scout agent"
+                    }
+                },
+                "required": ["observation_data"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "evaluate_position",
+            self.evaluate_position,
+            "Evaluate current position strength and strategic value",
+            {
+                "type": "object",
+                "properties": {
+                    "board_state": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    },
+                    "player": {
+                        "type": "string",
+                        "description": "Player to evaluate for (player or ai)"
+                    }
+                },
+                "required": ["board_state", "player"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "recommend_move",
+            self.recommend_move,
+            "Recommend best move with detailed strategic reasoning",
+            {
+                "type": "object",
+                "properties": {
+                    "board_state": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    },
+                    "available_moves": {
+                        "type": "array",
+                        "description": "List of available moves"
+                    }
+                },
+                "required": ["board_state", "available_moves"]
+            }
+        )
+        
+        self.register_mcp_tool(
+            "assess_win_probability",
+            self.assess_win_probability,
+            "Calculate win probability for current board position",
+            {
+                "type": "object",
+                "properties": {
+                    "board_state": {
+                        "type": "array",
+                        "description": "3x3 game board"
+                    },
+                    "player": {
+                        "type": "string",
+                        "description": "Player to assess (player or ai)"
+                    }
+                },
+                "required": ["board_state", "player"]
+            }
+        )
     
     async def create_strategy(self, observation_data: Dict) -> Dict:
         """Create strategy based on Scout's observation"""
