@@ -281,6 +281,105 @@ async def mcp_tool_call(agent_id: str, request: dict):
                 "result": {"tools": tools}
             }
         
+        elif method == "resources/list":
+            # List resources
+            resources_registry = agent.__dict__.get('resources_registry', {})
+            resources = []
+            for resource_uri, resource_info in resources_registry.items():
+                resources.append({
+                    "uri": resource_uri,
+                    "name": resource_info.get('name', ''),
+                    "description": resource_info.get('description', ''),
+                    "mimeType": resource_info.get('mimeType', 'text/plain')
+                })
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {"resources": resources}
+            }
+        
+        elif method == "resources/read":
+            # Read a specific resource
+            uri = params.get("uri")
+            resources_registry = agent.__dict__.get('resources_registry', {})
+            
+            if uri not in resources_registry:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "error": {
+                        "code": -32602,
+                        "message": f"Resource '{uri}' not found"
+                    }
+                }
+            
+            getter = resources_registry[uri]['getter']
+            content = await getter()
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {
+                    "contents": [
+                        {
+                            "uri": uri,
+                            "mimeType": resources_registry[uri]['mimeType'],
+                            "text": json.dumps(content, default=str)
+                        }
+                    ]
+                }
+            }
+        
+        elif method == "prompts/list":
+            # List prompts
+            prompts_registry = agent.__dict__.get('prompts_registry', {})
+            prompts = []
+            for prompt_name, prompt_info in prompts_registry.items():
+                prompts.append({
+                    "name": prompt_name,
+                    "description": prompt_info.get('description', ''),
+                    "arguments": prompt_info.get('arguments', [])
+                })
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {"prompts": prompts}
+            }
+        
+        elif method == "prompts/get":
+            # Get a specific prompt
+            prompt_name = params.get("name")
+            prompt_args = params.get("arguments", {})
+            prompts_registry = agent.__dict__.get('prompts_registry', {})
+            
+            if prompt_name not in prompts_registry:
+                return {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id"),
+                    "error": {
+                        "code": -32602,
+                        "message": f"Prompt '{prompt_name}' not found"
+                    }
+                }
+            
+            generator = prompts_registry[prompt_name]['generator']
+            messages = await generator(prompt_args)
+            
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get("id"),
+                "result": {
+                    "messages": [
+                        {
+                            "role": messages.role,
+                            "content": messages.content
+                        }
+                    ]
+                }
+            }
+        
         elif method == "tools/call":
             # Call a specific tool
             tool_name = params.get("name")

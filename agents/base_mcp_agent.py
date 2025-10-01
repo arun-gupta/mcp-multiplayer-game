@@ -14,7 +14,7 @@ import os
 # MCP Protocol imports
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import Tool, TextContent, Resource, Prompt, PromptMessage
 from .mcp_server import AgentMCPServer
 
 
@@ -43,6 +43,8 @@ class BaseMCPAgent(Agent, ABC):
         self.__dict__['mcp_clients'] = {}
         self.__dict__['is_running'] = False
         self.__dict__['tools_registry'] = {}  # Store tool metadata
+        self.__dict__['resources_registry'] = {}  # Store resource metadata
+        self.__dict__['prompts_registry'] = {}  # Store prompt templates
         
         # Performance metrics
         self.__dict__['request_count'] = 0
@@ -89,6 +91,61 @@ class BaseMCPAgent(Agent, ABC):
             
             print(f"[MCP] {agent_id}: Listed {len(tools)} tools via MCP protocol")
             return tools
+        
+        @mcp_server.list_resources()
+        async def list_resources() -> list[Resource]:
+            """List all available resources via MCP protocol"""
+            resources = []
+            resources_registry = self.__dict__.get('resources_registry', {})
+            
+            for resource_uri, resource_info in resources_registry.items():
+                resources.append(Resource(
+                    uri=resource_uri,
+                    name=resource_info.get('name', ''),
+                    description=resource_info.get('description', ''),
+                    mimeType=resource_info.get('mimeType', 'text/plain')
+                ))
+            
+            print(f"[MCP] {agent_id}: Listed {len(resources)} resources via MCP protocol")
+            return resources
+        
+        @mcp_server.read_resource()
+        async def read_resource(uri: str) -> str:
+            """Read a specific resource"""
+            resources_registry = self.__dict__.get('resources_registry', {})
+            if uri not in resources_registry:
+                raise ValueError(f"Resource '{uri}' not found")
+            
+            getter = resources_registry[uri]['getter']
+            content = await getter()
+            return content
+        
+        @mcp_server.list_prompts()
+        async def list_prompts() -> list[Prompt]:
+            """List all available prompts via MCP protocol"""
+            prompts = []
+            prompts_registry = self.__dict__.get('prompts_registry', {})
+            
+            for prompt_name, prompt_info in prompts_registry.items():
+                prompts.append(Prompt(
+                    name=prompt_name,
+                    description=prompt_info.get('description', ''),
+                    arguments=prompt_info.get('arguments', [])
+                ))
+            
+            print(f"[MCP] {agent_id}: Listed {len(prompts)} prompts via MCP protocol")
+            return prompts
+        
+        @mcp_server.get_prompt()
+        async def get_prompt(name: str, arguments: dict = None) -> PromptMessage:
+            """Get a specific prompt with optional arguments"""
+            prompts_registry = self.__dict__.get('prompts_registry', {})
+            if name not in prompts_registry:
+                raise ValueError(f"Prompt '{name}' not found")
+            
+            generator = prompts_registry[name]['generator']
+            messages = await generator(arguments or {})
+            return messages
         
         @mcp_server.call_tool()
         async def call_tool(name: str, arguments: dict) -> list[TextContent]:
@@ -166,11 +223,81 @@ class BaseMCPAgent(Agent, ABC):
         
         # Agent-specific tools
         self.register_agent_specific_endpoints()
+        
+        # Register standard resources
+        self.register_standard_resources()
+        
+        # Register standard prompts
+        self.register_standard_prompts()
     
     @abstractmethod
     def register_agent_specific_endpoints(self):
         """Each agent registers its specific MCP tools"""
         pass
+    
+    def register_standard_resources(self):
+        """Register standard resources all agents expose"""
+        agent_id = self.__dict__.get('agent_id', 'unknown')
+        
+        # Agent status resource
+        self.register_mcp_resource(
+            f"agent://{agent_id}/status",
+            f"{agent_id.title()} Agent Status",
+            "Current status, model, and configuration",
+            self.get_agent_status,
+            "application/json"
+        )
+        
+        # Agent metrics resource
+        self.register_mcp_resource(
+            f"agent://{agent_id}/metrics",
+            f"{agent_id.title()} Performance Metrics",
+            "Real-time performance metrics and statistics",
+            self.get_performance_metrics,
+            "application/json"
+        )
+        
+        # Agent memory resource  
+        self.register_mcp_resource(
+            f"agent://{agent_id}/memory",
+            f"{agent_id.title()} Agent Memory",
+            "Agent memory and conversation history",
+            self.get_agent_memory,
+            "application/json"
+        )
+    
+    def register_standard_prompts(self):
+        """Register standard prompts all agents expose"""
+        agent_id = self.__dict__.get('agent_id', 'unknown')
+        
+        # Task execution prompt
+        async def generate_task_prompt(args: dict) -> PromptMessage:
+            description = args.get('task_description', 'Execute a task')
+            return PromptMessage(
+                role="user",
+                content=f"""You are the {agent_id} agent.
+                
+Task: {description}
+
+Analyze the situation and provide your response based on your role:
+- Role: {self.role}
+- Goal: {self.goal}
+
+Provide a structured response with your analysis and recommendations."""
+            )
+        
+        self.register_mcp_prompt(
+            "execute_task_prompt",
+            f"Prompt template for executing tasks as {agent_id} agent",
+            generate_task_prompt,
+            [
+                {
+                    "name": "task_description",
+                    "description": "Description of the task to execute",
+                    "required": True
+                }
+            ]
+        )
     
     def register_mcp_tool(self, name: str, handler, description: str, input_schema: dict):
         """Register a tool with the MCP server"""
@@ -195,6 +322,37 @@ class BaseMCPAgent(Agent, ABC):
             f"{endpoint.replace('_', ' ').title()}",
             {"type": "object", "properties": {}}
         )
+    
+    def register_mcp_resource(self, uri: str, name: str, description: str, 
+                             getter: Callable, mime_type: str = "application/json"):
+        """Register a resource with the MCP server"""
+        agent_id = self.__dict__.get('agent_id', 'unknown')
+        resources_registry = self.__dict__.get('resources_registry', {})
+        
+        resources_registry[uri] = {
+            'name': name,
+            'description': description,
+            'getter': getter,
+            'mimeType': mime_type
+        }
+        
+        self.__dict__['resources_registry'] = resources_registry
+        print(f"[MCP] Registered resource '{name}' ({uri}) for {agent_id}")
+    
+    def register_mcp_prompt(self, name: str, description: str, 
+                           generator: Callable, arguments: list = None):
+        """Register a prompt template with the MCP server"""
+        agent_id = self.__dict__.get('agent_id', 'unknown')
+        prompts_registry = self.__dict__.get('prompts_registry', {})
+        
+        prompts_registry[name] = {
+            'description': description,
+            'generator': generator,
+            'arguments': arguments or []
+        }
+        
+        self.__dict__['prompts_registry'] = prompts_registry
+        print(f"[MCP] Registered prompt '{name}' for {agent_id}")
     
     def track_request(self, response_time: float = None, success: bool = True, tokens: int = 0):
         """Track a request for this agent with enhanced metrics"""
