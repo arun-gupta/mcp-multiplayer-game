@@ -108,7 +108,7 @@ Use our existing test script:
 
 ```bash
 # Run comprehensive MCP discovery
-python test_mcp_tools.py
+python tests/test_mcp_tools.py
 ```
 
 Or create your own script:

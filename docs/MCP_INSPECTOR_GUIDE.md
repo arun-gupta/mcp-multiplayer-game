@@ -22,7 +22,7 @@ When the MCP Inspector opens in your browser, use these **exact settings**:
 
 ### **Method 1: Automatic Launcher**
 ```bash
-./launch_inspector.sh scout
+./scripts/mcp/launch_inspector.sh scout
 ```
 - Automatically handles port cleanup
 - Opens browser with correct settings
@@ -30,7 +30,7 @@ When the MCP Inspector opens in your browser, use these **exact settings**:
 
 ### **Method 2: Direct Connection**
 ```bash
-./launch_direct_mcp.sh
+./scripts/mcp/launch_direct_mcp.sh
 ```
 - Launches with direct connection
 - Shows step-by-step instructions
@@ -60,7 +60,7 @@ DANGEROUSLY_OMIT_AUTH=true npx @modelcontextprotocol/inspector --transport http 
 2. Start backend: `python main.py`
 
 ### **Port Conflicts**
-**Solution**: Run `./cleanup_ports.sh` or restart with `./launch_inspector.sh scout`
+**Solution**: Run `./scripts/cleanup_ports.sh` or restart with `./scripts/mcp/launch_inspector.sh scout`
 
 ## 📊 **What You Can Do in MCP Inspector:**
 
@@ -85,7 +85,7 @@ DANGEROUSLY_OMIT_AUTH=true npx @modelcontextprotocol/inspector --transport http 
 ## 🎯 **Quick Start:**
 
 1. **Start Backend**: `python main.py`
-2. **Launch Inspector**: `./launch_inspector.sh scout`
+2. **Launch Inspector**: `./scripts/mcp/launch_inspector.sh scout`
 3. **Configure GUI**: Use settings above
 4. **Click Connect**: Should work without errors
 5. **Explore**: Browse tools, resources, and prompts

@@ -34,9 +34,9 @@ echo "======================================"
 echo "🤖 CrewAI agents with MCP distributed communication"
 echo ""
 echo "🔍 MCP Inspector available:"
-echo "   ./launch_inspector.sh scout        # GUI mode"
-echo "   ./launch_inspector.sh strategist   # GUI mode"
-echo "   ./launch_inspector.sh executor     # GUI mode"
+echo "   ./scripts/mcp/launch_inspector.sh scout        # GUI mode"
+echo "   ./scripts/mcp/launch_inspector.sh strategist   # GUI mode"
+echo "   ./scripts/mcp/launch_inspector.sh executor     # GUI mode"
 echo ""
 
 # Function to kill processes on a specific port

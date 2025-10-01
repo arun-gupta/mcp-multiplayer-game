@@ -23,7 +23,7 @@ check_ports
 
 echo ""
 echo "2. Launching MCP Inspector..."
-./launch_inspector.sh scout &
+./scripts/mcp/launch_inspector.sh scout &
 sleep 5
 
 echo ""
@@ -32,7 +32,7 @@ check_ports
 
 echo ""
 echo "4. Testing port cleanup..."
-./launch_inspector.sh scout
+./scripts/mcp/launch_inspector.sh scout
 sleep 3
 
 echo ""
