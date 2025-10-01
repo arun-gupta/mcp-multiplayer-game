@@ -6,6 +6,16 @@
 
 You can query MCP servers directly using REST HTTP requests without needing the MCP Inspector GUI!
 
+### **🚀 The Simplest Way to Explore MCP**
+
+Start with a single GET request to discover everything:
+
+```bash
+curl http://localhost:8000/mcp/scout
+```
+
+This returns all tools, resources, and prompts available on the agent in one response!
+
 ## 📡 **Available Endpoints**
 
 | Agent | Endpoint | Purpose |
@@ -16,11 +26,67 @@ You can query MCP servers directly using REST HTTP requests without needing the 
 
 ## 🔧 **HTTP Methods**
 
-### **GET - Agent Information**
+### **GET - Full MCP Discovery (Recommended!)**
 ```bash
 curl http://localhost:8000/mcp/scout
 ```
-Returns: Agent info and available tools
+
+**Returns**: Complete MCP server information including:
+- Server info (name, version, transport)
+- Capabilities (tools, resources, prompts with counts)
+- All available tools with descriptions and schemas
+- All available resources with URIs and descriptions
+- All available prompts with arguments
+
+**Example Response**:
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "serverInfo": {
+      "name": "scout_agent",
+      "version": "1.0.0",
+      "transport": "http"
+    },
+    "capabilities": {
+      "tools": {"supported": true, "count": 9},
+      "resources": {"supported": true, "count": 3},
+      "prompts": {"supported": true, "count": 4}
+    },
+    "tools": [
+      {
+        "name": "analyze_board",
+        "description": "Analyze board state and provide insights",
+        "inputSchema": {...}
+      },
+      ...
+    ],
+    "resources": [
+      {
+        "uri": "agent://scout/metrics",
+        "name": "Agent Metrics",
+        "description": "Performance metrics",
+        "mimeType": "application/json"
+      },
+      ...
+    ],
+    "prompts": [
+      {
+        "name": "execute_task_prompt",
+        "description": "Execute a CrewAI task",
+        "arguments": [...]
+      },
+      ...
+    ]
+  }
+}
+```
+
+**Why use this?**
+- ✅ **Single request** - Get everything in one call
+- ✅ **No JSON-RPC needed** - Simple GET request
+- ✅ **Complete discovery** - See all capabilities at once
+- ✅ **Easy exploration** - Perfect for understanding what's available
 
 ### **POST - MCP Method Calls**
 ```bash
@@ -28,6 +94,12 @@ curl -X POST http://localhost:8000/mcp/scout \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"METHOD","params":{}}'
 ```
+
+Use POST when you need to:
+- Call specific tools
+- Read resource contents
+- Get prompt templates
+- Execute actions
 
 ## 🛠️ **Available MCP Methods**
 
@@ -201,22 +273,40 @@ All responses follow JSON-RPC 2.0 format:
 
 ## 🚀 **Quick Start Examples**
 
-### **1. Get Agent Status**
+### **Step 1: Discover MCP Capabilities (Start Here!)**
 ```bash
+# Get everything available on Scout agent
+curl http://localhost:8000/mcp/scout
+
+# Get everything available on Strategist agent
+curl http://localhost:8000/mcp/strategist
+
+# Get everything available on Executor agent
+curl http://localhost:8000/mcp/executor
+```
+
+**This is the recommended first step!** You'll see:
+- What tools are available
+- What resources you can read
+- What prompts you can use
+- Input schemas for all tools
+
+### **Step 2: Call Specific Tools**
+
+After discovering what's available, use POST to call specific tools:
+
+```bash
+# Get Agent Status
 curl -X POST http://localhost:8000/mcp/scout \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_status","arguments":{}}}'
-```
 
-### **2. Get Agent Metrics**
-```bash
+# Get Agent Metrics
 curl -X POST http://localhost:8000/mcp/scout \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"resources/read","params":{"uri":"agent://scout/metrics"}}'
-```
 
-### **3. Analyze Board**
-```bash
+# Analyze Board
 curl -X POST http://localhost:8000/mcp/scout \
   -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"analyze_board","arguments":{"board":["X","O","X","-","O","X","-","O","X"]}}}'

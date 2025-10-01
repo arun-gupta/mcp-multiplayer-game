@@ -952,8 +952,9 @@ def main():
     
     <div class="header-container">
         <div>
-            <h1 class="mcp-header">🎮 Agentic Tic-Tac-Toe with CrewAI and MCP</h1>
-            <p class="mcp-sub-header">Watch three AI agents collaborate using CrewAI framework and MCP protocol!</p>
+            <h1 style='text-align: center;'>
+                🎮 🤖 <span style='background: linear-gradient(90deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;'>Agentic Tic-Tac-Toe with CrewAI and MCP</span> 🚀 ⚡
+            </h1>
         </div>
         <a href="https://github.com/arun-gupta/mcp-multiplayer-game" target="_blank" class="github-link">
             <svg class="github-logo" viewBox="0 0 16 16" fill="white">

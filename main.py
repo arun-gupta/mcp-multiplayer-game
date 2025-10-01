@@ -202,8 +202,8 @@ async def root():
     return {"message": "MCP CrewAI Tic Tac Toe Game", "version": "2.0.0"}
 
 @app.get("/mcp/{agent_id}")
-async def mcp_inspector_endpoint(agent_id: str):
-    """MCP Inspector endpoint - list tools for a specific agent"""
+async def mcp_info_endpoint(agent_id: str):
+    """Full MCP discovery endpoint - returns tools, resources, and prompts"""
     try:
         # Get the agent
         agent = None
@@ -215,14 +215,12 @@ async def mcp_inspector_endpoint(agent_id: str):
             agent = executor_agent
         else:
             raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")
-        
+
         if agent is None:
             raise HTTPException(status_code=503, detail=f"Agent '{agent_id}' not initialized")
-        
+
         # Get tools registry from agent
         tools_registry = agent.__dict__.get('tools_registry', {})
-        
-        # Convert to MCP tools format
         tools = []
         for tool_name, tool_info in tools_registry.items():
             tools.append({
@@ -230,34 +228,51 @@ async def mcp_inspector_endpoint(agent_id: str):
                 "description": tool_info.get('description', ''),
                 "inputSchema": tool_info.get('inputSchema', {})
             })
-        
+
+        # Get resources registry from agent
+        resources_registry = agent.__dict__.get('resources_registry', {})
+        resources = []
+        for resource_uri, resource_info in resources_registry.items():
+            resources.append({
+                "uri": resource_uri,
+                "name": resource_info.get('name', ''),
+                "description": resource_info.get('description', ''),
+                "mimeType": resource_info.get('mimeType', 'text/plain')
+            })
+
+        # Get prompts registry from agent
+        prompts_registry = agent.__dict__.get('prompts_registry', {})
+        prompts = []
+        for prompt_name, prompt_info in prompts_registry.items():
+            prompts.append({
+                "name": prompt_name,
+                "description": prompt_info.get('description', ''),
+                "arguments": prompt_info.get('arguments', [])
+            })
+
         return {
             "jsonrpc": "2.0",
             "result": {
-                "tools": tools
+                "serverInfo": {
+                    "name": f"{agent_id}_agent",
+                    "version": "1.0.0",
+                    "transport": "http"
+                },
+                "capabilities": {
+                    "tools": {"supported": True, "count": len(tools)},
+                    "resources": {"supported": True, "count": len(resources)},
+                    "prompts": {"supported": True, "count": len(prompts)}
+                },
+                "tools": tools,
+                "resources": resources,
+                "prompts": prompts
             }
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/mcp/{agent_id}")
-async def mcp_info_endpoint(agent_id: str):
-    """Info endpoint for MCP agent (HTTP transport)"""
-    return {
-        "jsonrpc": "2.0",
-        "result": {
-            "message": f"MCP endpoint for {agent_id} agent",
-            "transport": "http",
-            "endpoints": {
-                "tools": f"/mcp/{agent_id} (POST)",
-                "resources": f"/mcp/{agent_id} (POST)",
-                "prompts": f"/mcp/{agent_id} (POST)"
-            }
-        }
-    }
 
 @app.post("/mcp/{agent_id}")
 async def mcp_tool_call(agent_id: str, request: dict):

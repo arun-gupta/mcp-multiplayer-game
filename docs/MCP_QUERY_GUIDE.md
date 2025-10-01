@@ -10,9 +10,40 @@ This guide shows you how to query MCP servers using different methods.
 | Strategist | `http://localhost:8000/mcp/strategist` | 3002 | Strategy creation, move planning |
 | Executor | `http://localhost:8000/mcp/executor` | 3003 | Move execution, validation |
 
-## 🛠️ **Method 1: MCP Inspector (Recommended)**
+## 🚀 **Method 1: Simple GET Request (Recommended!)**
 
-The easiest way to explore MCP servers with a GUI:
+The **easiest and fastest** way to explore MCP servers - just use curl:
+
+```bash
+# Discover everything on Scout agent
+curl http://localhost:8000/mcp/scout
+
+# Discover everything on Strategist agent
+curl http://localhost:8000/mcp/strategist
+
+# Discover everything on Executor agent
+curl http://localhost:8000/mcp/executor
+```
+
+**Returns complete MCP server information:**
+- Server info (name, version, transport)
+- Capabilities summary (tools, resources, prompts counts)
+- All available tools with descriptions and input schemas
+- All available resources with URIs and descriptions
+- All available prompts with arguments
+
+**Why use this?**
+- ✅ **Single request** - Get everything in one call
+- ✅ **No JSON-RPC** - Simple HTTP GET
+- ✅ **No dependencies** - Works with curl, browsers, any HTTP client
+- ✅ **Fast** - Instant discovery
+- ✅ **Complete** - See all capabilities at once
+
+**📚 [See full REST API guide](MCP_REST_API_GUIDE.md)** for detailed examples and usage.
+
+## 🛠️ **Method 2: MCP Inspector (GUI)**
+
+If you prefer a graphical interface for exploring MCP servers:
 
 ```bash
 # Install MCP Inspector
@@ -31,7 +62,7 @@ npx @modelcontextprotocol/inspector --transport sse --server-url http://localhos
 npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:8000/mcp/scout --cli
 ```
 
-## 📡 **Method 2: Direct HTTP/JSON-RPC Calls**
+## 📡 **Method 3: Direct HTTP/JSON-RPC Calls**
 
 ### **List All Tools**
 ```bash
@@ -102,7 +133,7 @@ curl -X POST http://localhost:8000/mcp/scout \
   -d '{"jsonrpc":"2.0","id":1,"method":"prompts/get","params":{"name":"execute_task_prompt","arguments":{"task_description":"Analyze the board"}}}'
 ```
 
-## 🐍 **Method 3: Python Script**
+## 🐍 **Method 4: Python Script**
 
 Use our existing test script:
 
