@@ -15,12 +15,14 @@ npx @modelcontextprotocol/inspector
 ### **Step 3: Connect to an Agent**
 
 In the MCP Inspector web UI:
-- **Transport**: Select "HTTP"
+- **Transport**: Select "SSE" (Server-Sent Events)
 - **Server URL**: Enter one of:
-  - Scout: `http://localhost:8000/mcp/scout`
-  - Strategist: `http://localhost:8000/mcp/strategist`
-  - Executor: `http://localhost:8000/mcp/executor`
+  - Scout: `http://localhost:3001`
+  - Strategist: `http://localhost:3002`
+  - Executor: `http://localhost:3003`
 - Click **"Connect"**
+
+**Note:** Each agent runs as a standalone MCP server with real SSE transport for Inspector connectivity.
 
 ## 🎯 Quick Test
 
@@ -44,13 +46,16 @@ In the MCP Inspector web UI:
 - ✅ **Debug Protocol** - See full MCP communication
 - ✅ **Monitor Performance** - Real-time metrics
 
-## 🔗 MCP Server URLs
+## 🔗 Real MCP Server URLs
 
-| Agent | MCP Inspector URL | Tools |
-|-------|-------------------|-------|
-| **Scout** | http://localhost:8000/mcp/scout | Board analysis, threat detection |
-| **Strategist** | http://localhost:8000/mcp/strategist | Strategy creation, move recommendation |
-| **Executor** | http://localhost:8000/mcp/executor | Move execution, validation |
+| Agent | MCP Server URL | Port | Tools |
+|-------|----------------|------|-------|
+| **Scout** | http://localhost:3001 | 3001 | Board analysis, threat detection |
+| **Strategist** | http://localhost:3002 | 3002 | Strategy creation, move recommendation |
+| **Executor** | http://localhost:3003 | 3003 | Move execution, validation |
+
+**Protocol**: Real MCP with SSE transport  
+**Compatible with**: MCP Inspector, MCP Client SDK, any MCP-compliant tool
 
 ## 📚 Full Documentation
 

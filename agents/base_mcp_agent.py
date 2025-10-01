@@ -15,7 +15,7 @@ import os
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
-from .mcp_http_server import MCPHTTPServer
+from .mcp_server import AgentMCPServer
 
 
 class BaseMCPAgent(Agent, ABC):
@@ -39,7 +39,7 @@ class BaseMCPAgent(Agent, ABC):
         self.__dict__['mcp_port'] = mcp_port
         self.__dict__['agent_id'] = agent_id
         self.__dict__['mcp_server'] = Server(f"{agent_id}-mcp-server")  # ✨ Real MCP Server
-        self.__dict__['mcp_http_server'] = None  # HTTP wrapper for Inspector
+        self.__dict__['mcp_standalone_server'] = None  # Standalone MCP server instance
         self.__dict__['mcp_clients'] = {}
         self.__dict__['is_running'] = False
         self.__dict__['tools_registry'] = {}  # Store tool metadata
@@ -115,13 +115,16 @@ class BaseMCPAgent(Agent, ABC):
                     text=json.dumps({"error": str(e)})
                 )]
         
-        # Note: HTTP server will be started separately via FastAPI
-        # to avoid port conflicts with multiple uvicorn instances
+        # Start standalone MCP server with SSE transport
+        standalone_server = AgentMCPServer(self, agent_id, mcp_port)
+        await standalone_server.start()
+        self.__dict__['mcp_standalone_server'] = standalone_server
         
         self.__dict__['is_running'] = True
-        print(f"✅ MCP Server initialized for {agent_id} (port {mcp_port})")
-        print(f"   MCP Protocol: {len(self.__dict__.get('tools_registry', {}))} tools registered")
-        print(f"   🔍 MCP Inspector URL: http://localhost:8000/mcp/{agent_id}")
+        print(f"✅ Real MCP Server started for {agent_id}")
+        print(f"   Port: {mcp_port}")
+        print(f"   Tools: {len(self.__dict__.get('tools_registry', {}))}")
+        print(f"   🔍 MCP Inspector URL: http://localhost:{mcp_port}")
     
     def setup_mcp_endpoints(self):
         """Register MCP tools - both standard and agent-specific"""
