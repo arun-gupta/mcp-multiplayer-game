@@ -15,14 +15,23 @@ npx @modelcontextprotocol/inspector
 ### **Step 3: Connect to an Agent**
 
 In the MCP Inspector web UI:
-- **Transport**: Select "SSE" (Server-Sent Events)
-- **Server URL**: Enter one of:
-  - Scout: `http://localhost:3001`
-  - Strategist: `http://localhost:3002`
-  - Executor: `http://localhost:3003`
-- Click **"Connect"**
+- **Method**: Use HTTP/JSON-RPC (custom transport)
+- **Base URL**: `http://localhost:8000`
+- **Agent Endpoint**: `/mcp/{agent_id}`
+  - Scout: `/mcp/scout`
+  - Strategist: `/mcp/strategist`
+  - Executor: `/mcp/executor`
 
-**Note:** Each agent runs as a standalone MCP server with real SSE transport for Inspector connectivity.
+**Or use curl to test:**
+```bash
+# List Scout tools
+curl http://localhost:8000/mcp/scout
+
+# Call a tool
+curl -X POST http://localhost:8000/mcp/scout \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_status","arguments":{}}}'
+```
 
 ## 🎯 Quick Test
 
@@ -46,16 +55,17 @@ In the MCP Inspector web UI:
 - ✅ **Debug Protocol** - See full MCP communication
 - ✅ **Monitor Performance** - Real-time metrics
 
-## 🔗 Real MCP Server URLs
+## 🔗 MCP Tool Endpoints
 
-| Agent | MCP Server URL | Port | Tools |
-|-------|----------------|------|-------|
-| **Scout** | http://localhost:3001 | 3001 | Board analysis, threat detection |
-| **Strategist** | http://localhost:3002 | 3002 | Strategy creation, move recommendation |
-| **Executor** | http://localhost:3003 | 3003 | Move execution, validation |
+| Agent | MCP Endpoint | Tools |
+|-------|--------------|-------|
+| **Scout** | http://localhost:8000/mcp/scout | Board analysis, threat detection, 8 tools total |
+| **Strategist** | http://localhost:8000/mcp/strategist | Strategy creation, move recommendation, 8 tools total |
+| **Executor** | http://localhost:8000/mcp/executor | Move execution, validation, 8 tools total |
 
-**Protocol**: Real MCP with SSE transport  
-**Compatible with**: MCP Inspector, MCP Client SDK, any MCP-compliant tool
+**Protocol**: JSON-RPC 2.0 (MCP-compliant)  
+**Methods**: `tools/list`, `tools/call`, `initialize`  
+**Format**: Standard MCP tool discovery and execution
 
 ## 📚 Full Documentation
 

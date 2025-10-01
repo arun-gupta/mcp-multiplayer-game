@@ -115,16 +115,15 @@ class BaseMCPAgent(Agent, ABC):
                     text=json.dumps({"error": str(e)})
                 )]
         
-        # Start standalone MCP server with SSE transport
-        standalone_server = AgentMCPServer(self, agent_id, mcp_port)
-        await standalone_server.start()
-        self.__dict__['mcp_standalone_server'] = standalone_server
+        # MCP server is registered and ready
+        # Note: HTTP/SSE endpoints will be exposed via main FastAPI app
+        # to avoid multiple uvicorn instances in same event loop
         
         self.__dict__['is_running'] = True
-        print(f"✅ Real MCP Server started for {agent_id}")
-        print(f"   Port: {mcp_port}")
-        print(f"   Tools: {len(self.__dict__.get('tools_registry', {}))}")
-        print(f"   🔍 MCP Inspector URL: http://localhost:{mcp_port}")
+        print(f"✅ MCP Server registered for {agent_id}")
+        print(f"   Designated Port: {mcp_port}")
+        print(f"   Tools Registered: {len(self.__dict__.get('tools_registry', {}))}")
+        print(f"   🔍 MCP Inspector URL: http://localhost:8000/mcp/{agent_id}")
     
     def setup_mcp_endpoints(self):
         """Register MCP tools - both standard and agent-specific"""
