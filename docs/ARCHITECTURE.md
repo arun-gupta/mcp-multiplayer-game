@@ -8,24 +8,53 @@ This document describes the detailed architecture of the MCP Protocol Tic Tac To
 
 ## Deployment Modes
 
-This project supports **two deployment modes**:
+This project supports **two deployment modes** with different architectural patterns:
 
 ### 🏠 Local Mode (Default)
+**Architecture**: Single-process, in-memory communication
+
 - **Transport**: Direct Python method calls (in-process)
-- **Performance**: Faster, lower latency
+- **Performance**: Faster, lower latency (<1ms)
 - **Use case**: Development, testing, production (single machine)
 - **Agent files**: `agents/scout_local.py`, `agents/strategist_local.py`, `agents/executor_local.py`
 - **MCP role**: API specification and external interface only
 - **Start**: `python main.py` or `./quickstart.sh`
+- **Processes**: 1 (main.py)
+- **Communication**: Direct object method calls
+- **Benefits**: 
+  - ✅ Fastest performance
+  - ✅ Simple debugging
+  - ✅ No network dependencies
+  - ✅ Shared memory between agents
 
 ### 🌐 Distributed Mode
+**Architecture**: Multi-process, network-based communication
+
 - **Transport**: HTTP/JSON-RPC (MCP protocol)
-- **Performance**: Slower, network latency
+- **Performance**: Slower, network latency (10-50ms)
 - **Use case**: Multi-machine deployment, demonstrating true MCP transport
 - **Agent files**: `agents/scout_server.py`, `agents/strategist_server.py`, `agents/executor_server.py`
 - **MCP role**: Full protocol transport between agents
 - **Start**: `./quickstart.sh -d` or `python main.py --distributed`
 - **Ports**: Scout (3001), Strategist (3002), Executor (3003), Main API (8000)
+- **Processes**: 4 (main.py + 3 agent servers)
+- **Communication**: HTTP requests between processes
+- **Benefits**:
+  - ✅ True distributed deployment
+  - ✅ Agent isolation and fault tolerance
+  - ✅ Horizontal scaling
+  - ✅ Demonstrates full MCP protocol
+
+### Mode Selection Guide
+
+| Requirement | Recommended Mode | Reason |
+|-------------|------------------|---------|
+| Development & Testing | Local | Faster iteration, easier debugging |
+| Single Machine Production | Local | Better performance, simpler deployment |
+| Multi-Machine Deployment | Distributed | True distributed architecture |
+| MCP Protocol Demonstration | Distributed | Shows full protocol implementation |
+| Performance Critical | Local | Lower latency, higher throughput |
+| Fault Tolerance | Distributed | Process isolation, independent failures |
 
 **This document primarily describes Local Mode architecture. See "Distributed Mode Architecture" section below for distributed deployment details.**
 
@@ -648,18 +677,21 @@ npx @modelcontextprotocol/inspector
 
 ## Distributed Mode Architecture
 
-In **distributed mode**, agents run as separate processes and communicate via HTTP/JSON-RPC:
+In **distributed mode**, agents run as separate processes and communicate via HTTP/JSON-RPC, demonstrating true MCP protocol implementation:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Main API Server (Port 8000)                  │
 │                                                                 │
-│  • Coordinator with distributed=True                           │
+│  • MCPGameCoordinator(distributed=True)                        │
 │  • HTTP client for agent communication                         │
 │  • Game state management                                        │
+│  • External MCP endpoints (/mcp/scout, /mcp/strategist, etc.)  │
 └──────────────────────┬──────────────────────────────────────────┘
                        │
                        │ HTTP/JSON-RPC (MCP Protocol)
+                       │ • Full JSON-RPC 2.0 implementation
+                       │ • tools/call, resources/read, prompts/list
                        │
        ┌───────────────┼───────────────┐
        │               │               │
@@ -674,8 +706,19 @@ In **distributed mode**, agents run as separate processes and communicate via HT
 │ GET  /mcp   │ │ GET  /mcp   │ │ GET  /mcp   │
 │ POST /mcp   │ │ POST /mcp   │ │ POST /mcp   │
 │ GET  /health│ │ GET  /health│ │ GET  /health│
+│             │ │             │ │             │
+│ CrewAI Agent│ │ CrewAI Agent│ │ CrewAI Agent│
+│ + MCP Server│ │ + MCP Server│ │ + MCP Server│
 └─────────────┘ └─────────────┘ └─────────────┘
 ```
+
+### Distributed Mode Benefits
+
+- **True MCP Protocol**: Full HTTP/JSON-RPC transport between all components
+- **Process Isolation**: Each agent runs independently, fault-tolerant
+- **Scalability**: Agents can be deployed on different machines
+- **Protocol Demonstration**: Shows complete MCP implementation
+- **Production Ready**: Suitable for multi-machine deployments
 
 ### Key Differences from Local Mode
 
@@ -688,6 +731,32 @@ In **distributed mode**, agents run as separate processes and communicate via HT
 | **Agent files** | `*_local.py` | `*_server.py` |
 | **Coordinator** | `MCPGameCoordinator(distributed=False)` | `MCPGameCoordinator(distributed=True)` |
 | **MCP usage** | API spec only | Full transport protocol |
+
+### Communication Flow Comparison
+
+#### Local Mode Communication
+```
+Coordinator → Direct Python Call → Agent Method
+    ↓
+result = await scout_agent.analyze_board(data)
+```
+
+#### Distributed Mode Communication
+```
+Coordinator → HTTP Request → Agent Server → Agent Method
+    ↓
+response = await http_client.post(
+    "http://localhost:3001/mcp",
+    json={
+        "jsonrpc": "2.0",
+        "method": "tools/call", 
+        "params": {
+            "name": "analyze_board",
+            "arguments": {"board": data}
+        }
+    }
+)
+```
 
 ### Distributed Mode Communication Flow
 
