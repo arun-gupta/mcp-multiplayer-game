@@ -142,31 +142,70 @@ If you don't have API keys, the application will still work with some limitation
    ollama pull llama3.2:3b
    ```
 
-### 7. Run the Application
+### 7. Choose Deployment Mode
 
-**Option 1: Quick Start (Recommended)**
+This project supports two deployment modes:
+
+#### **🏠 Local Mode (Default, Recommended)**
+All agents run in the same Python process with direct method calls. Better performance, simpler setup.
+
 ```bash
-./start.sh
-```
-This script will:
-- Kill any existing processes on ports 8000 and 8501
-- Verify your virtual environment is active
-- Start both backend and frontend servers
-- Open the application in your browser
+# Option 1: Quick Start Script
+./quickstart.sh
 
-**Option 2: Manual Start**
-```bash
-# Start backend only
-python main.py
-
-# Or use the Python launcher (starts both servers)
-python run_app.py
+# Option 2: Manual Start
+python main.py &           # Start API server
+python run_streamlit.py    # Start UI
 ```
 
-### 8. Open in Browser
+**Ports:**
+- **8000** - Main API Server
+- **8501** - Streamlit UI
+
+#### **🌐 Distributed Mode**
+Agents run as separate processes communicating via HTTP/JSON-RPC (true MCP transport). Use this to demonstrate the actual MCP protocol transport layer.
+
+```bash
+# Quick Start Script (Recommended)
+./quickstart.sh -d  # or --d, --dist, --distributed
+```
+
+This automatically starts:
+- **3001** - Scout Agent Server
+- **3002** - Strategist Agent Server
+- **3003** - Executor Agent Server
+- **8000** - Main API Server (with `--distributed` flag)
+- **8501** - Streamlit UI
+
+**Manual Distributed Mode:**
+```bash
+# Terminal 1: Start Scout Agent
+python agents/scout_server.py
+
+# Terminal 2: Start Strategist Agent
+python agents/strategist_server.py
+
+# Terminal 3: Start Executor Agent
+python agents/executor_server.py
+
+# Terminal 4: Start Main API (distributed mode)
+python main.py --distributed
+
+# Terminal 5: Start Streamlit UI
+python run_streamlit.py
+```
+
+### 8. Access the Application
+
+**Both modes use the same URLs:**
 - **Frontend**: http://localhost:8501 (Streamlit)
 - **Backend**: http://localhost:8000 (FastAPI)
 - **API Docs**: http://localhost:8000/docs
+
+**Distributed mode additional endpoints:**
+- **Scout Agent**: http://localhost:3001/mcp
+- **Strategist Agent**: http://localhost:3002/mcp
+- **Executor Agent**: http://localhost:3003/mcp
 
 ## 🎮 How to Play
 

@@ -25,7 +25,14 @@ An interactive Tic Tac Toe game where **three AI agents work together** using **
 
 **Get started in 5 minutes!**
 
-### 🎯 **One-Command Setup (Recommended)**
+### 🎯 **Deployment Modes**
+
+This project supports two deployment modes:
+
+1. **Local Mode (Default)** - All agents run in the same Python process with direct method calls
+2. **Distributed Mode** - Agents run as separate processes communicating via HTTP/JSON-RPC (true MCP transport)
+
+### 🏠 **Local Mode Setup (Recommended)**
 
 ```bash
 # Clone and setup MCP hybrid architecture automatically
@@ -35,7 +42,28 @@ chmod +x quickstart.sh
 ./quickstart.sh
 ```
 
-**Access the game**: http://localhost:8501  
+**Access the game**: http://localhost:8501
+**API Documentation**: http://localhost:8000/docs
+
+### 🌐 **Distributed Mode Setup**
+
+For true MCP protocol transport between agents:
+
+```bash
+# Clone and setup
+git clone https://github.com/arun-gupta/mcp-multiplayer-game.git
+cd mcp-multiplayer-game
+chmod +x quickstart.sh
+./quickstart.sh -d  # or --d, --dist, --distributed all work
+```
+
+This starts:
+- **Scout Agent** on port 3001
+- **Strategist Agent** on port 3002
+- **Executor Agent** on port 3003
+- **Main API Server** on port 8000 (with `--distributed` flag)
+
+**Access the game**: http://localhost:8501
 **API Documentation**: http://localhost:8000/docs
 
 ### 🔧 **Manual Setup (Alternative)**

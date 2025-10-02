@@ -2,6 +2,7 @@ from typing import Optional
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_community.llms import Ollama
+from langchain_community.chat_models import ChatLiteLLM
 from .registry import ModelConfig, ModelProvider, model_registry
 
 
@@ -47,9 +48,11 @@ class ModelFactory:
                 )
             
             elif model_config.provider == ModelProvider.OLLAMA:
-                return Ollama(
-                    model=model_config.model_id,
-                    temperature=model_config.temperature
+                # Use ChatLiteLLM with ollama/ prefix for CrewAI compatibility
+                return ChatLiteLLM(
+                    model=f"ollama/{model_config.model_id}",
+                    temperature=model_config.temperature,
+                    api_base="http://localhost:11434"
                 )
             
             else:

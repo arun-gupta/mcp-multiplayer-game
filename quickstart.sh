@@ -147,23 +147,39 @@ load_config() {
 # Function to clean up existing processes
 cleanup_processes() {
     print_info "Cleaning up existing processes..."
-    
+
     # Load config to get ports
     load_config
-    
+
     kill_port $API_PORT
     kill_port $STREAMLIT_PORT
-    
+
+    # If distributed mode, also clean up agent ports
+    if [ "$DISTRIBUTED_MODE" = true ]; then
+        print_info "Cleaning up agent server ports (distributed mode)..."
+        kill_port 3001  # Scout
+        kill_port 3002  # Strategist
+        kill_port 3003  # Executor
+    fi
+
     # Wait for processes to fully terminate
     print_info "Waiting for processes to terminate..."
     sleep 3
-    
+
     # Verify ports are free
     print_info "Verifying ports are free..."
     if ! check_port $API_PORT || ! check_port $STREAMLIT_PORT; then
         print_error "Failed to free up ports. Please manually kill processes and try again."
         print_info "You can try: lsof -ti:$API_PORT,$STREAMLIT_PORT | xargs kill -9"
         exit 1
+    fi
+
+    if [ "$DISTRIBUTED_MODE" = true ]; then
+        if ! check_port 3001 || ! check_port 3002 || ! check_port 3003; then
+            print_error "Failed to free up agent ports. Please manually kill processes."
+            print_info "You can try: lsof -ti:3001,3002,3003 | xargs kill -9"
+            exit 1
+        fi
     fi
 }
 
@@ -390,17 +406,75 @@ validate_environment() {
 start_application() {
     print_info "🚀 Starting MCP Hybrid Architecture..."
     echo "=========================================="
-    print_info "🤖 CrewAI + MCP hybrid agents with distributed communication"
-    echo ""
-    
-    print_info "🚀 Starting MCP API server..."
-    python main.py &
-    API_PID=$!
-    
+
+    if [ "$DISTRIBUTED_MODE" = true ]; then
+        print_info "🌐 DISTRIBUTED MODE: Starting agents as separate processes"
+        echo ""
+
+        # Create logs directory if it doesn't exist
+        mkdir -p logs
+
+        # Start Scout Agent
+        print_info "🔍 Starting Scout Agent Server (port 3001)..."
+        python agents/scout_server.py > logs/scout_server.log 2>&1 &
+        SCOUT_PID=$!
+        sleep 2
+
+        # Start Strategist Agent
+        print_info "🧠 Starting Strategist Agent Server (port 3002)..."
+        python agents/strategist_server.py > logs/strategist_server.log 2>&1 &
+        STRATEGIST_PID=$!
+        sleep 2
+
+        # Start Executor Agent
+        print_info "⚡ Starting Executor Agent Server (port 3003)..."
+        python agents/executor_server.py > logs/executor_server.log 2>&1 &
+        EXECUTOR_PID=$!
+        sleep 2
+
+        # Check agent health
+        print_info "✅ Checking agent health..."
+        sleep 3
+
+        if curl -s http://localhost:3001/health > /dev/null; then
+            print_status "Scout Agent: Online"
+        else
+            print_error "Scout Agent: Failed to start (check logs/scout_server.log)"
+        fi
+
+        if curl -s http://localhost:3002/health > /dev/null; then
+            print_status "Strategist Agent: Online"
+        else
+            print_error "Strategist Agent: Failed to start (check logs/strategist_server.log)"
+        fi
+
+        if curl -s http://localhost:3003/health > /dev/null; then
+            print_status "Executor Agent: Online"
+        else
+            print_error "Executor Agent: Failed to start (check logs/executor_server.log)"
+        fi
+
+        # Start Main API with --distributed flag
+        print_info "🚀 Starting Main API server (distributed mode)..."
+        python main.py --distributed &
+        API_PID=$!
+
+        # Cleanup function for distributed mode
+        trap "kill $SCOUT_PID $STRATEGIST_PID $EXECUTOR_PID $API_PID 2>/dev/null" EXIT
+    else
+        print_info "🏠 LOCAL MODE: Starting agents in same process"
+        print_info "🤖 CrewAI + MCP hybrid agents with distributed communication"
+        echo ""
+
+        print_info "🚀 Starting MCP API server..."
+        python main.py &
+        API_PID=$!
+    fi
+
     # Wait for API to start
     print_info "⏳ Waiting for MCP API to start..."
     sleep 5
-    
+
     # Check if API is running (use configured port)
     if curl -s http://localhost:$API_PORT/health > /dev/null; then
         print_status "✅ MCP API is ready!"
@@ -409,6 +483,9 @@ start_application() {
     else
         print_error "❌ MCP API failed to start"
         kill $API_PID 2>/dev/null || true
+        if [ "$DISTRIBUTED_MODE" = true ]; then
+            kill $SCOUT_PID $STRATEGIST_PID $EXECUTOR_PID 2>/dev/null || true
+        fi
         exit 1
     fi
 }
@@ -418,6 +495,7 @@ main() {
     # Parse command line arguments
     SKIP_CLEANUP=false
     SKIP_SETUP=false
+    DISTRIBUTED_MODE=false
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -429,6 +507,10 @@ main() {
                 SKIP_SETUP=true
                 shift
                 ;;
+            --distributed|--dist|--d|-d)
+                DISTRIBUTED_MODE=true
+                shift
+                ;;
             --help|-h)
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
@@ -436,9 +518,14 @@ main() {
                 echo "🤖 CrewAI agents with MCP distributed communication"
                 echo ""
                 echo "Options:"
-                echo "  --skip-cleanup    Skip cleaning up existing processes"
-                echo "  --skip-setup      Skip environment setup (assumes venv exists)"
-                echo "  --help, -h        Show this help message"
+                echo "  --skip-cleanup          Skip cleaning up existing processes"
+                echo "  --skip-setup            Skip environment setup (assumes venv exists)"
+                echo "  -d, --d, --distributed  Run in distributed mode (agents as separate processes)"
+                echo "  -h, --help              Show this help message"
+                echo ""
+                echo "Deployment Modes:"
+                echo "  Local Mode (default):     All agents in same process, direct Python calls"
+                echo "  Distributed Mode:         Agents as separate processes, HTTP/JSON-RPC transport"
                 echo ""
                 echo "API Key Setup:"
                 echo "  The script will check for API keys and prompt you to set them up if missing."
@@ -448,15 +535,13 @@ main() {
                 echo "    3. Continue with limited functionality"
                 echo ""
                 echo "Architecture:"
-                echo "  MCP Protocol:    CrewAI agents with MCP distributed communication"
-                echo "                   - Scout Agent (MCP Server on port 3001)"
-                echo "                   - Strategist Agent (MCP Server on port 3002)"
-                echo "                   - Executor Agent (MCP Server on port 3003)"
-                echo "                   - FastAPI Coordinator (port 8000)"
-                echo "                   - Streamlit UI (port 8501)"
+                echo "  Local Mode:      FastAPI (8000) + Streamlit (8501)"
+                echo "  Distributed:     Scout (3001) + Strategist (3002) + Executor (3003)"
+                echo "                   + FastAPI (8000) + Streamlit (8501)"
                 echo ""
                 echo "Examples:"
-                echo "  $0                # Full setup and launch MCP system"
+                echo "  $0                # Local mode (default)"
+                echo "  $0 -d             # Distributed mode with separate agent processes"
                 echo "  $0 --skip-setup   # Launch only (venv must exist)"
                 echo "  $0 --skip-cleanup # Setup and launch without cleanup"
                 echo ""

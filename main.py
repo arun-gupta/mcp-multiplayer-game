@@ -48,9 +48,9 @@ else:
 
 # Import MCP modules
 from game.mcp_coordinator import MCPGameCoordinator
-from agents.scout import ScoutMCPAgent
-from agents.strategist import StrategistMCPAgent  
-from agents.executor import ExecutorMCPAgent
+from agents.scout_local import ScoutMCPAgent
+from agents.strategist_local import StrategistMCPAgent
+from agents.executor_local import ExecutorMCPAgent
 from models.registry import model_registry
 from models.factory import ModelFactory
 
@@ -74,10 +74,12 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Global coordinator and agents
-coordinator = MCPGameCoordinator()
+# Will be initialized in startup_event based on mode
+coordinator = None
 scout_agent = None
 strategist_agent = None
 executor_agent = None
+distributed_mode = False
 
 # Metrics are now handled by individual MCP agents via their tools
 
@@ -100,10 +102,34 @@ class AgentStatusResponse(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Start MCP agents and coordinator"""
-    global scout_agent, strategist_agent, executor_agent
-    
+    global scout_agent, strategist_agent, executor_agent, coordinator, distributed_mode
+
     print("🚀 Starting MCP CrewAI system...")
-    
+
+    # Check for distributed mode
+    import sys
+    if "--distributed" in sys.argv:
+        distributed_mode = True
+        print("🌐 DISTRIBUTED MODE: Agents will run as separate processes")
+    else:
+        print("🏠 LOCAL MODE: Agents will run in the same process")
+
+    # Initialize coordinator with appropriate mode
+    coordinator = MCPGameCoordinator(distributed=distributed_mode)
+    print(f"✅ Coordinator initialized (distributed={distributed_mode})")
+
+    # In distributed mode, skip local agent creation
+    if distributed_mode:
+        print("⏩ Skipping local agent creation in distributed mode")
+        print("📡 Agents should be started separately:")
+        print("   python agents/scout_server.py")
+        print("   python agents/strategist_server.py")
+        print("   python agents/executor_server.py")
+        return
+
+    # LOCAL MODE: Create agents
+    print("🏠 Creating local agents...")
+
     # Determine best available model
     available_models = ModelFactory.get_default_models()
     print(f"🔍 Available models: {available_models}")
@@ -175,26 +201,32 @@ async def startup_event():
         except Exception as e:
             print(f"❌ Error starting Executor MCP Server: {e}")
     
+    # Set agents in coordinator (local mode only)
+    if not distributed_mode:
+        coordinator.set_agents(scout_agent, strategist_agent, executor_agent)
+        print("✅ Agents registered with coordinator")
+
     # Initialize coordinator connections
     try:
         await coordinator.initialize_agents()
         print("✅ Coordinator initialized")
     except Exception as e:
         print(f"❌ Error initializing coordinator: {e}")
-    
-    # Show model availability summary
-    print("\n" + "="*50)
-    print("MODEL AVAILABILITY SUMMARY")
-    print("="*50)
-    if scout_agent is not None:
-        print(f"✅ All agents using: {default_model}")
-    else:
-        print("❌ No working models available - AI features will be limited")
-        print("💡 To enable AI features:")
-        print("   1. Add API keys to .env file, OR")
-        print("   2. Install Ollama and pull models")
-    print("="*50 + "\n")
-    
+
+    # Show model availability summary (local mode only)
+    if not distributed_mode:
+        print("\n" + "="*50)
+        print("MODEL AVAILABILITY SUMMARY")
+        print("="*50)
+        if scout_agent is not None:
+            print(f"✅ All agents using: {default_model}")
+        else:
+            print("❌ No working models available - AI features will be limited")
+            print("💡 To enable AI features:")
+            print("   1. Add API keys to .env file, OR")
+            print("   2. Install Ollama and pull models")
+        print("="*50 + "\n")
+
     print("🎉 MCP CrewAI system initialized!")
 
 @app.get("/")
@@ -491,13 +523,14 @@ async def get_game_state():
 async def make_move(move_data: MoveRequest):
     """Make a player move and get AI response via MCP"""
     try:
-        # Pass real agents to coordinator for actual timing
-        print(f"[DEBUG] Setting agents: scout={scout_agent is not None}, strategist={strategist_agent is not None}, executor={executor_agent is not None}")
-        coordinator.set_agents(scout_agent, strategist_agent, executor_agent)
-        print(f"[DEBUG] Agents set in coordinator: {list(coordinator.agents.keys())}")
-        
+        # Pass real agents to coordinator for actual timing (local mode only)
+        if not distributed_mode:
+            print(f"[DEBUG] Setting agents: scout={scout_agent is not None}, strategist={strategist_agent is not None}, executor={executor_agent is not None}")
+            coordinator.set_agents(scout_agent, strategist_agent, executor_agent)
+            print(f"[DEBUG] Agents set in coordinator: {list(coordinator.agents.keys())}")
+
         result = await coordinator.process_player_move(move_data.row, move_data.col)
-        
+
         return result
     except Exception as e:
         print(f"[DEBUG] Error in make_move: {e}")
@@ -599,18 +632,56 @@ async def debug_agents():
 async def get_agent_metrics(agent_id: str):
     """Get performance metrics for a specific agent via MCP"""
     try:
+        # In distributed mode, agents are None - fetch from agent servers
+        if distributed_mode:
+            agent_ports = {
+                "scout": 3001,
+                "strategist": 3002,
+                "executor": 3003
+            }
+
+            if agent_id not in agent_ports:
+                raise HTTPException(status_code=404, detail="Agent not found")
+
+            # Try to fetch metrics from agent server
+            import httpx
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    response = await client.post(
+                        f"http://localhost:{agent_ports[agent_id]}/mcp",
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "get_performance_metrics",
+                                "arguments": {}
+                            }
+                        }
+                    )
+                    if response.status_code == 200:
+                        result = response.json()
+                        return result.get("result", {})
+                    else:
+                        raise HTTPException(status_code=503, detail=f"Agent server unavailable (status {response.status_code})")
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=503, detail=f"Agent server unreachable: {str(e)}")
+
+        # Local mode - use direct agent references
         agents = {
             "scout": scout_agent,
             "strategist": strategist_agent,
             "executor": executor_agent
         }
-        
+
         if agent_id not in agents or agents[agent_id] is None:
             raise HTTPException(status_code=404, detail="Agent not found")
-        
+
         # Get metrics from the agent's MCP tool
         metrics = await agents[agent_id].get_performance_metrics()
         return metrics
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting agent metrics: {str(e)}")
 

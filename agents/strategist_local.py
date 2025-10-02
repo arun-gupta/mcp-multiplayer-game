@@ -6,6 +6,7 @@ from .base_mcp_agent import BaseMCPAgent
 from crewai import Task
 from typing import Dict, List
 import asyncio
+import json
 from datetime import datetime
 from models.factory import ModelFactory
 from utils.config import config
@@ -110,9 +111,11 @@ class StrategistMCPAgent(BaseMCPAgent):
         """Create strategy based on Scout's observation"""
         try:
             # Extract data from Scout's observation
+            board_state = observation_data.get("board_state", [])
             board_analysis = observation_data.get("analysis", "")
             threats = observation_data.get("threats", [])
             opportunities = observation_data.get("opportunities", [])
+            analysis = board_analysis  # For fallback prompt
             
             # Create strategy task for CrewAI
             strategy_task = Task(
@@ -217,9 +220,24 @@ Keep response concise."""
     
     def extract_best_move(self, strategy_result: str) -> Dict:
         """Extract best move from strategy result"""
-        # TODO: Implement proper parsing of CrewAI result
-        # For now, return a mock move
-        return {"row": 1, "col": 1, "reasoning": "Strategic center control"}
+        import re
+
+        # Try to find move in format (row, col) or [row, col] or row: X, col: Y
+        patterns = [
+            r'\((\d+),\s*(\d+)\)',  # (0, 1)
+            r'\[(\d+),\s*(\d+)\]',  # [0, 1]
+            r'row[:\s]+(\d+).*?col[:\s]+(\d+)',  # row: 0, col: 1
+            r'position\s+\((\d+),\s*(\d+)\)',  # position (0, 1)
+        ]
+
+        for pattern in patterns:
+            match = re.search(pattern, str(strategy_result), re.IGNORECASE)
+            if match:
+                row, col = int(match.group(1)), int(match.group(2))
+                return {"row": row, "col": col, "reasoning": "Extracted from strategy"}
+
+        # Fallback: return None to indicate no move found
+        return None
     
     def extract_reasoning(self, strategy_result: str) -> str:
         """Extract reasoning from strategy result"""

@@ -830,39 +830,41 @@ def render_agent_metrics():
                 with col4:
                     max_time = metrics.get('max_response_time', 0)
                     st.metric("Max Time", f"{max_time:.6f}s")
-                
-        # LLM-Specific Metrics Section
-        st.markdown("#### 🤖 LLM Metrics")
-        col5, col6, col7, col8 = st.columns(4)
-        
-        with col5:
-            st.metric("Total Tokens", metrics.get('total_tokens', 0))
-        
-        with col6:
-            tokens_per_req = metrics.get('tokens_per_request', 0)
-            st.metric("Tokens/Request", f"{tokens_per_req:.1f}")
-        
-        with col7:
-            success_rate = metrics.get('api_success_rate', 100)
-            st.metric("API Success", f"{success_rate:.1f}%")
-        
-        with col8:
-            errors = metrics.get('api_error_count', 0)
-            timeouts = metrics.get('timeout_count', 0)
-            st.metric("Errors/Timeouts", f"{errors}/{timeouts}")
-        
-        # Model and Timestamp with better visibility
-        st.markdown("---")
-        model_name = metrics.get('current_model', 'Unknown')
-        if model_name == 'LLM' or model_name == 'Unknown':
-            actual_model = metrics.get('model_name', metrics.get('llm_model', 'gpt-5-mini'))
-            st.markdown(f"**Current Model:** {actual_model}")
+
+                # LLM-Specific Metrics Section
+                st.markdown("#### 🤖 LLM Metrics")
+                col5, col6, col7, col8 = st.columns(4)
+
+                with col5:
+                    st.metric("Total Tokens", metrics.get('total_tokens', 0))
+
+                with col6:
+                    tokens_per_req = metrics.get('tokens_per_request', 0)
+                    st.metric("Tokens/Request", f"{tokens_per_req:.1f}")
+
+                with col7:
+                    success_rate = metrics.get('api_success_rate', 100)
+                    st.metric("API Success", f"{success_rate:.1f}%")
+
+                with col8:
+                    errors = metrics.get('api_error_count', 0)
+                    timeouts = metrics.get('timeout_count', 0)
+                    st.metric("Errors/Timeouts", f"{errors}/{timeouts}")
+
+                # Model and Timestamp with better visibility
+                st.markdown("---")
+                model_name = metrics.get('current_model', 'Unknown')
+                if model_name == 'LLM' or model_name == 'Unknown':
+                    actual_model = metrics.get('model_name', metrics.get('llm_model', 'gpt-5-mini'))
+                    st.markdown(f"**Current Model:** {actual_model}")
+                else:
+                    st.markdown(f"**Current Model:** {model_name}")
+
+                # Make timestamp more visible
+                timestamp = metrics.get('timestamp', 'Unknown')
+                st.markdown(f"**Last updated:** {timestamp}")
         else:
-            st.markdown(f"**Current Model:** {model_name}")
-        
-        # Make timestamp more visible
-        timestamp = metrics.get('timestamp', 'Unknown')
-        st.markdown(f"**Last updated:** {timestamp}")
+            st.warning(f"⚠️ {agent_names.get(agent_id, agent_id)} metrics not available")
 
 def render_model_switching():
     """Render model switching interface"""

@@ -6,7 +6,28 @@ This document describes the detailed architecture of the MCP Protocol Tic Tac To
 
 **Key Innovation**: Each agent is simultaneously a **CrewAI Agent** (providing intelligence) and an **MCP Server** (providing standardized API), creating a hybrid architecture that combines agentic AI with protocol-based interfaces.
 
-**Important**: MCP is used as an **API specification and external interface**, not as the internal transport protocol. Agents communicate internally via direct Python method calls for performance, while exposing MCP-compliant HTTP/JSON-RPC endpoints for external clients.
+## Deployment Modes
+
+This project supports **two deployment modes**:
+
+### 🏠 Local Mode (Default)
+- **Transport**: Direct Python method calls (in-process)
+- **Performance**: Faster, lower latency
+- **Use case**: Development, testing, production (single machine)
+- **Agent files**: `agents/scout_local.py`, `agents/strategist_local.py`, `agents/executor_local.py`
+- **MCP role**: API specification and external interface only
+- **Start**: `python main.py` or `./quickstart.sh`
+
+### 🌐 Distributed Mode
+- **Transport**: HTTP/JSON-RPC (MCP protocol)
+- **Performance**: Slower, network latency
+- **Use case**: Multi-machine deployment, demonstrating true MCP transport
+- **Agent files**: `agents/scout_server.py`, `agents/strategist_server.py`, `agents/executor_server.py`
+- **MCP role**: Full protocol transport between agents
+- **Start**: `./quickstart.sh -d` or `python main.py --distributed`
+- **Ports**: Scout (3001), Strategist (3002), Executor (3003), Main API (8000)
+
+**This document primarily describes Local Mode architecture. See "Distributed Mode Architecture" section below for distributed deployment details.**
 
 ## Architecture Diagram
 
@@ -625,10 +646,92 @@ npx @modelcontextprotocol/inspector
 # - Connection: Direct
 ```
 
+## Distributed Mode Architecture
+
+In **distributed mode**, agents run as separate processes and communicate via HTTP/JSON-RPC:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Main API Server (Port 8000)                  │
+│                                                                 │
+│  • Coordinator with distributed=True                           │
+│  • HTTP client for agent communication                         │
+│  • Game state management                                        │
+└──────────────────────┬──────────────────────────────────────────┘
+                       │
+                       │ HTTP/JSON-RPC (MCP Protocol)
+                       │
+       ┌───────────────┼───────────────┐
+       │               │               │
+       ▼               ▼               ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│   Scout     │ │ Strategist  │ │  Executor   │
+│  (Port 3001)│ │ (Port 3002) │ │ (Port 3003) │
+│             │ │             │ │             │
+│ FastAPI     │ │ FastAPI     │ │ FastAPI     │
+│ Server      │ │ Server      │ │ Server      │
+│             │ │             │ │             │
+│ GET  /mcp   │ │ GET  /mcp   │ │ GET  /mcp   │
+│ POST /mcp   │ │ POST /mcp   │ │ POST /mcp   │
+│ GET  /health│ │ GET  /health│ │ GET  /health│
+└─────────────┘ └─────────────┘ └─────────────┘
+```
+
+### Key Differences from Local Mode
+
+| Aspect | Local Mode | Distributed Mode |
+|--------|------------|------------------|
+| **Transport** | Direct Python calls | HTTP/JSON-RPC |
+| **Process** | Single process | Multiple processes |
+| **Latency** | <1ms | 10-50ms |
+| **Scalability** | Single machine | Multi-machine |
+| **Agent files** | `*_local.py` | `*_server.py` |
+| **Coordinator** | `MCPGameCoordinator(distributed=False)` | `MCPGameCoordinator(distributed=True)` |
+| **MCP usage** | API spec only | Full transport protocol |
+
+### Distributed Mode Communication Flow
+
+1. **User makes move** → Main API receives request
+2. **Coordinator calls Scout**:
+   ```python
+   response = await http_client.post(
+       "http://localhost:3001/mcp",
+       json={"jsonrpc": "2.0", "method": "tools/call", "params": {...}}
+   )
+   ```
+3. **Scout analyzes** → Returns JSON-RPC response
+4. **Coordinator calls Strategist** → HTTP request to port 3002
+5. **Strategist plans** → Returns JSON-RPC response
+6. **Coordinator calls Executor** → HTTP request to port 3003
+7. **Executor executes** → Returns JSON-RPC response
+8. **Game state updated** → Response sent to user
+
+### Starting Distributed Mode
+
+```bash
+# Quick start (recommended)
+./quickstart.sh -d  # or --d, --dist, --distributed
+
+# Manual start
+python agents/scout_server.py &
+python agents/strategist_server.py &
+python agents/executor_server.py &
+python main.py --distributed
+```
+
+### Health Checks
+
+Each agent server provides health endpoints:
+```bash
+curl http://localhost:3001/health  # Scout
+curl http://localhost:3002/health  # Strategist
+curl http://localhost:3003/health  # Executor
+```
+
 ## Future Enhancements
 
 ### Planned Features
-- [ ] Distributed deployment across multiple machines
+- [x] Distributed deployment across multiple machines
 - [ ] Load balancing for agent requests
 - [ ] Persistent game history and replay
 - [ ] Tournament mode with multiple AI opponents

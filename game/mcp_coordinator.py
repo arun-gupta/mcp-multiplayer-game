@@ -11,22 +11,45 @@ from .state import TicTacToeGameState
 
 class MCPGameCoordinator:
     """Coordinates game flow using MCP protocol between agents"""
-    
-    def __init__(self):
+
+    def __init__(self, distributed=False):
         self.game_state = TicTacToeGameState()
-        self.agents = {
-            "scout": None,     # Will connect to scout://localhost:3001
-            "strategist": None, # Will connect to strategist://localhost:3002  
-            "executor": None   # Will connect to executor://localhost:3003
-        }
+        self.distributed = distributed
+        self.http_client = None
+
+        if distributed:
+            # Use HTTP clients to connect to remote agents
+            import httpx
+            self.http_client = httpx.AsyncClient(timeout=30.0)
+            self.agent_urls = {
+                "scout": "http://localhost:3001/mcp",
+                "strategist": "http://localhost:3002/mcp",
+                "executor": "http://localhost:3003/mcp"
+            }
+            self.agents = {
+                "scout": "http://client",  # Placeholder to indicate HTTP mode
+                "strategist": "http_client",
+                "executor": "http_client"
+            }
+            print("[DISTRIBUTED MODE] Using HTTP clients to connect to agents")
+        else:
+            # Use direct Python references to local agents
+            self.agents = {
+                "scout": None,
+                "strategist": None,
+                "executor": None
+            }
+            print("[LOCAL MODE] Using direct Python method calls")
+
         self.move_history = []
         self.mcp_logs = []
-    
+
     def set_agents(self, scout_agent, strategist_agent, executor_agent):
-        """Set real agent instances for actual timing"""
-        self.agents["scout"] = scout_agent
-        self.agents["strategist"] = strategist_agent
-        self.agents["executor"] = executor_agent
+        """Set real agent instances for actual timing (local mode only)"""
+        if not self.distributed:
+            self.agents["scout"] = scout_agent
+            self.agents["strategist"] = strategist_agent
+            self.agents["executor"] = executor_agent
     
     async def initialize_agents(self):
         """Initialize connections to MCP agent servers"""
@@ -72,50 +95,11 @@ class MCPGameCoordinator:
         
         print(f"[DEBUG] Starting MCP AI move coordination")
         print(f"[DEBUG] Available agents: {list(self.agents.keys())}")
-        
-        # Track total time for all move paths
+
+        # Track total time
         total_start_time = time.time()
-        
-        # First, check for immediate blocking or winning moves using logic
-        blocking_move = self._find_blocking_move()
-        if blocking_move:
-            print(f"AI BLOCKING: {blocking_move}")
-            # Apply the move to game state
-            row, col = blocking_move.get("row"), blocking_move.get("col")
-            self.game_state.make_move(row, col, "ai")
-            
-            # Track metrics for all agents (instant strategic decision)
-            end_time = time.time()
-            response_time = end_time - total_start_time
-            print(f"[METRICS] Blocking move response time: {response_time:.6f}s")
-            for agent_name in ["scout", "strategist", "executor"]:
-                if self.agents.get(agent_name):
-                    # Estimate tokens for strategic decision (small prompt + response)
-                    estimated_tokens = 50  # Blocking move is a quick strategic decision
-                    self.agents[agent_name].track_request(response_time, success=True, tokens=estimated_tokens)
-            
-            return {"success": True, "move": blocking_move, "reasoning": "Blocking move"}
-        
-        winning_move = self._find_winning_move()
-        if winning_move:
-            print(f"AI WINNING: {winning_move}")
-            # Apply the move to game state
-            row, col = winning_move.get("row"), winning_move.get("col")
-            self.game_state.make_move(row, col, "ai")
-            
-            # Track metrics for all agents (instant strategic decision)
-            end_time = time.time()
-            response_time = end_time - total_start_time
-            print(f"[METRICS] Winning move response time: {response_time:.6f}s")
-            for agent_name in ["scout", "strategist", "executor"]:
-                if self.agents.get(agent_name):
-                    # Estimate tokens for strategic decision (small prompt + response)
-                    estimated_tokens = 50  # Winning move is a quick strategic decision
-                    self.agents[agent_name].track_request(response_time, success=True, tokens=estimated_tokens)
-            
-            return {"success": True, "move": winning_move, "reasoning": "Winning move"}
-        
-        # Try MCP coordination with timeout
+
+        # Use MCP agent coordination (no hardcoded logic)
         try:
             import asyncio
             # Set a 15-second timeout for MCP coordination
@@ -167,15 +151,38 @@ class MCPGameCoordinator:
         
         # Apply the move to game state
         move = execution_result.get("move_executed", {})
-        if move:
-            self.game_state.make_move(move["row"], move["col"], "ai")
-            self.move_history.append({
-                "player": "ai",
-                "move": move,
-                "observation": scout_result,
-                "strategy": strategy_result,
-                "execution": execution_result
-            })
+
+        # Validate move and use fallback if needed
+        if move and move.get("row") is not None and move.get("col") is not None:
+            row, col = move["row"], move["col"]
+
+            # Check if move is valid
+            if (0 <= row < 3 and 0 <= col < 3 and
+                self.game_state.board[row][col] == ""):
+                self.game_state.make_move(row, col, "ai")
+                self.move_history.append({
+                    "player": "ai",
+                    "move": move,
+                    "observation": scout_result,
+                    "strategy": strategy_result,
+                    "execution": execution_result
+                })
+            else:
+                # Invalid move - use first available move
+                print(f"[DEBUG] Invalid move {move}, using fallback")
+                available = self.get_available_moves(self.game_state.board)
+                if available:
+                    fallback_move = available[0]
+                    self.game_state.make_move(fallback_move["row"], fallback_move["col"], "ai")
+                    move = fallback_move
+        else:
+            # No move returned - use first available move
+            print(f"[DEBUG] No move returned, using fallback")
+            available = self.get_available_moves(self.game_state.board)
+            if available:
+                fallback_move = available[0]
+                self.game_state.make_move(fallback_move["row"], fallback_move["col"], "ai")
+                move = fallback_move
         
         return {
             "success": True,
@@ -193,10 +200,50 @@ class MCPGameCoordinator:
         try:
             board_str = self._board_to_string(self.game_state.board)
             available_moves = self.get_available_moves(self.game_state.board)
-            
+
             print(f"[DEBUG] Scout: Board analysis with LLM call")
-            
-            # Get the scout agent's LLM
+
+            # DISTRIBUTED MODE: Use HTTP client to call remote agent
+            if self.distributed and self.http_client:
+                print(f"[DEBUG] Scout: Using HTTP client (distributed mode)")
+                try:
+                    response = await self.http_client.post(
+                        self.agent_urls["scout"],
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "analyze_board",
+                                "arguments": {
+                                    "board": self.game_state.board,
+                                    "available_moves": available_moves
+                                }
+                            }
+                        }
+                    )
+
+                    if response.status_code == 200:
+                        mcp_result = response.json()
+                        result = mcp_result.get("result", {})
+
+                        # Track metrics
+                        end_time = time.time()
+                        response_time = end_time - start_time
+                        # Estimate tokens from response size
+                        total_tokens = len(str(result).split())
+
+                        print(f"[DEBUG] Scout HTTP response: {result}")
+                        return result
+                    else:
+                        print(f"[DEBUG] Scout HTTP error: {response.status_code}")
+                        return {"error": f"HTTP error {response.status_code}", "agent_id": "scout"}
+
+                except Exception as http_error:
+                    print(f"[DEBUG] Scout HTTP call failed: {http_error}")
+                    return {"error": str(http_error), "agent_id": "scout"}
+
+            # LOCAL MODE: Get the scout agent's LLM
             scout_agent = self.agents.get("scout")
             if not scout_agent or not hasattr(scout_agent, 'llm'):
                 print(f"[DEBUG] Scout agent or LLM not available")
@@ -281,10 +328,51 @@ Respond in JSON format with threats, opportunities, and recommended moves."""
         try:
             board_str = self._board_to_string(self.game_state.board)
             analysis = observation.get("analysis", "")
-            
+
             print(f"[DEBUG] Strategist: Strategy creation with LLM call")
-            
-            # Get the strategist agent's LLM
+
+            # DISTRIBUTED MODE: Use HTTP client to call remote agent
+            if self.distributed and self.http_client:
+                print(f"[DEBUG] Strategist: Using HTTP client (distributed mode)")
+                try:
+                    response = await self.http_client.post(
+                        self.agent_urls["strategist"],
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "create_strategy",
+                                "arguments": {
+                                    "board_state": self.game_state.board,
+                                    "available_moves": observation.get("available_moves", []),
+                                    "threats": observation.get("threats", []),
+                                    "opportunities": observation.get("opportunities", [])
+                                }
+                            }
+                        }
+                    )
+
+                    if response.status_code == 200:
+                        mcp_result = response.json()
+                        result = mcp_result.get("result", {})
+
+                        # Track metrics
+                        end_time = time.time()
+                        response_time = end_time - start_time
+                        total_tokens = len(str(result).split())
+
+                        print(f"[DEBUG] Strategist HTTP response: {result}")
+                        return result
+                    else:
+                        print(f"[DEBUG] Strategist HTTP error: {response.status_code}")
+                        return {"error": f"HTTP error {response.status_code}", "agent_id": "strategist"}
+
+                except Exception as http_error:
+                    print(f"[DEBUG] Strategist HTTP call failed: {http_error}")
+                    return {"error": str(http_error), "agent_id": "strategist"}
+
+            # LOCAL MODE: Get the strategist agent's LLM
             strategist_agent = self.agents.get("strategist")
             if not strategist_agent or not hasattr(strategist_agent, 'llm'):
                 print(f"[DEBUG] Strategist agent or LLM not available")
@@ -377,10 +465,49 @@ Respond in JSON format with strategy, recommended_move, and reasoning."""
         try:
             recommended_move = strategy.get("recommended_move", {})
             print(f"[DEBUG] Executor: Recommended move: {recommended_move}")
-            
+
             print(f"[DEBUG] Executor: Move execution with LLM call")
-            
-            # Get the executor agent's LLM
+
+            # DISTRIBUTED MODE: Use HTTP client to call remote agent
+            if self.distributed and self.http_client:
+                print(f"[DEBUG] Executor: Using HTTP client (distributed mode)")
+                try:
+                    response = await self.http_client.post(
+                        self.agent_urls["executor"],
+                        json={
+                            "jsonrpc": "2.0",
+                            "id": 1,
+                            "method": "tools/call",
+                            "params": {
+                                "name": "execute_move",
+                                "arguments": {
+                                    "recommended_move": recommended_move,
+                                    "strategy": strategy.get("strategy", "")
+                                }
+                            }
+                        }
+                    )
+
+                    if response.status_code == 200:
+                        mcp_result = response.json()
+                        result = mcp_result.get("result", {})
+
+                        # Track metrics
+                        end_time = time.time()
+                        response_time = end_time - start_time
+                        total_tokens = len(str(result).split())
+
+                        print(f"[DEBUG] Executor HTTP response: {result}")
+                        return result
+                    else:
+                        print(f"[DEBUG] Executor HTTP error: {response.status_code}")
+                        return {"error": f"HTTP error {response.status_code}", "agent_id": "executor"}
+
+                except Exception as http_error:
+                    print(f"[DEBUG] Executor HTTP call failed: {http_error}")
+                    return {"error": str(http_error), "agent_id": "executor"}
+
+            # LOCAL MODE: Get the executor agent's LLM
             executor_agent = self.agents.get("executor")
             if not executor_agent or not hasattr(executor_agent, 'llm'):
                 print(f"[DEBUG] Executor agent or LLM not available")
@@ -925,20 +1052,9 @@ Example: 1,1 for center position
             }
     
     async def _get_llm_move(self, available_moves: List[Dict]) -> Dict:
-        """Get AI move using LLM directly"""
+        """Get AI move using LLM directly (no hardcoded logic)"""
         try:
-            # First, check for immediate blocking or winning moves using logic
-            blocking_move = self._find_blocking_move()
-            if blocking_move:
-                print(f"AI BLOCKING: {blocking_move}")
-                return blocking_move
-            
-            winning_move = self._find_winning_move()
-            if winning_move:
-                print(f"AI WINNING: {winning_move}")
-                return winning_move
-            
-            # If no immediate threats/wins, use LLM for strategic positioning
+            # Use LLM for strategic positioning
             board_str = self._board_to_string(self.game_state.board)
             
             prompt = f"""
@@ -992,87 +1108,6 @@ Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
             print(f"Error getting LLM move: {e}")
             return None
     
-    def _find_blocking_move(self) -> Dict:
-        """Find if human has 2 in a row and block it"""
-        board = self.game_state.board
-        
-        # Check rows
-        for row in range(3):
-            x_count = sum(1 for col in range(3) if board[row][col] == "X")
-            o_count = sum(1 for col in range(3) if board[row][col] == "O")
-            if x_count == 2 and o_count == 0:
-                for col in range(3):
-                    if board[row][col] == "":
-                        return {"row": row, "col": col}
-        
-        # Check columns
-        for col in range(3):
-            x_count = sum(1 for row in range(3) if board[row][col] == "X")
-            o_count = sum(1 for row in range(3) if board[row][col] == "O")
-            if x_count == 2 and o_count == 0:
-                for row in range(3):
-                    if board[row][col] == "":
-                        return {"row": row, "col": col}
-        
-        # Check diagonals
-        # Main diagonal (0,0) to (2,2)
-        x_count = sum(1 for i in range(3) if board[i][i] == "X")
-        o_count = sum(1 for i in range(3) if board[i][i] == "O")
-        if x_count == 2 and o_count == 0:
-            for i in range(3):
-                if board[i][i] == "":
-                    return {"row": i, "col": i}
-        
-        # Anti-diagonal (0,2) to (2,0)
-        x_count = sum(1 for i in range(3) if board[i][2-i] == "X")
-        o_count = sum(1 for i in range(3) if board[i][2-i] == "O")
-        if x_count == 2 and o_count == 0:
-            for i in range(3):
-                if board[i][2-i] == "":
-                    return {"row": i, "col": 2-i}
-        
-        return None
-    
-    def _find_winning_move(self) -> Dict:
-        """Find if AI has 2 in a row and can win"""
-        board = self.game_state.board
-        
-        # Check rows
-        for row in range(3):
-            x_count = sum(1 for col in range(3) if board[row][col] == "X")
-            o_count = sum(1 for col in range(3) if board[row][col] == "O")
-            if o_count == 2 and x_count == 0:
-                for col in range(3):
-                    if board[row][col] == "":
-                        return {"row": row, "col": col}
-        
-        # Check columns
-        for col in range(3):
-            x_count = sum(1 for row in range(3) if board[row][col] == "X")
-            o_count = sum(1 for row in range(3) if board[row][col] == "O")
-            if o_count == 2 and x_count == 0:
-                for row in range(3):
-                    if board[row][col] == "":
-                        return {"row": row, "col": col}
-        
-        # Check diagonals
-        # Main diagonal (0,0) to (2,2)
-        x_count = sum(1 for i in range(3) if board[i][i] == "X")
-        o_count = sum(1 for i in range(3) if board[i][i] == "O")
-        if o_count == 2 and x_count == 0:
-            for i in range(3):
-                if board[i][i] == "":
-                    return {"row": i, "col": i}
-        
-        # Anti-diagonal (0,2) to (2,0)
-        x_count = sum(1 for i in range(3) if board[i][2-i] == "X")
-        o_count = sum(1 for i in range(3) if board[i][2-i] == "O")
-        if o_count == 2 and x_count == 0:
-            for i in range(3):
-                if board[i][2-i] == "":
-                    return {"row": i, "col": 2-i}
-        
-        return None
     
     def _board_to_string(self, board: List[List[str]]) -> str:
         """Convert board to string representation"""
