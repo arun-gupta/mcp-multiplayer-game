@@ -458,11 +458,11 @@ class MCPGameCoordinator:
 The system uses a model factory pattern with environment-based fallbacks:
 
 ```python
-Priority Order:
-1. gpt-5-mini (if OPENAI_API_KEY present)
-2. gpt-4 (if OPENAI_API_KEY present)
-3. claude-3-sonnet (if ANTHROPIC_API_KEY present)
-4. llama3.2:3b (if Ollama running)
+Priority Order (all agents):
+1. GPT-5 models (gpt-5, gpt-5-mini) - if OPENAI_API_KEY present
+2. Llama 3.2 (llama3.2:3b) - if Ollama running
+3. Other cloud models (GPT-4, Claude) - if API keys present
+4. Other local models - if Ollama running
 ```
 
 ### Port Configuration

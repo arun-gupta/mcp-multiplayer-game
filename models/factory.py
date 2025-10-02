@@ -85,32 +85,42 @@ class ModelFactory:
         # Assign models based on availability and preferences
         assignments = {}
         
-        # Scout: Prefer cloud models for reliability, fallback to local
-        if cloud_models:
-            # Prefer GPT-4 if available, otherwise first available cloud model
-            scout_model = next((model.name for model in cloud_models if "gpt-4" in model.name), cloud_models[0].name)
+        # Priority: GPT-5 > Llama 3.2 > others
+        # Scout: Prefer GPT-5, fallback to Llama 3.2, then other models
+        if any("gpt-5" in model.name for model in cloud_models):
+            scout_model = next(model.name for model in cloud_models if "gpt-5" in model.name)
+        elif any("llama3.2" in model.name.lower() for model in local_models):
+            scout_model = next(model.name for model in local_models if "llama3.2" in model.name.lower())
+        elif cloud_models:
+            scout_model = cloud_models[0].name
         elif local_models:
             scout_model = local_models[0].name
         else:
-            scout_model = "gpt-4"  # Fallback if no models available
-        
-        # Strategist: Prefer Claude for strategy, fallback to other cloud, then local
-        if any("claude" in model.name for model in cloud_models):
-            strategist_model = next(model.name for model in cloud_models if "claude" in model.name)
+            scout_model = "gpt-5-mini"  # Fallback if no models available
+
+        # Strategist: Prefer GPT-5, fallback to Llama 3.2, then other models
+        if any("gpt-5" in model.name for model in cloud_models):
+            strategist_model = next(model.name for model in cloud_models if "gpt-5" in model.name)
+        elif any("llama3.2" in model.name.lower() for model in local_models):
+            strategist_model = next(model.name for model in local_models if "llama3.2" in model.name.lower())
         elif cloud_models:
             strategist_model = cloud_models[0].name
         elif local_models:
             strategist_model = local_models[0].name
         else:
-            strategist_model = "claude-3-sonnet"  # Fallback
-        
-        # Executor: Prefer local models for execution, fallback to cloud
-        if local_models:
-            executor_model = local_models[0].name
+            strategist_model = "gpt-5-mini"  # Fallback
+
+        # Executor: Prefer GPT-5, fallback to Llama 3.2, then other models
+        if any("gpt-5" in model.name for model in cloud_models):
+            executor_model = next(model.name for model in cloud_models if "gpt-5" in model.name)
+        elif any("llama3.2" in model.name.lower() for model in local_models):
+            executor_model = next(model.name for model in local_models if "llama3.2" in model.name.lower())
         elif cloud_models:
             executor_model = cloud_models[0].name
+        elif local_models:
+            executor_model = local_models[0].name
         else:
-            executor_model = "gpt-4"  # Fallback to cloud model
+            executor_model = "gpt-5-mini"  # Fallback to cloud model
         
         assignments = {
             "scout": scout_model,
