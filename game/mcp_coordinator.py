@@ -36,6 +36,12 @@ class MCPGameCoordinator:
                 "strategist": "http://localhost:3002/mcp", 
                 "executor": "http://localhost:3003/mcp"
             }
+            # Initialize agents dict for compatibility
+            self.agents = {
+                "scout": None,
+                "strategist": None,
+                "executor": None
+            }
             print("[DISTRIBUTED MODE] Using MCPServerAdapter to connect to MCP servers")
         else:
             # Use direct Python references to local agents
@@ -807,17 +813,34 @@ Example: 1,1 for center position
     
     def get_agent_status(self) -> Dict:
         """Get status of all agents"""
-        return {
-            "coordinator_status": "running",
-            "agents_connected": {
-                "scout": self.agents["scout"] is not None,
-                "strategist": self.agents["strategist"] is not None,
-                "executor": self.agents["executor"] is not None
-            },
-            "game_state": self.game_state.board,
-            "move_count": len(self.move_history),
-            "mcp_logs_count": len(self.mcp_logs)
-        }
+        if self.distributed:
+            return {
+                "coordinator_status": "running",
+                "mode": "distributed",
+                "agents_connected": {
+                    "scout": "scout" in self.crewai_agents,
+                    "strategist": "strategist" in self.crewai_agents,
+                    "executor": "executor" in self.crewai_agents
+                },
+                "mcp_adapters": list(self.mcp_adapters.keys()),
+                "crewai_agents": list(self.crewai_agents.keys()),
+                "game_state": self.game_state.board,
+                "move_count": len(self.move_history),
+                "mcp_logs_count": len(self.mcp_logs)
+            }
+        else:
+            return {
+                "coordinator_status": "running",
+                "mode": "local",
+                "agents_connected": {
+                    "scout": self.agents["scout"] is not None,
+                    "strategist": self.agents["strategist"] is not None,
+                    "executor": self.agents["executor"] is not None
+                },
+                "game_state": self.game_state.board,
+                "move_count": len(self.move_history),
+                "mcp_logs_count": len(self.mcp_logs)
+            }
     
     def get_mcp_logs(self) -> List[Dict]:
         """Get MCP protocol logs"""
