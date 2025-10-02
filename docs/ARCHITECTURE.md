@@ -1,8 +1,14 @@
-# 🏗️ MCP Protocol Architecture
+# 🏗️ Multi-Agent Game Architecture
 
 ## Overview
 
-This document describes the detailed architecture of the MCP Protocol Tic Tac Toe game, showing how CrewAI agents work together with MCP protocol as a standardized API layer.
+This document describes the comprehensive architecture of the Multi-Agent Tic Tac Toe game system, covering:
+
+- **CrewAI Agent Architecture**: How intelligent agents (Scout, Strategist, Executor) work together
+- **MCP Protocol Integration**: Standardized API layer for external communication
+- **Deployment Modes**: Local vs Distributed deployment strategies
+- **Game Coordination**: Multi-agent orchestration and decision making
+- **Performance & Monitoring**: Metrics, health checks, and observability
 
 **Key Innovation**: Each agent is simultaneously a **CrewAI Agent** (providing intelligence) and an **MCP Server** (providing standardized API), creating a hybrid architecture that combines agentic AI with protocol-based interfaces.
 
