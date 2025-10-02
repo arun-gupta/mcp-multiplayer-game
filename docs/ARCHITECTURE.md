@@ -2,39 +2,29 @@
 
 ## Overview
 
-This document describes the detailed architecture of the MCP Protocol Tic Tac Toe game, showing how CrewAI agents work together using the Multi-Context Protocol (MCP) for distributed communication.
+This document describes the detailed architecture of the MCP Protocol Tic Tac Toe game, showing how CrewAI agents work together with MCP protocol as a standardized API layer.
 
-**Key Innovation**: Each agent is simultaneously a **CrewAI Agent** (providing intelligence) and an **MCP Server** (providing standardized communication), creating a hybrid architecture that combines agentic AI with protocol-based distributed systems.
+**Key Innovation**: Each agent is simultaneously a **CrewAI Agent** (providing intelligence) and an **MCP Server** (providing standardized API), creating a hybrid architecture that combines agentic AI with protocol-based interfaces.
+
+**Important**: MCP is used as an **API specification and external interface**, not as the internal transport protocol. Agents communicate internally via direct Python method calls for performance, while exposing MCP-compliant HTTP/JSON-RPC endpoints for external clients.
 
 ## Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           MCP Protocol Architecture                              │
-└─────────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Scout Agent   │    │ Strategist Agent│    │ Executor Agent  │
-│                 │    │                 │    │                 │
-│ 🤖 CrewAI Agent │    │ 🤖 CrewAI Agent │    │ 🤖 CrewAI Agent │
-│ + MCP Server    │    │ + MCP Server    │    │ + MCP Server    │
-│                 │    │                 │    │                 │
-│ • LLM Integration│    │ • LLM Integration│    │ • LLM Integration│
-│ • Memory Mgmt   │    │ • Memory Mgmt   │    │ • Memory Mgmt   │
-│ • Tool Execution│    │ • Tool Execution│    │ • Tool Execution│
-│ • MCP Protocol  │    │ • MCP Protocol  │    │ • MCP Protocol  │
-│   - Tools (8)   │    │   - Tools (8)   │    │   - Tools (8)   │
-│   - Resources(3)│    │   - Resources(3)│    │   - Resources(3)│
-│   - Prompts (4) │    │   - Prompts (4) │    │   - Prompts (4) │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │ HTTP/JSON-RPC         │ HTTP/JSON-RPC         │ HTTP/JSON-RPC
-         │ (MCP Protocol)        │ (MCP Protocol)        │ (MCP Protocol)
-         ▼                       ▼                       ▼
+│                    External Clients (MCP Protocol)                              │
+│          (curl, MCP Inspector, Monitoring Tools, Web Browsers)                  │
+└────────────────────────────────┬────────────────────────────────────────────────┘
+                                 │
+                                 │ HTTP/JSON-RPC (MCP Protocol)
+                                 │ • GET /mcp/{id} - Discovery
+                                 │ • POST /mcp/{id} - Tool calls
+                                 │
+                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                          FastAPI Server (Port 8000)                             │
 │                                                                                 │
-│  MCP Endpoints:                                                                 │
+│  MCP Endpoints (External Interface):                                           │
 │  • GET  /mcp/scout      → Full MCP discovery (tools+resources+prompts)        │
 │  • POST /mcp/scout      → JSON-RPC 2.0 calls (tools/call, resources/read)     │
 │  • GET  /mcp/strategist → Full MCP discovery                                   │
@@ -53,18 +43,46 @@ This document describes the detailed architecture of the MCP Protocol Tic Tac To
 │  • POST /agents/{id}/switch-model → Hot-swap LLM model                         │
 │  • GET  /agents/{id}/metrics      → Real-time performance metrics              │
 │  • GET  /mcp-logs                 → MCP protocol communication logs            │
+└────────────────────────────────┬────────────────────────────────────────────────┘
+                                 │
+                                 │ Direct Python Calls (In-Process)
+                                 │ • agent.tools_registry[name]['handler'](args)
+                                 │ • agent.analyze_board(data)
+                                 │ • agent.llm.call(prompt)
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                    Agent Instances (Same Python Process)                        │
+│                                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐           │
+│  │   Scout Agent   │    │ Strategist Agent│    │ Executor Agent  │           │
+│  │                 │    │                 │    │                 │           │
+│  │ 🤖 CrewAI Agent │    │ 🤖 CrewAI Agent │    │ 🤖 CrewAI Agent │           │
+│  │ + MCP Metadata  │    │ + MCP Metadata  │    │ + MCP Metadata  │           │
+│  │                 │    │                 │    │                 │           │
+│  │ • LLM (GPT-5)   │    │ • LLM (GPT-5)   │    │ • LLM (GPT-5)   │           │
+│  │ • Tools (8)     │    │ • Tools (8)     │    │ • Tools (8)     │           │
+│  │ • Resources(3)  │    │ • Resources(3)  │    │ • Resources(3)  │           │
+│  │ • Prompts (4)   │    │ • Prompts (4)   │    │ • Prompts (4)   │           │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘           │
+│                                                                                 │
+│  ┌────────────────────────────────────────────────────────────────────────┐   │
+│  │              MCP Coordinator (Game Orchestration)                      │   │
+│  │  • Game State Management                                               │   │
+│  │  • Agent Pipeline (Scout → Strategist → Executor)                     │   │
+│  │  • Optimization Logic (blocking/winning move detection)               │   │
+│  └────────────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────────────┘
-         │                       │
-         │                       │
-         ▼                       ▼
-┌──────────────────┐    ┌─────────────────────────────────────────┐
-│ MCP Coordinator  │    │      Streamlit UI (Port 8501)          │
-│                  │    │                                         │
-│ • Game State     │    │ • Interactive Game Board                │
-│ • Agent Pipeline │    │ • Real-time Agent Monitoring            │
-│ • Move Logic     │    │ • MCP Protocol Visualization            │
-│ • Optimization   │    │ • Performance Analytics Dashboard       │
-└──────────────────┘    └─────────────────────────────────────────┘
+                                 │
+                                 │ HTTP API
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        Streamlit UI (Port 8501)                                 │
+│  • Interactive Game Board                                                       │
+│  • Real-time Agent Monitoring                                                   │
+│  • Performance Metrics Dashboard                                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Key Architectural Patterns
@@ -89,10 +107,12 @@ class BaseMCPAgent(Agent, ABC):
 ```
 
 **Benefits**:
-- ✅ Leverages CrewAI's cognitive abilities (LLM, memory, reasoning)
-- ✅ Standardized communication via MCP protocol
-- ✅ Independent deployment and scaling per agent
-- ✅ Protocol-level monitoring and debugging
+- ✅ Leverages CrewAI's LLM integration (GPT-5, Claude, Llama)
+- ✅ Standardized MCP API for external clients
+- ✅ Registry-based discovery (tools, resources, prompts)
+- ✅ Future-ready for distributed deployment
+
+**Important**: The MCP Server object defines the API contract (tools, resources, prompts) but doesn't run as a separate HTTP server. Internal communication uses direct Python method calls for performance.
 
 ### 2. Registry-Based Discovery
 
@@ -122,20 +142,34 @@ prompts_registry = {
 - ✅ Dynamic tool registration at runtime
 - ✅ Separation of concerns (tools ≠ resources ≠ prompts)
 
-### 3. Unified FastAPI Transport
+### 3. MCP as External API (Not Internal Transport)
 
-All agents are exposed through a single FastAPI server instead of separate ports:
-
+**External clients use MCP protocol:**
 ```
-Traditional MCP:  Agent → stdio → Client
-Our Implementation: Agent → FastAPI → HTTP/JSON-RPC → Client
+External Client → HTTP/JSON-RPC (MCP) → FastAPI → Agent metadata
 ```
 
-**Benefits**:
-- ✅ Works with curl, browsers, any HTTP client
-- ✅ No stdio limitations (concurrent connections)
-- ✅ REST-friendly (GET for discovery, POST for actions)
-- ✅ Web-accessible without special clients
+**Internal communication bypasses MCP:**
+```
+Coordinator → Direct Python calls → Agent methods
+FastAPI → Direct object access → Agent.tools_registry[name]['handler']
+```
+
+**Why this design:**
+- ✅ **External**: Standard MCP API for discovery, tools, monitoring
+- ✅ **Internal**: Fast direct calls, no network overhead
+- ✅ **Pragmatic**: Protocol-first API, performance-first implementation
+- ✅ **Flexible**: Can switch to real MCP transport when distributing agents
+
+**Example:**
+```python
+# External client (uses MCP)
+curl -X POST http://localhost:8000/mcp/scout \
+  -d '{"method":"tools/call","params":{"name":"analyze_board"}}'
+
+# Internal coordinator (bypasses MCP)
+result = await scout_agent.analyze_board(data)  # Direct Python call
+```
 
 ### 4. Full MCP Protocol Implementation
 
@@ -353,29 +387,33 @@ class MCPGameCoordinator:
    ├─ If found → Execute directly
    └─ If not → Check for blocking move:
       ├─ If found → Execute block
-      └─ If not → Full agent pipeline:
+      └─ If not → Full agent pipeline (Direct Python Calls):
 
          Scout Analysis:
-         • POST /mcp/scout
-         • JSON-RPC: tools/call "analyze_board"
+         • await scout_agent.analyze_board(data)  # Direct method call
+         • scout_agent.llm.call(prompt)           # Direct LLM call
          • Returns: threats, opportunities, available moves
 
          ↓
 
          Strategist Planning:
-         • POST /mcp/strategist
-         • JSON-RPC: tools/call "recommend_move"
+         • await strategist_agent.create_strategy(data)  # Direct method call
+         • strategist_agent.llm.call(prompt)             # Direct LLM call
          • Returns: recommended move with reasoning
 
          ↓
 
          Executor Validation:
-         • POST /mcp/executor
-         • JSON-RPC: tools/call "execute_move"
+         • await executor_agent.execute_move(data)  # Direct method call
+         • executor_agent.llm.call(prompt)          # Direct LLM call
          • Returns: move execution result
 
 4. Update game state with AI move
-5. Return updated state to UI
+5. Track metrics on each agent
+6. Return updated state to UI
+
+Note: Internal coordination uses direct Python calls, NOT HTTP/JSON-RPC.
+      MCP protocol is only used by external clients accessing /mcp endpoints.
 ```
 
 ### MCP Discovery Flow
@@ -397,6 +435,7 @@ class MCPGameCoordinator:
 
 ### Agent Communication via MCP Protocol
 
+**Internal communication bypasses MCP:**
 ```
 ┌──────────────┐
 │ FastAPI      │
