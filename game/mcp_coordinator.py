@@ -8,6 +8,14 @@ from typing import Dict, List
 from datetime import datetime
 from .state import TicTacToeGameState
 
+# Import MCPServerAdapter for distributed mode
+try:
+    from crewai_tools import MCPServerAdapter
+    MCP_ADAPTER_AVAILABLE = True
+except ImportError:
+    MCP_ADAPTER_AVAILABLE = False
+    print("Warning: crewai-tools not available. Install with: pip install crewai-tools")
+
 
 class MCPGameCoordinator:
     """Coordinates game flow using MCP protocol between agents"""
@@ -15,23 +23,20 @@ class MCPGameCoordinator:
     def __init__(self, distributed=False):
         self.game_state = TicTacToeGameState()
         self.distributed = distributed
-        self.http_client = None
+        self.mcp_adapters = {}
+        self.crewai_agents = {}
 
         if distributed:
-            # Use HTTP clients to connect to remote agents
-            import httpx
-            self.http_client = httpx.AsyncClient(timeout=30.0)
+            if not MCP_ADAPTER_AVAILABLE:
+                raise ImportError("crewai-tools is required for distributed mode. Install with: pip install crewai-tools")
+            
+            # Use MCPServerAdapter to connect to remote MCP servers
             self.agent_urls = {
                 "scout": "http://localhost:3001/mcp",
-                "strategist": "http://localhost:3002/mcp",
+                "strategist": "http://localhost:3002/mcp", 
                 "executor": "http://localhost:3003/mcp"
             }
-            self.agents = {
-                "scout": "http://client",  # Placeholder to indicate HTTP mode
-                "strategist": "http_client",
-                "executor": "http_client"
-            }
-            print("[DISTRIBUTED MODE] Using HTTP clients to connect to agents")
+            print("[DISTRIBUTED MODE] Using MCPServerAdapter to connect to MCP servers")
         else:
             # Use direct Python references to local agents
             self.agents = {
@@ -53,15 +58,39 @@ class MCPGameCoordinator:
     
     async def initialize_agents(self):
         """Initialize connections to MCP agent servers"""
-        # TODO: Create actual MCP client connections
-        print("Connecting to MCP agents...")
-        
-        # Mock connections for now
-        self.agents["scout"] = "MockMCPClient(scout://localhost:3001)"
-        self.agents["strategist"] = "MockMCPClient(strategist://localhost:3002)"
-        self.agents["executor"] = "MockMCPClient(executor://localhost:3003)"
-        
-        print("MCP agent connections initialized")
+        if self.distributed:
+            print("Connecting to MCP servers using MCPServerAdapter...")
+            
+            # Create MCP adapters for each agent
+            for agent_name, url in self.agent_urls.items():
+                try:
+                    # Create MCPServerAdapter for this agent
+                    adapter = MCPServerAdapter({
+                        "url": url,
+                        "transport": "sse"
+                    })
+                    self.mcp_adapters[agent_name] = adapter
+                    
+                    # Create CrewAI agent with MCP tools
+                    from crewai import Agent
+                    crewai_agent = Agent(
+                        role=f"{agent_name.title()} Agent",
+                        goal=f"Provide {agent_name} capabilities via MCP protocol",
+                        backstory=f"Expert {agent_name} agent connected via MCP",
+                        tools=adapter,
+                        verbose=True
+                    )
+                    self.crewai_agents[agent_name] = crewai_agent
+                    
+                    print(f"✅ Connected to {agent_name} MCP server at {url}")
+                    
+                except Exception as e:
+                    print(f"❌ Failed to connect to {agent_name} MCP server: {e}")
+                    raise
+            
+            print("MCP agent connections initialized with MCPServerAdapter")
+        else:
+            print("Local mode - agents will be set via set_agents() method")
     
     async def process_player_move(self, row: int, col: int) -> Dict:
         """Process player move and orchestrate AI response via MCP"""
@@ -195,397 +224,189 @@ class MCPGameCoordinator:
         }
     
     async def _quick_scout_analysis(self) -> Dict:
-        """Scout analysis with actual LLM call for exact token counting"""
+        """Scout analysis using CrewAI agent with MCP adapter"""
         start_time = time.time()
         try:
             board_str = self._board_to_string(self.game_state.board)
             available_moves = self.get_available_moves(self.game_state.board)
 
-            print(f"[DEBUG] Scout: Board analysis with LLM call")
+            print(f"[DEBUG] Scout: Board analysis")
 
-            # DISTRIBUTED MODE: Use HTTP client to call remote agent
-            if self.distributed and self.http_client:
-                print(f"[DEBUG] Scout: Using HTTP client (distributed mode)")
-                try:
-                    response = await self.http_client.post(
-                        self.agent_urls["scout"],
-                        json={
-                            "jsonrpc": "2.0",
-                            "id": 1,
-                            "method": "tools/call",
-                            "params": {
-                                "name": "analyze_board",
-                                "arguments": {
-                                    "board": self.game_state.board,
-                                    "available_moves": available_moves
-                                }
-                            }
-                        }
-                    )
-
-                    if response.status_code == 200:
-                        mcp_result = response.json()
-                        result = mcp_result.get("result", {})
-
-                        # Track metrics
-                        end_time = time.time()
-                        response_time = end_time - start_time
-                        # Estimate tokens from response size
-                        total_tokens = len(str(result).split())
-
-                        print(f"[DEBUG] Scout HTTP response: {result}")
-                        return result
-                    else:
-                        print(f"[DEBUG] Scout HTTP error: {response.status_code}")
-                        return {"error": f"HTTP error {response.status_code}", "agent_id": "scout"}
-
-                except Exception as http_error:
-                    print(f"[DEBUG] Scout HTTP call failed: {http_error}")
-                    return {"error": str(http_error), "agent_id": "scout"}
-
-            # LOCAL MODE: Get the scout agent's LLM
-            scout_agent = self.agents.get("scout")
-            if not scout_agent or not hasattr(scout_agent, 'llm'):
-                print(f"[DEBUG] Scout agent or LLM not available")
-                return {"error": "Scout agent not available", "agent_id": "scout"}
-            
-            # Create prompt for board analysis
-            prompt = f"""Analyze this Tic-Tac-Toe board:
-{board_str}
-
-Identify:
-1. Threats (opponent has 2 in a row)
-2. Opportunities (we can win)
-3. Best defensive moves
-
-Respond in JSON format with threats, opportunities, and recommended moves."""
-            
-            # Make actual LLM call to get real token usage
-            try:
-                response = await asyncio.to_thread(scout_agent.llm.call, prompt)
-                response_text = response if isinstance(response, str) else str(response)
+            if self.distributed:
+                # DISTRIBUTED MODE: Use CrewAI agent with MCP adapter
+                scout_agent = self.crewai_agents.get("scout")
+                if not scout_agent:
+                    return {"error": "Scout agent not available", "agent_id": "scout"}
                 
-                # Count tokens in prompt and response (rough approximation)
-                prompt_tokens = len(prompt.split())  # Rough token count
-                response_tokens = len(response_text.split())  # Rough token count
-                total_tokens = prompt_tokens + response_tokens
+                # Use CrewAI agent to analyze board
+                from crewai import Task
+                task = Task(
+                    description=f"Analyze this Tic-Tac-Toe board: {board_str}\nAvailable moves: {available_moves}\nIdentify threats and opportunities.",
+                    expected_output="JSON with threats, opportunities, and analysis"
+                )
                 
-                print(f"[DEBUG] Scout: Actual tokens used - prompt: {prompt_tokens}, response: {response_tokens}, total: {total_tokens}")
+                result = await scout_agent.execute_task(task)
                 
-                # Parse response or use fallback analysis
-                try:
-                    import json
-                    analysis_data = json.loads(response_text)
-                    threats = analysis_data.get("threats", ["Opponent has two in a row", "Need to block center threat"])
-                    opportunities = analysis_data.get("opportunities", ["Can create fork", "Center control available"])
-                except:
-                    # Fallback to simple analysis
-                    threats = ["Opponent has two in a row", "Need to block center threat"]
-                    opportunities = ["Can create fork", "Center control available"]
+            else:
+                # LOCAL MODE: Use direct agent method
+                scout_agent = self.agents.get("scout")
+                if not scout_agent:
+                    return {"error": "Scout agent not available", "agent_id": "scout"}
                 
-            except Exception as llm_error:
-                print(f"[DEBUG] Scout LLM call failed: {llm_error}")
-                # Fallback to simple analysis
-                threats = ["Opponent has two in a row", "Need to block center threat"]
-                opportunities = ["Can create fork", "Center control available"]
-                total_tokens = 20  # Minimal tokens for fallback
+                result = await scout_agent.analyze_board({
+                    "board": self.game_state.board,
+                    "available_moves": available_moves
+                })
             
-            result = {
-                "agent_id": "scout",
-                "board_state": self.game_state.board,
-                "analysis": "Board analysis: Check for threats and opportunities",
-                "available_moves": available_moves,
-                "threats": threats,
-                "opportunities": opportunities,
-                "confidence": 0.85,
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            # Track metrics with actual token count
+            # Track metrics
             end_time = time.time()
             response_time = end_time - start_time
-            if self.agents.get("scout"):
-                print(f"[DEBUG] Tracking scout request: {response_time:.6f}s, tokens: {total_tokens}")
-                self.agents["scout"].track_request(response_time, success=True, tokens=total_tokens)
-            else:
-                print(f"[DEBUG] Scout agent not available for tracking")
             
+            # Ensure result has required fields
+            if not isinstance(result, dict):
+                result = {"analysis": str(result)}
+            
+            result.update({
+                "agent_id": "scout",
+                "board_state": self.game_state.board,
+                "available_moves": available_moves,
+                "threats": result.get("threats", ["Opponent has two in a row"]),
+                "opportunities": result.get("opportunities", ["Can create fork"]),
+                "confidence": 0.85,
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            print(f"[DEBUG] Scout analysis completed in {response_time:.3f}s")
             return result
             
         except Exception as e:
             print(f"[DEBUG] Scout analysis error: {e}")
-            # Track failed request
             end_time = time.time()
             response_time = end_time - start_time
-            if self.agents.get("scout"):
-                # Track failed request with minimal tokens
-                self.agents["scout"].track_request(response_time, success=False, tokens=10)
             return {"error": str(e), "agent_id": "scout"}
     
     async def _quick_strategy_creation(self, observation: Dict) -> Dict:
-        """Strategy creation with actual LLM call for exact token counting"""
+        """Strategy creation using CrewAI agent with MCP adapter"""
         start_time = time.time()
         try:
             board_str = self._board_to_string(self.game_state.board)
             analysis = observation.get("analysis", "")
 
-            print(f"[DEBUG] Strategist: Strategy creation with LLM call")
+            print(f"[DEBUG] Strategist: Strategy creation")
 
-            # DISTRIBUTED MODE: Use HTTP client to call remote agent
-            if self.distributed and self.http_client:
-                print(f"[DEBUG] Strategist: Using HTTP client (distributed mode)")
-                try:
-                    response = await self.http_client.post(
-                        self.agent_urls["strategist"],
-                        json={
-                            "jsonrpc": "2.0",
-                            "id": 1,
-                            "method": "tools/call",
-                            "params": {
-                                "name": "create_strategy",
-                                "arguments": {
-                                    "board_state": self.game_state.board,
-                                    "available_moves": observation.get("available_moves", []),
-                                    "threats": observation.get("threats", []),
-                                    "opportunities": observation.get("opportunities", [])
-                                }
-                            }
-                        }
-                    )
-
-                    if response.status_code == 200:
-                        mcp_result = response.json()
-                        result = mcp_result.get("result", {})
-
-                        # Track metrics
-                        end_time = time.time()
-                        response_time = end_time - start_time
-                        total_tokens = len(str(result).split())
-
-                        print(f"[DEBUG] Strategist HTTP response: {result}")
-                        return result
-                    else:
-                        print(f"[DEBUG] Strategist HTTP error: {response.status_code}")
-                        return {"error": f"HTTP error {response.status_code}", "agent_id": "strategist"}
-
-                except Exception as http_error:
-                    print(f"[DEBUG] Strategist HTTP call failed: {http_error}")
-                    return {"error": str(http_error), "agent_id": "strategist"}
-
-            # LOCAL MODE: Get the strategist agent's LLM
-            strategist_agent = self.agents.get("strategist")
-            if not strategist_agent or not hasattr(strategist_agent, 'llm'):
-                print(f"[DEBUG] Strategist agent or LLM not available")
-                return {"error": "Strategist agent not available", "agent_id": "strategist"}
-            
-            # Create prompt for strategy creation
-            prompt = f"""Based on this Tic-Tac-Toe board analysis:
-Board: {board_str}
-Analysis: {analysis}
-
-Create a strategic plan:
-1. What is the best move?
-2. Why is this move strategic?
-3. What threats should we consider?
-
-Respond in JSON format with strategy, recommended_move, and reasoning."""
-            
-            # Make actual LLM call to get real token usage
-            try:
-                response = await asyncio.to_thread(strategist_agent.llm.call, prompt)
-                response_text = response if isinstance(response, str) else str(response)
+            if self.distributed:
+                # DISTRIBUTED MODE: Use CrewAI agent with MCP adapter
+                strategist_agent = self.crewai_agents.get("strategist")
+                if not strategist_agent:
+                    return {"error": "Strategist agent not available", "agent_id": "strategist"}
                 
-                # Count tokens in prompt and response (rough approximation)
-                prompt_tokens = len(prompt.split())  # Rough token count
-                response_tokens = len(response_text.split())  # Rough token count
-                total_tokens = prompt_tokens + response_tokens
+                # Use CrewAI agent to create strategy
+                from crewai import Task
+                task = Task(
+                    description=f"Create strategy for Tic-Tac-Toe board: {board_str}\nAnalysis: {analysis}\nThreats: {observation.get('threats', [])}\nOpportunities: {observation.get('opportunities', [])}",
+                    expected_output="JSON with strategy, recommended_move, and reasoning"
+                )
                 
-                print(f"[DEBUG] Strategist: Actual tokens used - prompt: {prompt_tokens}, response: {response_tokens}, total: {total_tokens}")
+                result = await strategist_agent.execute_task(task)
                 
-                # Parse response or use fallback strategy
-                try:
-                    import json
-                    strategy_data = json.loads(response_text)
-                    strategy = strategy_data.get("strategy", "Control center, create threats, block opponent")
-                    recommended_move = strategy_data.get("recommended_move", {"row": 1, "col": 1})
-                    reasoning = strategy_data.get("reasoning", "Strategic reasoning: Control center, create threats, block opponent")
-                except:
-                    # Fallback to simple strategy
-                    strategy = "Control center, create threats, block opponent"
-                    available_moves = self.get_available_moves(self.game_state.board)
-                    if available_moves:
-                        recommended_move = available_moves[0]
-                    else:
-                        recommended_move = {"row": 0, "col": 0}
-                    reasoning = "Strategic reasoning: Control center, create threats, block opponent"
+            else:
+                # LOCAL MODE: Use direct agent method
+                strategist_agent = self.agents.get("strategist")
+                if not strategist_agent:
+                    return {"error": "Strategist agent not available", "agent_id": "strategist"}
                 
-            except Exception as llm_error:
-                print(f"[DEBUG] Strategist LLM call failed: {llm_error}")
-                # Fallback to simple strategy
-                strategy = "Control center, create threats, block opponent"
-                available_moves = self.get_available_moves(self.game_state.board)
-                if available_moves:
-                    recommended_move = available_moves[0]
-                else:
-                    recommended_move = {"row": 0, "col": 0}
-                reasoning = "Strategic reasoning: Control center, create threats, block opponent"
-                total_tokens = 30  # Minimal tokens for fallback
+                result = await strategist_agent.create_strategy({
+                    "board_state": self.game_state.board,
+                    "available_moves": observation.get("available_moves", []),
+                    "threats": observation.get("threats", []),
+                    "opportunities": observation.get("opportunities", [])
+                })
             
-            result = {
-                "agent_id": "strategist",
-                "strategy": strategy,
-                "recommended_move": recommended_move,
-                "confidence": 0.9,
-                "reasoning": reasoning,
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            # Track metrics with actual token count
+            # Track metrics
             end_time = time.time()
             response_time = end_time - start_time
-            if self.agents.get("strategist"):
-                print(f"[DEBUG] Tracking strategist request: {response_time:.6f}s, tokens: {total_tokens}")
-                self.agents["strategist"].track_request(response_time, success=True, tokens=total_tokens)
             
+            # Ensure result has required fields
+            if not isinstance(result, dict):
+                result = {"strategy": str(result)}
+            
+            result.update({
+                "agent_id": "strategist",
+                "strategy": result.get("strategy", "Control center, create threats, block opponent"),
+                "recommended_move": result.get("recommended_move", {"row": 1, "col": 1}),
+                "confidence": 0.9,
+                "reasoning": result.get("reasoning", "Strategic reasoning"),
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            print(f"[DEBUG] Strategist strategy completed in {response_time:.3f}s")
             return result
             
         except Exception as e:
             print(f"[DEBUG] Strategy creation error: {e}")
-            # Track failed request
             end_time = time.time()
             response_time = end_time - start_time
-            if self.agents.get("strategist"):
-                # Track failed request with minimal tokens
-                self.agents["strategist"].track_request(response_time, success=False, tokens=10)
             return {"error": str(e), "agent_id": "strategist"}
     
     async def _quick_move_execution(self, strategy: Dict) -> Dict:
-        """Move execution with actual LLM call for exact token counting"""
+        """Move execution using CrewAI agent with MCP adapter"""
         start_time = time.time()
         try:
             recommended_move = strategy.get("recommended_move", {})
             print(f"[DEBUG] Executor: Recommended move: {recommended_move}")
 
-            print(f"[DEBUG] Executor: Move execution with LLM call")
+            print(f"[DEBUG] Executor: Move execution")
 
-            # DISTRIBUTED MODE: Use HTTP client to call remote agent
-            if self.distributed and self.http_client:
-                print(f"[DEBUG] Executor: Using HTTP client (distributed mode)")
-                try:
-                    response = await self.http_client.post(
-                        self.agent_urls["executor"],
-                        json={
-                            "jsonrpc": "2.0",
-                            "id": 1,
-                            "method": "tools/call",
-                            "params": {
-                                "name": "execute_move",
-                                "arguments": {
-                                    "recommended_move": recommended_move,
-                                    "strategy": strategy.get("strategy", "")
-                                }
-                            }
-                        }
-                    )
-
-                    if response.status_code == 200:
-                        mcp_result = response.json()
-                        result = mcp_result.get("result", {})
-
-                        # Track metrics
-                        end_time = time.time()
-                        response_time = end_time - start_time
-                        total_tokens = len(str(result).split())
-
-                        print(f"[DEBUG] Executor HTTP response: {result}")
-                        return result
-                    else:
-                        print(f"[DEBUG] Executor HTTP error: {response.status_code}")
-                        return {"error": f"HTTP error {response.status_code}", "agent_id": "executor"}
-
-                except Exception as http_error:
-                    print(f"[DEBUG] Executor HTTP call failed: {http_error}")
-                    return {"error": str(http_error), "agent_id": "executor"}
-
-            # LOCAL MODE: Get the executor agent's LLM
-            executor_agent = self.agents.get("executor")
-            if not executor_agent or not hasattr(executor_agent, 'llm'):
-                print(f"[DEBUG] Executor agent or LLM not available")
-                return {"error": "Executor agent not available", "agent_id": "executor"}
-            
-            # Create prompt for move execution
-            prompt = f"""Execute this Tic-Tac-Toe move:
-Recommended move: {recommended_move}
-Strategy: {strategy.get('strategy', '')}
-
-Confirm the move execution:
-1. Is this move valid?
-2. What is the result?
-3. Any final considerations?
-
-Respond in JSON format with move_executed, result, and success status."""
-            
-            # Make actual LLM call to get real token usage
-            try:
-                response = await asyncio.to_thread(executor_agent.llm.call, prompt)
-                response_text = response if isinstance(response, str) else str(response)
+            if self.distributed:
+                # DISTRIBUTED MODE: Use CrewAI agent with MCP adapter
+                executor_agent = self.crewai_agents.get("executor")
+                if not executor_agent:
+                    return {"error": "Executor agent not available", "agent_id": "executor"}
                 
-                # Count tokens in prompt and response (rough approximation)
-                prompt_tokens = len(prompt.split())  # Rough token count
-                response_tokens = len(response_text.split())  # Rough token count
-                total_tokens = prompt_tokens + response_tokens
+                # Use CrewAI agent to execute move
+                from crewai import Task
+                task = Task(
+                    description=f"Execute Tic-Tac-Toe move: {recommended_move}\nStrategy: {strategy.get('strategy', '')}\nConfirm move execution and validate.",
+                    expected_output="JSON with move_executed, result, and success status"
+                )
                 
-                print(f"[DEBUG] Executor: Actual tokens used - prompt: {prompt_tokens}, response: {response_tokens}, total: {total_tokens}")
+                result = await executor_agent.execute_task(task)
                 
-                # Parse response or use fallback execution
-                try:
-                    import json
-                    execution_data = json.loads(response_text)
-                    move_executed = execution_data.get("move_executed", recommended_move)
-                    result = execution_data.get("result", "Move executed successfully")
-                    success = execution_data.get("success", True)
-                except:
-                    # Fallback to simple execution
-                    move_executed = recommended_move
-                    result = "Move executed successfully"
-                    success = True
+            else:
+                # LOCAL MODE: Use direct agent method
+                executor_agent = self.agents.get("executor")
+                if not executor_agent:
+                    return {"error": "Executor agent not available", "agent_id": "executor"}
                 
-            except Exception as llm_error:
-                print(f"[DEBUG] Executor LLM call failed: {llm_error}")
-                # Fallback to simple execution
-                move_executed = recommended_move
-                result = "Move executed successfully"
-                success = True
-                total_tokens = 25  # Minimal tokens for fallback
+                result = await executor_agent.execute_move({
+                    "recommended_move": recommended_move,
+                    "strategy": strategy.get("strategy", "")
+                })
             
-            result = {
-                "agent_id": "executor",
-                "move_executed": move_executed,
-                "result": result,
-                "success": success,
-                "game_state": "updated",
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            # Track metrics with actual token count
+            # Track metrics
             end_time = time.time()
             response_time = end_time - start_time
-            if self.agents.get("executor"):
-                print(f"[DEBUG] Tracking executor request: {response_time:.6f}s, tokens: {total_tokens}")
-                self.agents["executor"].track_request(response_time, success=True, tokens=total_tokens)
             
+            # Ensure result has required fields
+            if not isinstance(result, dict):
+                result = {"move_executed": recommended_move}
+            
+            result.update({
+                "agent_id": "executor",
+                "move_executed": result.get("move_executed", recommended_move),
+                "result": result.get("result", "Move executed successfully"),
+                "success": result.get("success", True),
+                "game_state": "updated",
+                "timestamp": datetime.now().isoformat()
+            })
+            
+            print(f"[DEBUG] Executor execution completed in {response_time:.3f}s")
             return result
             
         except Exception as e:
             print(f"[DEBUG] Move execution error: {e}")
-            import traceback
-            print(f"[DEBUG] Executor traceback: {traceback.format_exc()}")
-            # Track failed request
             end_time = time.time()
             response_time = end_time - start_time
-            if self.agents.get("executor"):
-                # Track failed request with minimal tokens
-                self.agents["executor"].track_request(response_time, success=False, tokens=10)
             return {"error": str(e), "agent_id": "executor"}
     
     def _extract_move_from_response(self, response: str) -> Dict:

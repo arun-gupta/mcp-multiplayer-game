@@ -725,18 +725,22 @@ In **distributed mode**, agents run as separate processes and communicate via HT
 - **Scalability**: Agents can be deployed on different machines
 - **Protocol Demonstration**: Shows complete MCP implementation
 - **Production Ready**: Suitable for multi-machine deployments
+- **Simplified Architecture**: Uses MCPServerAdapter instead of custom HTTP clients
+- **CrewAI Integration**: Leverages official CrewAI MCP support
+- **Reduced Complexity**: Less custom code to maintain
 
 ### Key Differences from Local Mode
 
 | Aspect | Local Mode | Distributed Mode |
 |--------|------------|------------------|
-| **Transport** | Direct Python calls | HTTP/JSON-RPC |
+| **Transport** | Direct Python calls | HTTP/JSON-RPC via MCPServerAdapter |
 | **Process** | Single process | Multiple processes |
 | **Latency** | <1ms | 10-50ms |
 | **Scalability** | Single machine | Multi-machine |
-| **Agent files** | `*_local.py` | `*_server.py` |
+| **Agent files** | `*_local.py` | `*_server_simple.py` |
 | **Coordinator** | `MCPGameCoordinator(distributed=False)` | `MCPGameCoordinator(distributed=True)` |
 | **MCP usage** | API spec only | Full transport protocol |
+| **Integration** | Direct agent calls | CrewAI + MCPServerAdapter |
 
 ### Communication Flow Comparison
 
@@ -767,18 +771,17 @@ response = await http_client.post(
 ### Distributed Mode Communication Flow
 
 1. **User makes move** → Main API receives request
-2. **Coordinator calls Scout**:
+2. **Coordinator uses MCPServerAdapter**:
    ```python
-   response = await http_client.post(
-       "http://localhost:3001/mcp",
-       json={"jsonrpc": "2.0", "method": "tools/call", "params": {...}}
-   )
+   # Scout analysis via CrewAI agent with MCP tools
+   scout_agent = Agent(tools=MCPServerAdapter({"url": "http://localhost:3001/mcp"}))
+   result = await scout_agent.execute_task(task)
    ```
-3. **Scout analyzes** → Returns JSON-RPC response
-4. **Coordinator calls Strategist** → HTTP request to port 3002
-5. **Strategist plans** → Returns JSON-RPC response
-6. **Coordinator calls Executor** → HTTP request to port 3003
-7. **Executor executes** → Returns JSON-RPC response
+3. **Scout MCP Server** → Processes via MCP protocol → Returns result
+4. **Coordinator uses MCPServerAdapter for Strategist** → CrewAI agent with MCP tools
+5. **Strategist MCP Server** → Processes via MCP protocol → Returns result
+6. **Coordinator uses MCPServerAdapter for Executor** → CrewAI agent with MCP tools
+7. **Executor MCP Server** → Processes via MCP protocol → Returns result
 8. **Game state updated** → Response sent to user
 
 ### Starting Distributed Mode
@@ -787,10 +790,10 @@ response = await http_client.post(
 # Quick start (recommended)
 ./quickstart.sh -d  # or --d, --dist, --distributed
 
-# Manual start
-python agents/scout_server.py &
-python agents/strategist_server.py &
-python agents/executor_server.py &
+# Manual start (simplified MCP servers)
+python agents/scout_server_simple.py &
+python agents/strategist_server_simple.py &
+python agents/executor_server_simple.py &
 python main.py --distributed
 ```
 
