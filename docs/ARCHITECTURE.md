@@ -737,7 +737,7 @@ In **distributed mode**, agents run as separate processes and communicate via HT
 | **Process** | Single process | Multiple processes |
 | **Latency** | <1ms | 10-50ms |
 | **Scalability** | Single machine | Multi-machine |
-| **Agent files** | `*_local.py` | `*_server_simple.py` |
+| **Agent files** | `*_local.py` | `*_server.py` |
 | **Coordinator** | `MCPGameCoordinator(distributed=False)` | `MCPGameCoordinator(distributed=True)` |
 | **MCP usage** | API spec only | Full transport protocol |
 | **Integration** | Direct agent calls | CrewAI + MCPServerAdapter |
@@ -790,10 +790,10 @@ response = await http_client.post(
 # Quick start (recommended)
 ./quickstart.sh -d  # or --d, --dist, --distributed
 
-# Manual start (simplified MCP servers)
-python agents/scout_server_simple.py &
-python agents/strategist_server_simple.py &
-python agents/executor_server_simple.py &
+# Manual start (MCP servers)
+python agents/scout_server.py &
+python agents/strategist_server.py &
+python agents/executor_server.py &
 python main.py --distributed
 ```
 

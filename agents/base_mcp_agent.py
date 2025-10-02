@@ -15,7 +15,6 @@ import os
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent, Resource, Prompt, PromptMessage
-from .mcp_server import AgentMCPServer
 
 
 class BaseMCPAgent(Agent, ABC):

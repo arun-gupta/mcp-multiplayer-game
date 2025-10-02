@@ -414,21 +414,21 @@ start_application() {
         # Create logs directory if it doesn't exist
         mkdir -p logs
 
-        # Start Scout Agent (Simplified MCP Server)
+        # Start Scout Agent MCP Server
         print_info "🔍 Starting Scout Agent MCP Server (port 3001)..."
-        python agents/scout_server_simple.py > logs/scout_server.log 2>&1 &
+        python agents/scout_server.py > logs/scout_server.log 2>&1 &
         SCOUT_PID=$!
         sleep 2
 
-        # Start Strategist Agent (Simplified MCP Server)
+        # Start Strategist Agent MCP Server
         print_info "🧠 Starting Strategist Agent MCP Server (port 3002)..."
-        python agents/strategist_server_simple.py > logs/strategist_server.log 2>&1 &
+        python agents/strategist_server.py > logs/strategist_server.log 2>&1 &
         STRATEGIST_PID=$!
         sleep 2
 
-        # Start Executor Agent (Simplified MCP Server)
+        # Start Executor Agent MCP Server
         print_info "⚡ Starting Executor Agent MCP Server (port 3003)..."
-        python agents/executor_server_simple.py > logs/executor_server.log 2>&1 &
+        python agents/executor_server.py > logs/executor_server.log 2>&1 &
         EXECUTOR_PID=$!
         sleep 2
 
