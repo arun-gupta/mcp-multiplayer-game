@@ -991,6 +991,11 @@ def main():
                 st.error(f"Error resetting game: {e}")
             st.rerun()
     
+    # Add manual AI move trigger for testing
+    if st.button("🤖 Force AI Move (Debug)", key="force_ai_move"):
+        st.session_state.trigger_ai_move = True
+        st.rerun()
+    
     # Header with GitHub link
     st.markdown("""
     <style>
