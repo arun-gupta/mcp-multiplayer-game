@@ -1113,7 +1113,7 @@ def main():
                             st.error("Failed to trigger AI move")
                     except Exception as e:
                         st.error(f"Error triggering AI move: {e}")
-                return
+                # Don't return here - continue to render the board
             
             
             # Create two-column layout: Game Board (50%) and Player Moves (50%)
