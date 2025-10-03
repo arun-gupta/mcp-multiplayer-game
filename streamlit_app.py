@@ -966,6 +966,23 @@ def main():
     if 'trigger_ai_move' not in st.session_state:
         st.session_state.trigger_ai_move = False
     
+    # Reset trigger_ai_move if it's True but no game is in progress
+    if st.session_state.get('trigger_ai_move', False):
+        # Check if we're in a valid state to trigger AI move
+        game_state = get_game_state()
+        if game_state:
+            current_player = game_state.get('current_player', 'player')
+            move_number = game_state.get('move_number', 0)
+            
+            # Only allow AI move trigger if it's actually the AI's turn and there are moves
+            if current_player != 'ai' or move_number == 0:
+                print(f"[DEBUG] Resetting trigger_ai_move - current_player: {current_player}, move_number: {move_number}")
+                st.session_state.trigger_ai_move = False
+        else:
+            # No game state available, reset trigger
+            print(f"[DEBUG] No game state available, resetting trigger_ai_move")
+            st.session_state.trigger_ai_move = False
+    
     # Header with GitHub link
     st.markdown("""
     <style>
