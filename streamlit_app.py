@@ -1098,8 +1098,10 @@ def main():
                         
                         if ai_result.status_code == 200:
                             result = ai_result.json()
+                            print(f"[DEBUG] AI move result: {result}")
                             if result.get("success"):
                                 st.success(f"✅ AI move completed in {duration:.3f}s")
+                                print(f"[DEBUG] AI move successful, calling st.rerun()")
                                 st.rerun()
                             else:
                                 st.error(f"❌ AI move failed after {duration:.3f}s")
