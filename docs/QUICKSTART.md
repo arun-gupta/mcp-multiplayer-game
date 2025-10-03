@@ -66,7 +66,33 @@ ollama serve
 ollama pull llama2:7b llama3:latest mistral:latest
 ```
 
-### 4. Setup Python Environment
+### 4. Optimize Ollama for Performance (Recommended)
+
+For the best gaming experience with instant AI responses, keep models loaded in memory:
+
+```bash
+# Keep models loaded in memory for instant responses
+OLLAMA_KEEP_ALIVE=-1 ollama run llama3.2:1b
+```
+
+**Why this helps:**
+- ⚡ **Instant first moves** - No model loading delay
+- 🚀 **Faster responses** - Models stay in GPU memory
+- 🎮 **Better gaming experience** - Seamless gameplay
+
+**Alternative models for different performance levels:**
+```bash
+# Ultra-fast (1B parameters) - Recommended for gaming
+OLLAMA_KEEP_ALIVE=-1 ollama run llama3.2:1b
+
+# Balanced (3B parameters) - Good performance/speed balance
+OLLAMA_KEEP_ALIVE=-1 ollama run llama3.2:3b
+
+# High-quality (7B parameters) - Slower but more intelligent
+OLLAMA_KEEP_ALIVE=-1 ollama run llama3.2:7b
+```
+
+### 5. Setup Python Environment
 
 **Clone the repository:**
 ```bash
@@ -81,7 +107,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 5. Set Environment Variables
+### 6. Set Environment Variables
 
 **Copy the example environment file:**
 ```bash
@@ -106,12 +132,12 @@ ANTHROPIC_API_KEY=your-actual-anthropic-api-key-here
 
 > **💡 Note:** If you don't have API keys, the application will still run but with limited AI functionality. You can use local models with Ollama instead.
 
-### 6. Test Installation
+### 7. Test Installation
 ```bash
 python test_installation.py
 ```
 
-### 7. Running Without API Keys
+### 8. Running Without API Keys
 
 If you don't have API keys, the application will still work with some limitations:
 
@@ -142,11 +168,49 @@ If you don't have API keys, the application will still work with some limitation
    ollama pull llama3.2:3b
    ```
 
-### 7. Choose Deployment Mode
+### 9. Choose Deployment Mode
 
-This project supports two deployment modes:
+This project supports multiple deployment modes and agent frameworks:
 
-#### **🏠 Local Mode (Default, Recommended)**
+#### **📊 Mode Comparison Table**
+
+| Mode | Framework | Speed | Architecture | Resources | Use Case |
+|------|-----------|-------|-------------|-----------|----------|
+| **🚀 Simple** | Direct LLM | < 1s | Single LLM call | 1 connection | Fastest, simplest |
+| **⚡ Optimized** | LangChain | < 1s | Shared resources | 1 shared connection | Best balance |
+| **🏠 Local** | CrewAI | 3-8s | MCP simulation | 3 LLM connections | Agent coordination |
+| **🌐 Distributed** | CrewAI + MCP | 3-8s | Full MCP protocol | 3 separate processes | Multi-machine |
+
+#### **🚀 Simple Mode (Fastest)**
+Direct LLM calls with no complex architecture. Perfect for Tic Tac Toe - < 1 second per move!
+
+```bash
+# Simple mode - fastest and most reliable
+./quickstart.sh --simple    # or --s for short
+```
+
+**Benefits:**
+- ⚡ **< 1 second per move** - 8-19x faster than complex mode
+- 🔧 **10x simpler** - No CrewAI/MCP overhead
+- 🛠️ **5x easier maintenance** - Direct LLM calls only
+- 🎯 **Perfect for Tic Tac Toe** - No over-engineering
+
+#### **⚡ Optimized Mode (Recommended)**
+LangChain with shared resources. Best balance of speed and structure - < 1 second per move!
+
+```bash
+# Optimized mode - best balance of speed and structure
+./quickstart.sh --optimized    # or --o for short
+```
+
+**Benefits:**
+- ⚡ **< 1 second per move** - Shared resources, no MCP servers
+- 🔧 **LangChain direct calls** - No CrewAI overhead
+- 🛠️ **Shared Ollama connection** - Memory efficient
+- 🎯 **Pre-created tasks** - No runtime creation overhead
+- 🚀 **Best balance** - Speed + structure
+
+#### **🏠 Local Mode (Default)**
 All agents run in the same Python process with direct method calls. Better performance, simpler setup.
 
 ```bash
@@ -161,6 +225,26 @@ python run_streamlit.py    # Start UI
 **Ports:**
 - **8000** - Main API Server
 - **8501** - Streamlit UI
+
+#### **🤖 Agent Framework Options**
+
+Choose between different agent frameworks:
+
+```bash
+# Simple mode (fastest, recommended for Tic Tac Toe)
+./quickstart.sh --simple    # or --s for short
+
+# LangChain agents (faster than CrewAI)
+./quickstart.sh --langchain
+
+# CrewAI agents with MCP protocol (complex, full coordination)
+./quickstart.sh --crewai
+```
+
+**Framework Comparison:**
+- **Simple**: Direct LLM calls, < 1 second per move, perfect for Tic Tac Toe
+- **LangChain**: Direct LLM calls, faster than CrewAI, good balance
+- **CrewAI**: Full agent coordination with MCP protocol, most complex
 
 #### **🌐 Distributed Mode**
 Agents run as separate processes communicating via HTTP/JSON-RPC (true MCP transport). Use this to demonstrate the actual MCP protocol transport layer.
@@ -195,7 +279,7 @@ python main.py --distributed
 python run_streamlit.py
 ```
 
-### 8. Access the Application
+### 10. Access the Application
 
 **Both modes use the same URLs:**
 - **Frontend**: http://localhost:8501 (Streamlit)

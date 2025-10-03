@@ -40,6 +40,20 @@ pip install -r requirements.txt
 pip install pytest black flake8 mypy
 ```
 
+### Ollama Optimization for Development
+
+For the best development experience with instant AI responses:
+
+```bash
+# Keep models loaded in memory for instant responses
+OLLAMA_KEEP_ALIVE=-1 ollama run llama3.2:1b
+```
+
+**Benefits for development:**
+- ⚡ **Instant testing** - No model loading delays during development
+- 🚀 **Faster iteration** - Quick feedback when testing agent changes
+- 🎮 **Seamless debugging** - Models stay loaded while debugging MCP flows
+
 ## Project Structure
 
 ```
