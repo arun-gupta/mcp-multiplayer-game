@@ -61,20 +61,20 @@ Validate and execute the move:""")
             # GPT-5 models don't support custom temperature, use default
             return ChatOpenAI(
                 model=self.model_name,
-                timeout=10.0
+                timeout=30.0
             )
         elif "claude" in self.model_name.lower():
             return ChatAnthropic(
                 model=self.model_name,
                 temperature=0.1,
-                timeout=10.0
+                timeout=30.0
             )
         else:
             # Use LiteLLM for other models
             return ChatLiteLLM(
                 model=self.model_name,
                 temperature=0.1,
-                timeout=10.0
+                timeout=30.0
             )
     
     async def execute_move(self, execution_input: Dict[str, Any]) -> Dict[str, Any]:

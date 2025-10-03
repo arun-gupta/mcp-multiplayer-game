@@ -54,20 +54,20 @@ Provide your analysis:""")
             # GPT-5 models don't support custom temperature, use default
             return ChatOpenAI(
                 model=self.model_name,
-                timeout=10.0
+                timeout=30.0
             )
         elif "claude" in self.model_name.lower():
             return ChatAnthropic(
                 model=self.model_name,
                 temperature=0.1,
-                timeout=10.0
+                timeout=30.0
             )
         else:
             # Use LiteLLM for other models
             return ChatLiteLLM(
                 model=self.model_name,
                 temperature=0.1,
-                timeout=10.0
+                timeout=30.0
             )
     
     async def analyze_board(self, board_state: Dict[str, Any]) -> Dict[str, Any]:
