@@ -129,12 +129,13 @@ def render_board(board: List[List[str]], game_over: bool = False):
                         
                         # Show player move first, then trigger AI move
                         st.success("✅ Your move recorded!")
-                        st.rerun()  # Show player move first
                         
-                        # Check if AI should move (this will happen after rerun)
+                        # Check if AI should move BEFORE rerun
                         if not result.get('game_over', False) and result.get('current_player') == 'O':
                             # Set flag to trigger AI move on next render
                             st.session_state.trigger_ai_move = True
+                        
+                        st.rerun()  # Show player move first
                     else:
                         st.error("Invalid move!")
 
