@@ -22,8 +22,11 @@ class ExecutorMCPAgent(BaseMCPAgent):
         super().__init__(
             role="Executor Agent",
             goal="Execute moves and validate game state",
-            backstory="""You are precise and decisive. You execute the strategic plans
-            and ensure all moves are valid and properly implemented.""",
+            backstory="""You are a Tic Tac Toe execution specialist with perfect precision.
+            Your role is to validate and execute strategic moves, ensuring they are legal
+            and properly placed on the 3x3 board. You understand the critical importance of
+            immediate threat blocking and winning move execution. You never miss a blocking
+            opportunity and always execute winning moves when available.""",
             mcp_port=config.get_mcp_port("executor"),  # ✅ Load from config
             agent_id="executor",
             llm=llm
@@ -127,8 +130,8 @@ class ExecutorMCPAgent(BaseMCPAgent):
             # Execute using CrewAI with timeout
             try:
                 execution_result = await asyncio.wait_for(
-                    asyncio.to_thread(self.execute, execution_task), 
-                    timeout=8.0
+                    self.execute(execution_task),
+                    timeout=15.0  # Increased timeout for LLM calls
                 )
             except (AttributeError, asyncio.TimeoutError):
                 # Fallback: use the LLM directly with optimized prompt
@@ -157,9 +160,9 @@ Keep response concise."""
         )
         
         try:
-            result = await asyncio.to_thread(self.execute, validation_task)
+            result = await self.execute(validation_task)
         except AttributeError:
-            result = await asyncio.to_thread(self.llm.call, validation_task.description)
+            result = await self._tracked_llm_call(validation_task.description)
         
         return {
             "agent_id": "executor",
@@ -177,9 +180,9 @@ Keep response concise."""
         )
         
         try:
-            result = await asyncio.to_thread(self.execute, update_task)
+            result = await self.execute(update_task)
         except AttributeError:
-            result = await asyncio.to_thread(self.llm.call, update_task.description)
+            result = await self._tracked_llm_call(update_task.description)
         
         return {
             "agent_id": "executor",
@@ -196,9 +199,9 @@ Keep response concise."""
         )
         
         try:
-            result = await asyncio.to_thread(self.execute, confirmation_task)
+            result = await self.execute(confirmation_task)
         except AttributeError:
-            result = await asyncio.to_thread(self.llm.call, confirmation_task.description)
+            result = await self._tracked_llm_call(confirmation_task.description)
         
         return {
             "agent_id": "executor",

@@ -6,6 +6,7 @@ from crewai import Agent, Task
 from typing import Dict, List, Optional, Any, Callable
 import asyncio
 import json
+import time
 from datetime import datetime
 from abc import ABC, abstractmethod
 import psutil
@@ -394,6 +395,87 @@ Provide a structured response with your analysis and recommendations."""
             self.__dict__['total_tokens'] += tokens
             print(f"[METRICS] {agent_id} total tokens: {self.__dict__['total_tokens']}")
     
+    async def execute(self, task: Task) -> str:
+        """Execute a CrewAI task - simplified implementation"""
+        print(f"[DEBUG] BaseMCPAgent.execute called with task: {task.description[:100]}...")
+        
+        # Get the task description
+        description = task.description
+        
+        # Use the agent's LLM to process the task
+        if hasattr(self, 'llm') and self.llm:
+            print(f"[DEBUG] BaseMCPAgent: LLM available, calling _tracked_llm_call")
+            try:
+                response = await self._tracked_llm_call(description)
+                print(f"[DEBUG] BaseMCPAgent: LLM call successful, response length: {len(str(response))}")
+                return str(response)
+            except Exception as e:
+                print(f"[DEBUG] BaseMCPAgent: LLM call failed with exception: {type(e).__name__}: {str(e)}")
+                raise e
+        else:
+            print(f"[DEBUG] BaseMCPAgent: No LLM available, using fallback")
+            # Fallback response
+            return f"Task executed: {description[:100]}..."
+    
+    async def _tracked_llm_call(self, prompt: str) -> str:
+        """Make an LLM call with metrics tracking"""
+        print(f"[DEBUG] _tracked_llm_call: Starting LLM call with prompt length: {len(prompt)}")
+        start_time = time.time()
+        
+        try:
+            print(f"[DEBUG] _tracked_llm_call: Calling self.llm.call with asyncio.to_thread")
+            # Make the LLM call
+            response = await asyncio.to_thread(self.llm.call, prompt)
+            print(f"[DEBUG] _tracked_llm_call: LLM call completed, response type: {type(response)}")
+            
+            # Calculate response time
+            response_time = time.time() - start_time
+            print(f"[DEBUG] _tracked_llm_call: Response time: {response_time:.3f}s")
+            
+            # Update metrics
+            self._update_metrics(response_time, success=True)
+            print(f"[DEBUG] _tracked_llm_call: Metrics updated successfully")
+            
+            return response
+            
+        except Exception as e:
+            print(f"[DEBUG] _tracked_llm_call: Exception occurred: {type(e).__name__}: {str(e)}")
+            # Update metrics for failure
+            response_time = time.time() - start_time
+            self._update_metrics(response_time, success=False)
+            print(f"[DEBUG] _tracked_llm_call: Metrics updated for failure")
+            raise e
+    
+    def _update_metrics(self, response_time: float, success: bool = True):
+        """Update agent performance metrics"""
+        # Initialize metrics if not present
+        if 'request_count' not in self.__dict__:
+            self.__dict__['request_count'] = 0
+            self.__dict__['total_response_time'] = 0.0
+            self.__dict__['min_response_time'] = float('inf')
+            self.__dict__['max_response_time'] = 0.0
+            self.__dict__['api_call_count'] = 0
+            self.__dict__['api_success_count'] = 0
+            self.__dict__['total_tokens'] = 0
+        
+        # Update counters
+        self.__dict__['request_count'] += 1
+        self.__dict__['total_response_time'] += response_time
+        self.__dict__['api_call_count'] += 1
+        
+        if success:
+            self.__dict__['api_success_count'] += 1
+        
+        # Update min/max times
+        if response_time < self.__dict__['min_response_time']:
+            self.__dict__['min_response_time'] = response_time
+        if response_time > self.__dict__['max_response_time']:
+            self.__dict__['max_response_time'] = response_time
+        
+        # Estimate tokens (rough approximation)
+        estimated_tokens = len(str(self.llm.call).split()) * 2  # Rough estimate
+        self.__dict__['total_tokens'] += estimated_tokens
+    
     def track_timeout(self):
         """Track a timeout event"""
         self.__dict__['timeout_count'] = self.__dict__.get('timeout_count', 0) + 1
@@ -470,19 +552,36 @@ Provide a structured response with your analysis and recommendations."""
     async def switch_llm_model(self, model_config: Dict) -> Dict:
         """Hot-swap LLM model"""
         try:
-            # TODO: Implement actual model switching logic
             old_model = self.__dict__.get('current_model', 'unknown')
-            # self.llm = create_new_llm(model_config)
             new_model = model_config.get("model", "unknown")
-            self.__dict__['current_model'] = new_model
             
-            agent_id = self.__dict__.get('agent_id', 'unknown')
-            return {
-                "success": True,
-                "old_model": old_model,
-                "new_model": new_model,
-                "agent_id": agent_id
-            }
+            # Import model factory to create new LLM
+            from models.factory import ModelFactory
+            
+            # Create new LLM with the specified model
+            new_llm = ModelFactory.create_llm_for_agent(self.agent_id, new_model)
+            
+            if new_llm:
+                # Replace the old LLM with the new one
+                self.llm = new_llm
+                self.__dict__['current_model'] = new_model
+                
+                agent_id = self.__dict__.get('agent_id', 'unknown')
+                return {
+                    "success": True,
+                    "old_model": old_model,
+                    "new_model": new_model,
+                    "agent_id": agent_id,
+                    "message": f"Successfully switched {agent_id} from {old_model} to {new_model}"
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Failed to create LLM for model: {new_model}",
+                    "old_model": old_model,
+                    "new_model": new_model
+                }
+                
         except Exception as e:
             return {"success": False, "error": str(e)}
     

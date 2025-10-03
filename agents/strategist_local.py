@@ -22,8 +22,11 @@ class StrategistMCPAgent(BaseMCPAgent):
         super().__init__(
             role="Strategist Agent", 
             goal="Create optimal strategies based on board analysis",
-            backstory="""You are a master strategist with deep understanding of Tic Tac Toe
-            tactics. You excel at creating winning strategies and tactical plans.""",
+            backstory="""You are a Tic Tac Toe master strategist with deep understanding of game theory
+            and tactical positioning. Your expertise lies in prioritizing moves: first blocking
+            opponent threats, then securing wins, then controlling center and corners for strategic
+            advantage. You understand fork patterns, defensive positioning, and how to create
+            multiple winning opportunities while preventing opponent victories.""",
             mcp_port=config.get_mcp_port("strategist"),  # ✅ Load from config
             agent_id="strategist",
             llm=llm
@@ -136,8 +139,8 @@ class StrategistMCPAgent(BaseMCPAgent):
             # Execute using CrewAI with timeout
             try:
                 strategy_result = await asyncio.wait_for(
-                    asyncio.to_thread(self.execute, strategy_task), 
-                    timeout=8.0
+                    self.execute(strategy_task),
+                    timeout=15.0  # Increased timeout for LLM calls
                 )
             except (AttributeError, asyncio.TimeoutError):
                 # Fallback: use the LLM directly with optimized prompt
@@ -168,9 +171,9 @@ Keep response concise."""
         )
         
         try:
-            result = await asyncio.to_thread(self.execute, evaluation_task)
+            result = await self.execute(evaluation_task)
         except AttributeError:
-            result = await asyncio.to_thread(self.llm.call, evaluation_task.description)
+            result = await self._tracked_llm_call(evaluation_task.description)
         
         return {
             "agent_id": "strategist",
@@ -187,9 +190,9 @@ Keep response concise."""
         )
         
         try:
-            result = await asyncio.to_thread(self.execute, recommendation_task)
+            result = await self.execute(recommendation_task)
         except AttributeError:
-            result = await asyncio.to_thread(self.llm.call, recommendation_task.description)
+            result = await self._tracked_llm_call(recommendation_task.description)
         
         return {
             "agent_id": "strategist",
@@ -207,9 +210,9 @@ Keep response concise."""
         )
         
         try:
-            result = await asyncio.to_thread(self.execute, probability_task)
+            result = await self.execute(probability_task)
         except AttributeError:
-            result = await asyncio.to_thread(self.llm.call, probability_task.description)
+            result = await self._tracked_llm_call(probability_task.description)
         
         return {
             "agent_id": "strategist",

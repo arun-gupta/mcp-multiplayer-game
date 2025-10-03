@@ -22,9 +22,11 @@ class ScoutMCPAgent(BaseMCPAgent):
         super().__init__(
             role="Scout Agent",
             goal="Analyze the Tic Tac Toe board and detect threats, opportunities, and patterns",
-            backstory="""You are a keen observer with exceptional pattern recognition abilities.
-            Your role is to thoroughly analyze the current game state and provide detailed
-            observations that will help the team make strategic decisions.""",
+            backstory="""You are a Tic Tac Toe expert with exceptional pattern recognition abilities.
+            Your specialty is identifying immediate threats where the opponent (X) has 2 in a row
+            and must be blocked, as well as spotting winning opportunities where you (O) can
+            complete a line. You excel at scanning all rows, columns, and diagonals for potential
+            wins and blocks. Your analysis is critical for preventing losses and securing victories.""",
             mcp_port=config.get_mcp_port("scout"),  # ✅ Load from config
             agent_id="scout",
             llm=llm
@@ -118,19 +120,24 @@ class ScoutMCPAgent(BaseMCPAgent):
             # Create analysis task for CrewAI
             analysis_task = Task(
                 description=f"""
-                Analyze this Tic Tac Toe board state:
+                CRITICAL Tic Tac Toe board analysis:
                 Board: {json.dumps(board_state)}
                 Current Player: {current_player}
                 Move Number: {move_number}
                 
-                Provide analysis including:
-                1. Available moves
-                2. Immediate threats
-                3. Blocking opportunities
-                4. Winning opportunities
-                5. Pattern assessment
+                URGENT PRIORITIES:
+                1. THREAT DETECTION: Check if opponent (X) has 2 in a row - BLOCK immediately!
+                2. WIN OPPORTUNITIES: Check if AI (O) has 2 in a row - WIN immediately!
+                3. STRATEGIC ANALYSIS: Center control, corner positions, fork opportunities
+                
+                REQUIRED ANALYSIS:
+                - Scan all rows, columns, and diagonals for threats
+                - Identify any immediate blocking moves needed
+                - Identify any winning moves available
+                - Assess strategic positioning opportunities
+                - Provide clear recommendations with reasoning
                 """,
-                expected_output="Structured analysis with threats, opportunities, and recommendations"
+                expected_output="Structured analysis with immediate threats, blocking moves, winning opportunities, and strategic recommendations"
             )
             
             # Execute analysis using CrewAI with timeout
@@ -138,21 +145,29 @@ class ScoutMCPAgent(BaseMCPAgent):
                 print(f"[DEBUG] Scout: Starting CrewAI execution")
                 # Use the CrewAI agent's execute method with timeout
                 analysis_result = await asyncio.wait_for(
-                    asyncio.to_thread(self.execute, analysis_task), 
-                    timeout=8.0
+                    self.execute(analysis_task), 
+                    timeout=15.0  # Increased timeout for LLM calls
                 )
                 print(f"[DEBUG] Scout: CrewAI execution completed")
-            except (AttributeError, asyncio.TimeoutError) as e:
-                print(f"[DEBUG] Scout: CrewAI execution failed: {e}, using LLM fallback")
+            except Exception as e:
+                print(f"[DEBUG] Scout: CrewAI execution failed with exception: {type(e).__name__}: {str(e)}")
+                print(f"[DEBUG] Scout: Exception details: {repr(e)}")
                 # Fallback: use the LLM directly with optimized prompt
                 short_prompt = f"""Analyze this Tic Tac Toe board: {json.dumps(board_state)}
 Current player: {current_player}
-Provide brief analysis focusing on:
-1. Immediate threats to block
-2. Winning opportunities
-3. Strategic positioning
-Keep response concise."""
-                analysis_result = await asyncio.to_thread(self.llm.call, short_prompt)
+
+CRITICAL ANALYSIS REQUIRED:
+1. THREAT DETECTION: Look for opponent (X) having 2 in a row - this is URGENT to block!
+2. WIN OPPORTUNITIES: Look for AI (O) having 2 in a row - this is a winning move!
+3. STRATEGIC POSITIONING: Center and corners are valuable
+
+BOARD ANALYSIS:
+- Check all rows, columns, and diagonals for threats
+- Identify any immediate blocking moves needed
+- Identify any winning moves available
+
+Provide concise analysis focusing on immediate threats and opportunities."""
+                analysis_result = await self._tracked_llm_call(short_prompt)
                 print(f"[DEBUG] Scout: LLM fallback completed")
             
             # Structure the response for MCP protocol
