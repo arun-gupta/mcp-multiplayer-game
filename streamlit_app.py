@@ -1087,7 +1087,20 @@ def main():
             
             print(f"[DEBUG] Game state - current_player: {current_player}, move_number: {move_number}, trigger_ai_move: {st.session_state.get('trigger_ai_move', False)}")
             
-            # Handle AI move trigger (only after player move, not on page load)
+            # Create two-column layout: Game Board (50%) and Player Moves (50%)
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.markdown("### 🎮 Game Board")
+                
+                # Show first-move delay explanation
+                if move_number == 0:
+                    st.info("💡 **First move tip**: The AI may take a few seconds to respond on the first move as it loads the model. Subsequent moves will be faster!")
+                
+                # Render game board
+                render_game_board(board, game_over)
+            
+            # Handle AI move trigger AFTER board is rendered
             if st.session_state.get('trigger_ai_move', False):
                 st.session_state.trigger_ai_move = False  # Reset flag
                 print(f"[DEBUG] AI move trigger activated - current_player: {current_player}")
@@ -1113,26 +1126,11 @@ def main():
                             st.error("Failed to trigger AI move")
                     except Exception as e:
                         st.error(f"Error triggering AI move: {e}")
-                # Don't return here - continue to render the board
             
+            # Game board already has NEW GAME button
             
-            # Create two-column layout: Game Board (50%) and Player Moves (50%)
-            col1, col2 = st.columns([1, 1])
-            
-            with col1:
-                st.markdown("### 🎮 Game Board")
-                
-                # Show first-move delay explanation
-                if move_number == 0:
-                    st.info("💡 **First move tip**: The AI may take a few seconds to respond on the first move as it loads the model. Subsequent moves will be faster!")
-                
-                # Render game board
-                render_game_board(board, game_over)
-                
-                # Game board already has NEW GAME button
-                
-                # Display winner if game is over (after NEW GAME button)
-                if game_over and winner:
+            # Display winner if game is over (after NEW GAME button)
+            if game_over and winner:
                     if winner == "player":
                         st.success("🎉 You Win! Congratulations!")
                     elif winner == "ai":
