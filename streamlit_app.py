@@ -684,8 +684,12 @@ def render_game_board(board, game_over=False):
                                 st.success(f"✅ Your move recorded at ({row}, {col})")
                                 
                                 # Check if AI should move (set flag for next render)
+                                print(f"[DEBUG] Player move result: {result}")
                                 if not result.get('game_over', False) and result.get('current_player') == 'ai':
                                     st.session_state.trigger_ai_move = True
+                                    print(f"[DEBUG] Set trigger_ai_move = True")
+                                else:
+                                    print(f"[DEBUG] Not setting trigger_ai_move - game_over: {result.get('game_over')}, current_player: {result.get('current_player')}")
                                 
                                 st.rerun()  # Show player move first
                             else:
