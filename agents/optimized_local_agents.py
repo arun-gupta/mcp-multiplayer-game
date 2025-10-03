@@ -548,9 +548,13 @@ class OptimizedLocalCoordinator:
             total_time = time.time() - start_time
             print(f"✅ Optimized AI move completed in {total_time:.3f}s")
             
+            # Debug: Print the actual move being returned
+            final_move = executor_result.get("move", {})
+            print(f"[DEBUG] Final move being returned: {final_move}")
+            
             return {
                 "success": True,
-                "move": executor_result.get("move", {}),
+                "move": final_move,
                 "process": {
                     "scout": scout_result,
                     "strategist": strategist_result,
