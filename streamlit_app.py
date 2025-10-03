@@ -1116,8 +1116,11 @@ def main():
                 st.markdown("### 📝 Move History")
                 
                 # Show move history from actual game history
+                print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
+                print(f"[DEBUG] Move History - game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
                 if 'game_history' in game_state and game_state['game_history']:
-                    for i, move in enumerate(game_state['game_history'], 1):
+                    for move in game_state['game_history']:
+                        move_number = move.get('move_number', 0)
                         player = move.get('player', 'unknown')
                         position = move.get('position', {})
                         row = position.get('row', 0)
@@ -1125,9 +1128,9 @@ def main():
                         symbol = position.get('value', '')
                         
                         if player == 'player':
-                            st.write(f"{i}. 👤 You placed {symbol} at ({row}, {col})")
+                            st.write(f"{move_number}. 👤 You placed {symbol} at ({row}, {col})")
                         else:
-                            st.write(f"{i}. 🤖 Double-O-AI placed {symbol} at ({row}, {col})")
+                            st.write(f"{move_number}. 🤖 Double-O-AI placed {symbol} at ({row}, {col})")
                 else:
                     st.info("No moves yet - click a cell to start!")
                 
