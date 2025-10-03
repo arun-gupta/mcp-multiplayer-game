@@ -106,8 +106,9 @@ Validate and execute the move:""")
             llm_duration = time.time() - llm_start
             
             total_duration = time.time() - start_time
+            overhead = total_duration - llm_duration
             print(f"[DEBUG] ExecutorLangChain: Move execution completed")
-            print(f"[TIMING] Executor Agent - LLM call: {llm_duration:.3f}s, Total: {total_duration:.3f}s")
+            print(f"[TIMING] Executor Agent - LLM: {llm_duration:.3f}s, Overhead: {overhead:.3f}s, Total: {total_duration:.3f}s")
             
             return {
                 "success": True,

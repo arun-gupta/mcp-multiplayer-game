@@ -105,8 +105,9 @@ Recommend the best move:""")
             llm_duration = time.time() - llm_start
             
             total_duration = time.time() - start_time
+            overhead = total_duration - llm_duration
             print(f"[DEBUG] StrategistLangChain: Strategy created successfully")
-            print(f"[TIMING] Strategist Agent - LLM call: {llm_duration:.3f}s, Total: {total_duration:.3f}s")
+            print(f"[TIMING] Strategist Agent - LLM: {llm_duration:.3f}s, Overhead: {overhead:.3f}s, Total: {total_duration:.3f}s")
             
             return {
                 "success": True,
