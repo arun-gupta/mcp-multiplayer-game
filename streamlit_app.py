@@ -1098,6 +1098,7 @@ def main():
                     st.info("💡 **First move tip**: The AI may take a few seconds to respond on the first move as it loads the model. Subsequent moves will be faster!")
                 
                 # Render game board
+                print(f"[DEBUG] Rendering board with state: {board}")
                 render_game_board(board, game_over)
             
             # Handle AI move trigger AFTER board is rendered
