@@ -117,7 +117,7 @@ def render_board(board: List[List[str]], game_over: bool = False):
                     # Make player move
                     result = make_move(i, j)
                     if result and result.get('success'):
-                        # Update session state
+                        # Update session state with player move
                         move_count = sum(1 for row in result["board"] for cell in row if cell != "")
                         st.session_state.game_state = {
                             "board": result["board"],
@@ -127,30 +127,14 @@ def render_board(board: List[List[str]], game_over: bool = False):
                             "move_count": move_count
                         }
                         
-                        # Check if AI should move
-                        if not result.get('game_over', False) and result.get('current_player') == 'O':
-                            with st.spinner("🤖 AI is thinking..."):
-                                start_time = time.time()
-                                ai_result = get_ai_move()
-                                duration = time.time() - start_time
-                            
-                            if ai_result and ai_result.get('success'):
-                                st.success(f"✅ AI move completed in {duration:.3f}s")
-                                # Update session state with AI move
-                                move_count = sum(1 for row in ai_result["board"] for cell in row if cell != "")
-                                st.session_state.game_state = {
-                                    "board": ai_result["board"],
-                                    "current_player": ai_result["current_player"],
-                                    "game_over": ai_result["game_over"],
-                                    "winner": ai_result.get("winner"),
-                                    "move_count": move_count
-                                }
-                            else:
-                                st.error(f"❌ AI move failed after {duration:.3f}s")
-                                if ai_result:
-                                    st.error(f"Error: {ai_result.get('error', 'Unknown error')}")
+                        # Show player move first, then trigger AI move
+                        st.success("✅ Your move recorded!")
+                        st.rerun()  # Show player move first
                         
-                        st.rerun()
+                        # Check if AI should move (this will happen after rerun)
+                        if not result.get('game_over', False) and result.get('current_player') == 'O':
+                            # Set flag to trigger AI move on next render
+                            st.session_state.trigger_ai_move = True
                     else:
                         st.error("Invalid move!")
 
@@ -170,6 +154,32 @@ def main():
         start_new_game()
     
     game_state = st.session_state.game_state
+    
+    # Handle AI move trigger
+    if st.session_state.get('trigger_ai_move', False):
+        st.session_state.trigger_ai_move = False  # Reset flag
+        
+        with st.spinner("🤖 AI is thinking..."):
+            start_time = time.time()
+            ai_result = get_ai_move()
+            duration = time.time() - start_time
+        
+        if ai_result and ai_result.get('success'):
+            st.success(f"✅ AI move completed in {duration:.3f}s")
+            # Update session state with AI move
+            move_count = sum(1 for row in ai_result["board"] for cell in row if cell != "")
+            st.session_state.game_state = {
+                "board": ai_result["board"],
+                "current_player": ai_result["current_player"],
+                "game_over": ai_result["game_over"],
+                "winner": ai_result.get("winner"),
+                "move_count": move_count
+            }
+            st.rerun()
+        else:
+            st.error(f"❌ AI move failed after {duration:.3f}s")
+            if ai_result:
+                st.error(f"Error: {ai_result.get('error', 'Unknown error')}")
     
     # Calculate move count from board
     move_count = sum(1 for row in game_state['board'] for cell in row if cell != "")
