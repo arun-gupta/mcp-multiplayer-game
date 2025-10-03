@@ -282,29 +282,43 @@ async def ai_move():
     try:
         if distributed_mode:
             # Use distributed coordinator
+            print(f"[DEBUG] Using distributed coordinator")
             result = await distributed_coordinator.get_ai_move()
         else:
             # Use optimized local coordinator
+            print(f"[DEBUG] Using optimized local coordinator")
+            print(f"[DEBUG] Game state: {game_state}")
             result = await optimized_coordinator.get_ai_move(game_state)
+            print(f"[DEBUG] Optimized coordinator result: {result}")
         
         if result and "error" not in result:
             # Extract move from result
             move = result.get("move", {})
-            if move and "row" in move and "col" in move:
-                # Make the AI move
+            
+            # Handle both list format [row, col] and dict format {"row": row, "col": col}
+            if isinstance(move, list) and len(move) == 2:
+                # Convert list format [row, col] to row, col
+                row, col = move[0], move[1]
+                success = make_ai_move(row, col)
+            elif isinstance(move, dict) and "row" in move and "col" in move:
+                # Handle dict format {"row": row, "col": col}
                 success = make_ai_move(move["row"], move["col"])
-                if success:
-                    duration = time.time() - start_time
-                    return {
-                        "success": True,
-                        "move": move,
-                        "board": game_state["board"],
-                        "current_player": game_state["current_player"],
-                        "game_over": game_state["game_over"],
-                        "winner": game_state["winner"],
-                        "ai_response_time": f"{duration:.3f}s",
-                        "architecture": "Distributed" if distributed_mode else "Optimized Local"
-                    }
+            else:
+                print(f"[DEBUG] Invalid move format: {move}")
+                success = False
+            
+            if success:
+                duration = time.time() - start_time
+                return {
+                    "success": True,
+                    "move": move,
+                    "board": game_state["board"],
+                    "current_player": game_state["current_player"],
+                    "game_over": game_state["game_over"],
+                    "winner": game_state["winner"],
+                    "ai_response_time": f"{duration:.3f}s",
+                    "architecture": "Distributed" if distributed_mode else "Optimized Local"
+                }
         
         # Fallback
         return {"success": False, "error": "AI move failed"}
