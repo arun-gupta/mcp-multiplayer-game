@@ -210,8 +210,11 @@ st.markdown("""
 def get_game_state():
     """Get current game state from MCP API"""
     try:
-        print(f"[DEBUG] Fetching game state from API")
-        response = requests.get(f"{API_BASE}/state")
+        import time
+        # Add cache-busting parameter to force fresh data
+        cache_buster = int(time.time() * 1000)  # milliseconds
+        print(f"[DEBUG] Fetching game state from API (cache-buster: {cache_buster})")
+        response = requests.get(f"{API_BASE}/state?t={cache_buster}")
         print(f"[DEBUG] Game state API response status: {response.status_code}")
         if response.status_code == 200:
             result = response.json()
@@ -683,8 +686,11 @@ def render_game_board(board, game_over=False):
                             if result and result.get('success'):
                                 st.success(f"✅ Your move recorded at ({row}, {col})")
                                 
-                                # Check if AI should move (set flag for next render)
+                                # Force refresh of game state to update Move History immediately
                                 print(f"[DEBUG] Player move result: {result}")
+                                print(f"[DEBUG] Forcing game state refresh for Move History update")
+                                
+                                # Check if AI should move (set flag for next render)
                                 if not result.get('game_over', False) and result.get('current_player') == 'ai':
                                     st.session_state.trigger_ai_move = True
                                     print(f"[DEBUG] Set trigger_ai_move = True")
@@ -1118,6 +1124,8 @@ def main():
                 # Show move history from actual game history
                 print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
                 print(f"[DEBUG] Move History - game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
+                print(f"[DEBUG] Move History - game_history length: {len(game_state.get('game_history', [])) if game_state else 0}")
+                print(f"[DEBUG] Move History - game_history type: {type(game_state.get('game_history', [])) if game_state else 'None'}")
                 if 'game_history' in game_state and game_state['game_history']:
                     for move in game_state['game_history']:
                         move_number = move.get('move_number', 0)
