@@ -100,7 +100,7 @@ class MCPGameCoordinator:
             print("Local mode - agents will be set via set_agents() method")
     
     async def process_player_move(self, row: int, col: int) -> Dict:
-        """Process player move and orchestrate AI response via MCP"""
+        """Process player move only (AI move handled separately)"""
         
         # 1. Update game state with player move
         move_success = self.game_state.make_move(row, col, "player")
@@ -109,21 +109,23 @@ class MCPGameCoordinator:
         
         # 2. Check if game is over
         if self.game_state._check_winner() or self.game_state.move_number >= 9:
-            return {"game_over": True, "state": self.game_state.board}
+            return {
+                "success": True,
+                "player_move": {"row": row, "col": col},
+                "board": self.game_state.board,
+                "game_over": True,
+                "winner": self.game_state.winner,
+                "current_player": self.game_state.current_player
+            }
         
-        # 3. Get AI response via MCP protocol
-        ai_move_result = await self.get_ai_move()
-        
-        # 4. Check if game is over after AI move
-        game_over = self.game_state.game_over
-        winner = self.game_state.winner
-        
+        # 3. Return player move result (AI move will be handled separately)
         return {
+            "success": True,
             "player_move": {"row": row, "col": col},
-            "ai_move": ai_move_result,
             "board": self.game_state.board,
-            "game_over": game_over,
-            "winner": winner
+            "game_over": False,
+            "winner": None,
+            "current_player": self.game_state.current_player
         }
     
     async def get_ai_move(self) -> Dict:

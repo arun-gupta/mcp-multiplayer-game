@@ -680,7 +680,7 @@ def render_game_board(board, game_over=False):
                         if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", use_container_width=True):
                             # Make move instantly
                             result = make_move(row, col)
-                            if result:
+                            if result and result.get('success'):
                                 st.success(f"✅ Your move recorded at ({row}, {col})")
                                 
                                 # Check if AI should move (set flag for next render)
