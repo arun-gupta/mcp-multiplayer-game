@@ -31,17 +31,17 @@ class SharedLLMConnection:
         """Initialize shared LLM connection"""
         try:
             if "gpt" in self.model_name.lower():
-                self.llm = ChatOpenAI(model=self.model_name, timeout=5.0)
+                self.llm = ChatOpenAI(model=self.model_name, timeout=30.0)  # Increased timeout
             elif "claude" in self.model_name.lower():
-                self.llm = ChatAnthropic(model=self.model_name, timeout=5.0)
+                self.llm = ChatAnthropic(model=self.model_name, timeout=30.0)  # Increased timeout
             else:
                 # Use Ollama for local models
-                self.llm = Ollama(model=self.model_name, timeout=5.0)
+                self.llm = Ollama(model=self.model_name, timeout=30.0)  # Increased timeout
             print(f"✅ Shared LLM connection initialized: {self.model_name}")
         except Exception as e:
             print(f"❌ Failed to initialize shared LLM: {e}")
             # Fallback to Ollama
-            self.llm = Ollama(model="llama3.2:1b", timeout=5.0)
+            self.llm = Ollama(model="llama3.2:1b", timeout=30.0)  # Increased timeout
             self.model_name = "llama3.2:1b"
     
     def get_connection(self):
@@ -127,22 +127,33 @@ Return JSON: {{"opportunities": [[row, col]]}}"""
                 available_moves=json.dumps(board_state.get("available_moves", []))
             )
             
-            # Direct LLM call with shared connection
-            response = await self.llm.ainvoke(prompt)
-            
-            # Parse response
-            if hasattr(response, 'content'):
-                content = response.content
-            else:
-                content = str(response)
-            
-            # Extract JSON from response
-            import re
-            json_match = re.search(r'\{[^}]*\}', content)
-            if json_match:
-                result = json.loads(json_match.group())
-            else:
-                # Fallback parsing
+            # Direct LLM call with timeout and error handling
+            try:
+                response = await asyncio.wait_for(
+                    self.llm.ainvoke(prompt),
+                    timeout=25.0  # Slightly less than LLM timeout
+                )
+                
+                # Parse response
+                if hasattr(response, 'content'):
+                    content = response.content
+                else:
+                    content = str(response)
+                
+                # Extract JSON from response
+                import re
+                json_match = re.search(r'\{[^}]*\}', content)
+                if json_match:
+                    result = json.loads(json_match.group())
+                else:
+                    # Fallback parsing
+                    result = self._fallback_analysis(board_state)
+                    
+            except asyncio.TimeoutError:
+                print(f"⚠️ Scout LLM call timed out, using fallback analysis")
+                result = self._fallback_analysis(board_state)
+            except Exception as e:
+                print(f"⚠️ Scout LLM call failed: {e}, using fallback analysis")
                 result = self._fallback_analysis(board_state)
             
             duration = time.time() - start_time
@@ -239,21 +250,32 @@ Return JSON: {{"move": [row, col], "reasoning": "explanation"}}"""
                 available_moves=json.dumps(strategy_input.get("available_moves", []))
             )
             
-            # Direct LLM call
-            response = await self.llm.ainvoke(prompt)
-            
-            # Parse response
-            if hasattr(response, 'content'):
-                content = response.content
-            else:
-                content = str(response)
-            
-            # Extract JSON
-            import re
-            json_match = re.search(r'\{[^}]*\}', content)
-            if json_match:
-                result = json.loads(json_match.group())
-            else:
+            # Direct LLM call with timeout and error handling
+            try:
+                response = await asyncio.wait_for(
+                    self.llm.ainvoke(prompt),
+                    timeout=25.0  # Slightly less than LLM timeout
+                )
+                
+                # Parse response
+                if hasattr(response, 'content'):
+                    content = response.content
+                else:
+                    content = str(response)
+                
+                # Extract JSON
+                import re
+                json_match = re.search(r'\{[^}]*\}', content)
+                if json_match:
+                    result = json.loads(json_match.group())
+                else:
+                    result = self._fallback_strategy(strategy_input)
+                    
+            except asyncio.TimeoutError:
+                print(f"⚠️ Strategist LLM call timed out, using fallback strategy")
+                result = self._fallback_strategy(strategy_input)
+            except Exception as e:
+                print(f"⚠️ Strategist LLM call failed: {e}, using fallback strategy")
                 result = self._fallback_strategy(strategy_input)
             
             duration = time.time() - start_time
@@ -343,21 +365,32 @@ Is the move valid? Return JSON: {{"valid": true/false, "reasoning": "explanation
                 board=json.dumps(execution_input.get("board", []))
             )
             
-            # Direct LLM call
-            response = await self.llm.ainvoke(prompt)
-            
-            # Parse response
-            if hasattr(response, 'content'):
-                content = response.content
-            else:
-                content = str(response)
-            
-            # Extract JSON
-            import re
-            json_match = re.search(r'\{[^}]*\}', content)
-            if json_match:
-                result = json.loads(json_match.group())
-            else:
+            # Direct LLM call with timeout and error handling
+            try:
+                response = await asyncio.wait_for(
+                    self.llm.ainvoke(prompt),
+                    timeout=25.0  # Slightly less than LLM timeout
+                )
+                
+                # Parse response
+                if hasattr(response, 'content'):
+                    content = response.content
+                else:
+                    content = str(response)
+                
+                # Extract JSON
+                import re
+                json_match = re.search(r'\{[^}]*\}', content)
+                if json_match:
+                    result = json.loads(json_match.group())
+                else:
+                    result = self._fallback_execution(execution_input)
+                    
+            except asyncio.TimeoutError:
+                print(f"⚠️ Executor LLM call timed out, using fallback execution")
+                result = self._fallback_execution(execution_input)
+            except Exception as e:
+                print(f"⚠️ Executor LLM call failed: {e}, using fallback execution")
                 result = self._fallback_execution(execution_input)
             
             duration = time.time() - start_time
