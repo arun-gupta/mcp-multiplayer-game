@@ -962,26 +962,15 @@ def render_model_switching():
 def main():
     """Main Streamlit app"""
     
-    # Initialize session state
-    if 'trigger_ai_move' not in st.session_state:
-        st.session_state.trigger_ai_move = False
+    # Force reset trigger_ai_move to False on every page load
+    st.session_state.trigger_ai_move = False
+    print(f"[DEBUG] Force reset trigger_ai_move to False on page load")
     
-    # Reset trigger_ai_move if it's True but no game is in progress
-    if st.session_state.get('trigger_ai_move', False):
-        # Check if we're in a valid state to trigger AI move
-        game_state = get_game_state()
-        if game_state:
-            current_player = game_state.get('current_player', 'player')
-            move_number = game_state.get('move_number', 0)
-            
-            # Only allow AI move trigger if it's actually the AI's turn and there are moves
-            if current_player != 'ai' or move_number == 0:
-                print(f"[DEBUG] Resetting trigger_ai_move - current_player: {current_player}, move_number: {move_number}")
-                st.session_state.trigger_ai_move = False
-        else:
-            # No game state available, reset trigger
-            print(f"[DEBUG] No game state available, resetting trigger_ai_move")
-            st.session_state.trigger_ai_move = False
+    # Add a debug button to clear all session state
+    if st.button("🔧 Clear Session State (Debug)", key="clear_session"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
     
     # Header with GitHub link
     st.markdown("""
@@ -1075,6 +1064,7 @@ def main():
             if st.session_state.get('trigger_ai_move', False):
                 st.session_state.trigger_ai_move = False  # Reset flag
                 print(f"[DEBUG] AI move trigger activated - current_player: {current_player}")
+                print(f"[DEBUG] This should NOT happen on page load - investigating...")
                 
                 with st.spinner("🤖 AI is thinking..."):
                     start_time = time.time()
