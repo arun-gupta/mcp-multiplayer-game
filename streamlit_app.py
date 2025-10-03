@@ -966,9 +966,10 @@ def render_model_switching():
 def main():
     """Main Streamlit app"""
     
-    # Force reset trigger_ai_move to False on every page load
-    st.session_state.trigger_ai_move = False
-    print(f"[DEBUG] Force reset trigger_ai_move to False on page load")
+    # Initialize trigger_ai_move if not set
+    if 'trigger_ai_move' not in st.session_state:
+        st.session_state.trigger_ai_move = False
+        print(f"[DEBUG] Initialize trigger_ai_move to False")
     
     # Add debug buttons
     col1, col2 = st.columns(2)
