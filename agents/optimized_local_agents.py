@@ -300,11 +300,36 @@ Return JSON: {{"move": [row, col], "reasoning": "explanation"}}"""
         corners = [[0, 0], [0, 2], [2, 0], [2, 2]]
         
         if center in available_moves:
-            return {"strategy": "Take center", "reasoning": "Center control is key"}
+            return {
+                "strategy": "Take center", 
+                "reasoning": "Center control is key",
+                "recommended_move": {"row": 1, "col": 1}
+            }
         elif any(corner in available_moves for corner in corners):
-            return {"strategy": "Take corner", "reasoning": "Corner positioning"}
+            # Find first available corner
+            for corner in corners:
+                if corner in available_moves:
+                    return {
+                        "strategy": "Take corner", 
+                        "reasoning": "Corner positioning",
+                        "recommended_move": {"row": corner[0], "col": corner[1]}
+                    }
         else:
-            return {"strategy": "Take any available", "reasoning": "Any move is better than none"}
+            # Take first available move
+            if available_moves:
+                move = available_moves[0]
+                return {
+                    "strategy": "Take any available", 
+                    "reasoning": "Any move is better than none",
+                    "recommended_move": {"row": move[0], "col": move[1]}
+                }
+        
+        # Final fallback
+        return {
+            "strategy": "Emergency fallback", 
+            "reasoning": "No moves available",
+            "recommended_move": {"row": 1, "col": 1}
+        }
 
 
 class OptimizedExecutorAgent:
@@ -503,9 +528,18 @@ class OptimizedLocalCoordinator:
             }
             strategist_result = await self.strategist.create_strategy(strategist_input)
             
+            # Extract recommended move from strategist
+            strategist_move = strategist_result.get("recommended_move", {})
+            if not strategist_move or "row" not in strategist_move or "col" not in strategist_move:
+                # Fallback to first available move
+                if available_moves:
+                    strategist_move = {"row": available_moves[0][0], "col": available_moves[0][1]}
+                else:
+                    strategist_move = {"row": 1, "col": 1}  # Final fallback to center
+            
             # Executor move
             executor_input = {
-                "recommended_move": {"row": 1, "col": 1},  # Default to center
+                "recommended_move": strategist_move,
                 "strategy": strategist_result.get("strategy", ""),
                 "board": board
             }
