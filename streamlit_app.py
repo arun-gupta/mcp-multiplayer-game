@@ -681,8 +681,13 @@ def render_game_board(board, game_over=False):
                             # Make move instantly
                             result = make_move(row, col)
                             if result:
-                                st.success(f"Move made at ({row}, {col})")
-                                st.rerun()
+                                st.success(f"✅ Your move recorded at ({row}, {col})")
+                                
+                                # Check if AI should move (set flag for next render)
+                                if not result.get('game_over', False) and result.get('current_player') == 'ai':
+                                    st.session_state.trigger_ai_move = True
+                                
+                                st.rerun()  # Show player move first
                             else:
                                 st.error("Failed to make move")
                     else:
@@ -1042,23 +1047,28 @@ def main():
             game_over = game_state.get('game_over', False)
             winner = game_state.get('winner')
             
-            # Auto-trigger AI move if it's the AI's turn
-            if current_player == "ai" and not game_over:
-                # Trigger AI move automatically (should be instant)
-                try:
-                    # Use dedicated AI move endpoint
-                    ai_result = requests.post(f"{API_BASE}/ai-move")
-                    if ai_result.status_code == 200:
-                        result = ai_result.json()
-                        if result.get("success"):
-                            st.success("🤖 AI made its move!")
-                            st.rerun()
+            # Handle AI move trigger (only after player move)
+            if st.session_state.get('trigger_ai_move', False):
+                st.session_state.trigger_ai_move = False  # Reset flag
+                
+                with st.spinner("🤖 AI is thinking..."):
+                    start_time = time.time()
+                    try:
+                        ai_result = requests.post(f"{API_BASE}/ai-move")
+                        duration = time.time() - start_time
+                        
+                        if ai_result.status_code == 200:
+                            result = ai_result.json()
+                            if result.get("success"):
+                                st.success(f"✅ AI move completed in {duration:.3f}s")
+                                st.rerun()
+                            else:
+                                st.error(f"❌ AI move failed after {duration:.3f}s")
+                                st.error(f"Error: {result.get('error', 'Unknown error')}")
                         else:
-                            st.error(f"AI move failed: {result.get('error', 'Unknown error')}")
-                    else:
-                        st.error("Failed to trigger AI move")
-                except Exception as e:
-                    st.error(f"Error triggering AI move: {e}")
+                            st.error("Failed to trigger AI move")
+                    except Exception as e:
+                        st.error(f"Error triggering AI move: {e}")
                 return
             
             
