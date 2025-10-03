@@ -25,9 +25,9 @@ def make_request(endpoint: str, method: str = "GET", data: dict = None) -> Optio
     try:
         url = f"{API_BASE}{endpoint}"
         if method == "GET":
-            response = requests.get(url, timeout=30)  # Increased timeout for AI moves
+            response = requests.get(url, timeout=60)  # Increased timeout for AI moves
         elif method == "POST":
-            response = requests.post(url, json=data, timeout=30)  # Increased timeout for AI moves
+            response = requests.post(url, json=data, timeout=60)  # Increased timeout for AI moves
         else:
             return None
         
