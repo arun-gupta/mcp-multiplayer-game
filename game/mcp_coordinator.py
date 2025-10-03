@@ -78,14 +78,17 @@ class MCPGameCoordinator:
                     })
                     self.mcp_adapters[agent_name] = adapter
                     
-                    # Create CrewAI agent with MCP tools
+                    # Create CrewAI agent with MCP tools and performance optimizations
                     from crewai import Agent
                     crewai_agent = Agent(
                         role=f"{agent_name.title()} Agent",
                         goal=f"Provide {agent_name} capabilities via MCP protocol",
                         backstory=f"Expert {agent_name} agent connected via MCP",
                         tools=adapter,
-                        verbose=True
+                        memory=False,  # Disable context retention for better performance
+                        verbose=False,  # Reduce processing of output
+                        allow_delegation=False,  # Skip delegation logic
+                        max_iter=1  # Limit reasoning loops
                     )
                     self.crewai_agents[agent_name] = crewai_agent
                     

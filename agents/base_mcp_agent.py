@@ -23,14 +23,16 @@ class BaseMCPAgent(Agent, ABC):
     
     def __init__(self, role: str, goal: str, backstory: str, 
                  mcp_port: int, agent_id: str, **kwargs):
-        # Initialize CrewAI Agent with only valid CrewAI parameters
+        # Initialize CrewAI Agent with performance optimizations
         Agent.__init__(
             self,
             role=role,
             goal=goal, 
             backstory=backstory,
-            memory=True,
-            verbose=True,
+            memory=False,  # Disable context retention for better performance
+            verbose=False,  # Reduce processing of output
+            allow_delegation=False,  # Skip delegation logic
+            max_iter=1,  # Limit reasoning loops
             **kwargs
         )
         
