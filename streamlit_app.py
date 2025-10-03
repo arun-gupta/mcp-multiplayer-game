@@ -961,6 +961,11 @@ def render_model_switching():
 
 def main():
     """Main Streamlit app"""
+    
+    # Initialize session state
+    if 'trigger_ai_move' not in st.session_state:
+        st.session_state.trigger_ai_move = False
+    
     # Header with GitHub link
     st.markdown("""
     <style>
@@ -1047,9 +1052,12 @@ def main():
             game_over = game_state.get('game_over', False)
             winner = game_state.get('winner')
             
+            print(f"[DEBUG] Game state - current_player: {current_player}, move_number: {move_number}, trigger_ai_move: {st.session_state.get('trigger_ai_move', False)}")
+            
             # Handle AI move trigger (only after player move)
             if st.session_state.get('trigger_ai_move', False):
                 st.session_state.trigger_ai_move = False  # Reset flag
+                print(f"[DEBUG] AI move trigger activated - current_player: {current_player}")
                 
                 with st.spinner("🤖 AI is thinking..."):
                     start_time = time.time()
