@@ -144,16 +144,22 @@ class MCPGameCoordinator:
                 )
                 if result and "error" not in result:
                     total_time = time.time() - start_time
-                    print(f"[DEBUG] MCP coordination completed in {total_time:.3f}s")
+                    print(f"[TIMING] MCP Coordination - Total: {total_time:.3f}s")
                     return result
                 else:
+                    total_time = time.time() - start_time
                     print(f"[DEBUG] MCP coordination returned error: {result}")
+                    print(f"[TIMING] MCP Coordination - FAILED after {total_time:.3f}s")
                     return {"error": "MCP coordination failed", "details": result}
             except asyncio.TimeoutError:
-                print("[DEBUG] MCP coordination timed out")
+                total_time = time.time() - start_time
+                print(f"[DEBUG] MCP coordination timed out")
+                print(f"[TIMING] MCP Coordination - TIMEOUT after {total_time:.3f}s")
                 return {"error": "MCP coordination timed out"}
             except Exception as e:
+                total_time = time.time() - start_time
                 print(f"[DEBUG] MCP coordination failed: {e}")
+                print(f"[TIMING] MCP Coordination - FAILED after {total_time:.3f}s")
                 return {"error": f"MCP coordination failed: {e}"}
         else:
             # LOCAL MODE: Direct agent calls - no MCP protocol
@@ -208,7 +214,7 @@ class MCPGameCoordinator:
                     return {"error": "Failed to make AI move"}
                 
                 total_time = time.time() - start_time
-                print(f"[DEBUG] Direct agent calls completed in {total_time:.3f}s")
+                print(f"[TIMING] Local Coordination - Total: {total_time:.3f}s")
                 
                 return {
                     "success": True,
@@ -223,7 +229,9 @@ class MCPGameCoordinator:
                 }
                 
             except Exception as e:
+                total_time = time.time() - start_time
                 print(f"[DEBUG] Direct agent calls failed: {e}")
+                print(f"[TIMING] Local Coordination - FAILED after {total_time:.3f}s")
                 return {"error": f"Agent calls failed: {e}"}
     
     async def _optimized_mcp_coordination_flow(self) -> Dict:

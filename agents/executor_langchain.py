@@ -79,6 +79,9 @@ Validate and execute the move:""")
     
     async def execute_move(self, execution_input: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a move based on strategy recommendation"""
+        import time
+        start_time = time.time()
+        
         try:
             print(f"[DEBUG] ExecutorLangChain: Starting move execution")
             
@@ -92,6 +95,7 @@ Validate and execute the move:""")
             chain = self.prompt | self.llm | self.parser
             
             # Make the call
+            llm_start = time.time()
             result = await chain.ainvoke({
                 "recommended_move": json.dumps(recommended_move),
                 "board": json.dumps(board),
@@ -99,8 +103,11 @@ Validate and execute the move:""")
                 "current_player": current_player,
                 "format_instructions": self.parser.get_format_instructions()
             })
+            llm_duration = time.time() - llm_start
             
+            total_duration = time.time() - start_time
             print(f"[DEBUG] ExecutorLangChain: Move execution completed")
+            print(f"[TIMING] Executor Agent - LLM call: {llm_duration:.3f}s, Total: {total_duration:.3f}s")
             
             return {
                 "success": True,
@@ -111,7 +118,9 @@ Validate and execute the move:""")
             }
             
         except Exception as e:
+            total_duration = time.time() - start_time
             print(f"[DEBUG] ExecutorLangChain: Move execution failed: {e}")
+            print(f"[TIMING] Executor Agent - FAILED after {total_duration:.3f}s")
             return {
                 "success": False,
                 "error": str(e),

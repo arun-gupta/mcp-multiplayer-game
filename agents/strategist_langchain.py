@@ -76,6 +76,9 @@ Recommend the best move:""")
     
     async def create_strategy(self, strategy_input: Dict[str, Any]) -> Dict[str, Any]:
         """Create strategy based on board analysis"""
+        import time
+        start_time = time.time()
+        
         try:
             print(f"[DEBUG] StrategistLangChain: Starting strategy creation")
             
@@ -90,6 +93,7 @@ Recommend the best move:""")
             chain = self.prompt | self.llm | self.parser
             
             # Make the call
+            llm_start = time.time()
             result = await chain.ainvoke({
                 "board": json.dumps(board),
                 "threats": json.dumps(threats),
@@ -98,8 +102,11 @@ Recommend the best move:""")
                 "current_player": current_player,
                 "format_instructions": self.parser.get_format_instructions()
             })
+            llm_duration = time.time() - llm_start
             
+            total_duration = time.time() - start_time
             print(f"[DEBUG] StrategistLangChain: Strategy created successfully")
+            print(f"[TIMING] Strategist Agent - LLM call: {llm_duration:.3f}s, Total: {total_duration:.3f}s")
             
             return {
                 "success": True,
@@ -110,7 +117,9 @@ Recommend the best move:""")
             }
             
         except Exception as e:
+            total_duration = time.time() - start_time
             print(f"[DEBUG] StrategistLangChain: Strategy creation failed: {e}")
+            print(f"[TIMING] Strategist Agent - FAILED after {total_duration:.3f}s")
             return {
                 "success": False,
                 "error": str(e),

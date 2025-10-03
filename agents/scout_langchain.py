@@ -72,6 +72,9 @@ Provide your analysis:""")
     
     async def analyze_board(self, board_state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze the board and return structured analysis"""
+        import time
+        start_time = time.time()
+        
         try:
             print(f"[DEBUG] ScoutLangChain: Starting board analysis")
             
@@ -84,14 +87,18 @@ Provide your analysis:""")
             chain = self.prompt | self.llm | self.parser
             
             # Make the call
+            llm_start = time.time()
             result = await chain.ainvoke({
                 "board": json.dumps(board),
                 "current_player": current_player,
                 "available_moves": json.dumps(available_moves),
                 "format_instructions": self.parser.get_format_instructions()
             })
+            llm_duration = time.time() - llm_start
             
+            total_duration = time.time() - start_time
             print(f"[DEBUG] ScoutLangChain: Analysis completed successfully")
+            print(f"[TIMING] Scout Agent - LLM call: {llm_duration:.3f}s, Total: {total_duration:.3f}s")
             
             return {
                 "success": True,
@@ -103,7 +110,9 @@ Provide your analysis:""")
             }
             
         except Exception as e:
+            total_duration = time.time() - start_time
             print(f"[DEBUG] ScoutLangChain: Analysis failed: {e}")
+            print(f"[TIMING] Scout Agent - FAILED after {total_duration:.3f}s")
             return {
                 "success": False,
                 "error": str(e),
