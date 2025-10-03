@@ -1060,11 +1060,11 @@ def main():
             
             print(f"[DEBUG] Game state - current_player: {current_player}, move_number: {move_number}, trigger_ai_move: {st.session_state.get('trigger_ai_move', False)}")
             
-            # Handle AI move trigger (only after player move)
-            if st.session_state.get('trigger_ai_move', False):
+            # Handle AI move trigger (when it's AI's turn)
+            if st.session_state.get('trigger_ai_move', False) or current_player == 'ai':
                 st.session_state.trigger_ai_move = False  # Reset flag
                 print(f"[DEBUG] AI move trigger activated - current_player: {current_player}")
-                print(f"[DEBUG] This should NOT happen on page load - investigating...")
+                print(f"[DEBUG] AI move should now be triggered")
                 
                 with st.spinner("🤖 AI is thinking..."):
                     start_time = time.time()
