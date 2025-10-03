@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sse_starlette import EventSourceResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
+from contextlib import asynccontextmanager
 import uvicorn
 import os
 import json
@@ -61,7 +62,8 @@ from models.factory import ModelFactory
 app = FastAPI(
     title="MCP Protocol Tic Tac Toe",
     description="Multi-Agent Game Simulation using CrewAI + MCP Protocol",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -101,10 +103,12 @@ class AgentStatusResponse(BaseModel):
     agents: Dict[str, Any]
     coordinator: Dict[str, Any]
 
-@app.on_event("startup")
-async def startup_event():
-    """Start agents and coordinator based on framework mode"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for startup and shutdown"""
     global scout_agent, strategist_agent, executor_agent, coordinator, distributed_mode
+    
+    print("🚀 Startup event triggered - initializing agents...")
 
     # Load configuration
     from utils.config import config
@@ -294,6 +298,12 @@ async def startup_event():
         print("="*50 + "\n")
 
     print("🎉 MCP CrewAI system initialized!")
+    
+    # Yield control back to FastAPI
+    yield
+    
+    # Shutdown logic (if needed)
+    print("🛑 Shutting down...")
     print("🚀 Game is fully pre-warmed and ready to play!")
     print("⚡ First move should now be instant!")
 
