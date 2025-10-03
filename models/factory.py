@@ -41,8 +41,9 @@ class ModelFactory:
                     )
             
             elif model_config.provider == ModelProvider.ANTHROPIC:
-                return ChatAnthropic(
-                    model=model_config.model_id,
+                # For LiteLLM, use the proper format
+                return ChatLiteLLM(
+                    model=f"anthropic/{model_config.model_id}",
                     temperature=model_config.temperature,
                     max_completion_tokens=model_config.max_tokens
                 )
@@ -88,10 +89,24 @@ class ModelFactory:
         # Assign models based on availability and preferences
         assignments = {}
         
-        # Priority: GPT-5 > Llama 3.2 > others
-        # Scout: Prefer GPT-5, fallback to Llama 3.2, then other models
-        if any("gpt-5" in model.name for model in cloud_models):
+        # Priority: GPT-5 Mini > Claude 4.5 Sonnet > Claude 3.5 Haiku > Claude 3.5 Sonnet > Claude 3 > Llama 3.2 > others
+        # Scout: Prefer GPT-5 Mini (reliable and fast), fallback to Claude models
+        if any("gpt-5-mini" in model.name for model in cloud_models):
+            scout_model = "gpt-5-mini"  # Prefer GPT-5 Mini for reliability
+        elif any("claude-4.5-sonnet" in model.name for model in cloud_models):
+            scout_model = "claude-4.5-sonnet"  # Fallback to Claude 4.5 Sonnet
+        elif any("claude-3.5-haiku" in model.name for model in cloud_models):
+            scout_model = "claude-3.5-haiku"  # Fallback to Claude 3.5 Haiku
+        elif any("claude-3.5-sonnet" in model.name for model in cloud_models):
+            scout_model = "claude-3.5-sonnet"  # Fallback to Claude 3.5 Sonnet
+        elif any("claude-3-sonnet" in model.name for model in cloud_models):
+            scout_model = "claude-3-sonnet"  # Fallback to Claude 3
+        elif any("gpt-5-mini" in model.name for model in cloud_models):
+            scout_model = "gpt-5-mini"  # Then GPT-5 Mini
+        elif any("gpt-5" in model.name for model in cloud_models):
             scout_model = next(model.name for model in cloud_models if "gpt-5" in model.name)
+        elif any("llama3.2-1b" in model.name.lower() for model in local_models):
+            scout_model = "llama3.2-1b"  # Prefer 1B for speed
         elif any("llama3.2" in model.name.lower() for model in local_models):
             scout_model = next(model.name for model in local_models if "llama3.2" in model.name.lower())
         elif cloud_models:
@@ -101,9 +116,23 @@ class ModelFactory:
         else:
             scout_model = "gpt-5-mini"  # Fallback if no models available
 
-        # Strategist: Prefer GPT-5, fallback to Llama 3.2, then other models
-        if any("gpt-5" in model.name for model in cloud_models):
+        # Strategist: Prefer GPT-5 Mini (reliable), fallback to Claude models
+        if any("gpt-5-mini" in model.name for model in cloud_models):
+            strategist_model = "gpt-5-mini"  # Prefer GPT-5 Mini for reliability
+        elif any("claude-4.5-sonnet" in model.name for model in cloud_models):
+            strategist_model = "claude-4.5-sonnet"  # Fallback to Claude 4.5 Sonnet
+        elif any("claude-3.5-haiku" in model.name for model in cloud_models):
+            strategist_model = "claude-3.5-haiku"  # Fallback to Claude 3.5 Haiku
+        elif any("claude-3.5-sonnet" in model.name for model in cloud_models):
+            strategist_model = "claude-3.5-sonnet"  # Fallback to Claude 3.5 Sonnet
+        elif any("claude-3-sonnet" in model.name for model in cloud_models):
+            strategist_model = "claude-3-sonnet"  # Fallback to Claude 3
+        elif any("gpt-5-mini" in model.name for model in cloud_models):
+            strategist_model = "gpt-5-mini"  # Then GPT-5 Mini
+        elif any("gpt-5" in model.name for model in cloud_models):
             strategist_model = next(model.name for model in cloud_models if "gpt-5" in model.name)
+        elif any("llama3.2-1b" in model.name.lower() for model in local_models):
+            strategist_model = "llama3.2-1b"  # Prefer 1B for speed
         elif any("llama3.2" in model.name.lower() for model in local_models):
             strategist_model = next(model.name for model in local_models if "llama3.2" in model.name.lower())
         elif cloud_models:
@@ -113,9 +142,23 @@ class ModelFactory:
         else:
             strategist_model = "gpt-5-mini"  # Fallback
 
-        # Executor: Prefer GPT-5, fallback to Llama 3.2, then other models
-        if any("gpt-5" in model.name for model in cloud_models):
+        # Executor: Prefer GPT-5 Mini (reliable), fallback to Claude models
+        if any("gpt-5-mini" in model.name for model in cloud_models):
+            executor_model = "gpt-5-mini"  # Prefer GPT-5 Mini for reliability
+        elif any("claude-4.5-sonnet" in model.name for model in cloud_models):
+            executor_model = "claude-4.5-sonnet"  # Fallback to Claude 4.5 Sonnet
+        elif any("claude-3.5-haiku" in model.name for model in cloud_models):
+            executor_model = "claude-3.5-haiku"  # Fallback to Claude 3.5 Haiku
+        elif any("claude-3.5-sonnet" in model.name for model in cloud_models):
+            executor_model = "claude-3.5-sonnet"  # Fallback to Claude 3.5 Sonnet
+        elif any("claude-3-sonnet" in model.name for model in cloud_models):
+            executor_model = "claude-3-sonnet"  # Fallback to Claude 3
+        elif any("gpt-5-mini" in model.name for model in cloud_models):
+            executor_model = "gpt-5-mini"  # Then GPT-5 Mini
+        elif any("gpt-5" in model.name for model in cloud_models):
             executor_model = next(model.name for model in cloud_models if "gpt-5" in model.name)
+        elif any("llama3.2-1b" in model.name.lower() for model in local_models):
+            executor_model = "llama3.2-1b"  # Prefer 1B for speed
         elif any("llama3.2" in model.name.lower() for model in local_models):
             executor_model = next(model.name for model in local_models if "llama3.2" in model.name.lower())
         elif cloud_models:
@@ -145,4 +188,9 @@ class ModelFactory:
             return model_config._check_ollama_model_status() == "available"
         else:
             # For cloud models, use the static availability check
-            return model_config.is_available 
+            return model_config.is_available
+    
+    @staticmethod
+    def create_llm_for_agent(agent_id: str, model_name: str) -> Optional[object]:
+        """Create an LLM instance for a specific agent"""
+        return ModelFactory.create_llm(model_name) 

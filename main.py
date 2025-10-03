@@ -51,6 +51,9 @@ from game.mcp_coordinator import MCPGameCoordinator
 from agents.scout_local import ScoutMCPAgent
 from agents.strategist_local import StrategistMCPAgent
 from agents.executor_local import ExecutorMCPAgent
+from agents.scout_langchain import ScoutLangChain
+from agents.strategist_langchain import StrategistLangChain
+from agents.executor_langchain import ExecutorLangChain
 from models.registry import model_registry
 from models.factory import ModelFactory
 
@@ -91,7 +94,6 @@ class MoveRequest(BaseModel):
 
 class ModelSwitchRequest(BaseModel):
     """Request model for switching agent model"""
-    agent: str
     model: str
 
 class AgentStatusResponse(BaseModel):
@@ -101,10 +103,14 @@ class AgentStatusResponse(BaseModel):
 
 @app.on_event("startup")
 async def startup_event():
-    """Start MCP agents and coordinator"""
+    """Start agents and coordinator based on framework mode"""
     global scout_agent, strategist_agent, executor_agent, coordinator, distributed_mode
 
-    print("🚀 Starting MCP CrewAI system...")
+    # Load configuration
+    from utils.config import config
+    agent_framework = config.get("agent_framework", "mode", default="langchain")
+    
+    print(f"🚀 Starting {agent_framework.upper()} system...")
 
     # Check for distributed mode
     import sys
@@ -151,55 +157,99 @@ async def startup_event():
         else:
             print("⚠️ No models available - agents will be created but may not function")
     
-    # Initialize agents with MCP servers
-    try:
-        scout_agent = ScoutMCPAgent({"model": default_model})
-        print(f"✅ Scout MCP Agent created with {default_model}")
-    except Exception as e:
-        print(f"❌ Error creating Scout MCP Agent: {e}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
-        scout_agent = None
-    
-    try:
-        strategist_agent = StrategistMCPAgent({"model": default_model})
-        print(f"✅ Strategist MCP Agent created with {default_model}")
-    except Exception as e:
-        print(f"❌ Error creating Strategist MCP Agent: {e}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
-        strategist_agent = None
-    
-    try:
-        executor_agent = ExecutorMCPAgent({"model": default_model})
-        print(f"✅ Executor MCP Agent created with {default_model}")
-    except Exception as e:
-        print(f"❌ Error creating Executor MCP Agent: {e}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
-        executor_agent = None
+    # Initialize agents based on framework mode
+    if agent_framework == "langchain":
+        print("🔗 Using LangChain agents (faster and more reliable)")
+        try:
+            scout_agent = ScoutLangChain(default_model)
+            print(f"✅ Scout LangChain Agent created with {default_model}")
+        except Exception as e:
+            print(f"❌ Error creating Scout LangChain Agent: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            scout_agent = None
+        
+        try:
+            strategist_agent = StrategistLangChain(default_model)
+            print(f"✅ Strategist LangChain Agent created with {default_model}")
+        except Exception as e:
+            print(f"❌ Error creating Strategist LangChain Agent: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            strategist_agent = None
+        
+        try:
+            executor_agent = ExecutorLangChain(default_model)
+            print(f"✅ Executor LangChain Agent created with {default_model}")
+        except Exception as e:
+            print(f"❌ Error creating Executor LangChain Agent: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            executor_agent = None
+            
+    elif agent_framework == "crewai":
+        print("🤖 Using CrewAI agents (with MCP protocol)")
+        try:
+            scout_agent = ScoutMCPAgent({"model": default_model})
+            print(f"✅ Scout CrewAI Agent created with {default_model}")
+        except Exception as e:
+            print(f"❌ Error creating Scout CrewAI Agent: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            scout_agent = None
+        
+        try:
+            strategist_agent = StrategistMCPAgent({"model": default_model})
+            print(f"✅ Strategist CrewAI Agent created with {default_model}")
+        except Exception as e:
+            print(f"❌ Error creating Strategist CrewAI Agent: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            strategist_agent = None
+        
+        try:
+            executor_agent = ExecutorMCPAgent({"model": default_model})
+            print(f"✅ Executor CrewAI Agent created with {default_model}")
+        except Exception as e:
+            print(f"❌ Error creating Executor CrewAI Agent: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            executor_agent = None
+    else:
+        print(f"❌ Unknown agent framework: {agent_framework}")
+        print("Available options: 'crewai', 'langchain'")
+        return
 
     print(f"🔍 Agent status: scout={scout_agent is not None}, strategist={strategist_agent is not None}, executor={executor_agent is not None}")
 
-    # Start MCP servers
-    if scout_agent:
-        try:
-            await scout_agent.start_mcp_server()
-            print("✅ Scout MCP Server started")
-        except Exception as e:
-            print(f"❌ Error starting Scout MCP Server: {e}")
-    if strategist_agent:
-        try:
-            await strategist_agent.start_mcp_server()
-            print("✅ Strategist MCP Server started")
-        except Exception as e:
-            print(f"❌ Error starting Strategist MCP Server: {e}")
-    if executor_agent:
-        try:
-            await executor_agent.start_mcp_server()
-            print("✅ Executor MCP Server started")
-        except Exception as e:
-            print(f"❌ Error starting Executor MCP Server: {e}")
+    # Start MCP servers (only for CrewAI agents)
+    if agent_framework == "crewai":
+        if scout_agent:
+            try:
+                await scout_agent.start_mcp_server()
+                print("✅ Scout MCP Server started")
+            except Exception as e:
+                print(f"❌ Error starting Scout MCP Server: {e}")
+        if strategist_agent:
+            try:
+                await strategist_agent.start_mcp_server()
+                print("✅ Strategist MCP Server started")
+            except Exception as e:
+                print(f"❌ Error starting Strategist MCP Server: {e}")
+        if executor_agent:
+            try:
+                await executor_agent.start_mcp_server()
+                print("✅ Executor MCP Server started")
+            except Exception as e:
+                print(f"❌ Error starting Executor MCP Server: {e}")
+    else:
+        # LangChain agents don't need MCP servers
+        if scout_agent:
+            print("✅ Scout LangChain Agent ready (no MCP server needed)")
+        if strategist_agent:
+            print("✅ Strategist LangChain Agent ready (no MCP server needed)")
+        if executor_agent:
+            print("✅ Executor LangChain Agent ready (no MCP server needed)")
     
     # Set agents in coordinator (local mode only)
     if not distributed_mode:
@@ -212,6 +262,22 @@ async def startup_event():
         print("✅ Coordinator initialized")
     except Exception as e:
         print(f"❌ Error initializing coordinator: {e}")
+
+    # Light pre-warming for faster startup
+    if not distributed_mode and scout_agent:
+        try:
+            print("🔥 Light model pre-warming for faster startup...")
+            
+            # Quick model warmup only
+            print("   📝 Basic model initialization...")
+            warmup_prompt = "Hello, this is a quick warmup call."
+            await asyncio.to_thread(scout_agent.llm.call, warmup_prompt)
+            
+            print("✅ Light pre-warming completed - game is ready!")
+            
+        except Exception as e:
+            print(f"⚠️ Model pre-warming failed (non-critical): {e}")
+            print("   💡 Game will still work but first move may be slower")
 
     # Show model availability summary (local mode only)
     if not distributed_mode:
@@ -228,6 +294,8 @@ async def startup_event():
         print("="*50 + "\n")
 
     print("🎉 MCP CrewAI system initialized!")
+    print("🚀 Game is fully pre-warmed and ready to play!")
+    print("⚡ First move should now be instant!")
 
 @app.get("/")
 async def root():
@@ -514,7 +582,8 @@ async def get_game_state():
             "current_player": coordinator.game_state.current_player,
             "move_number": coordinator.game_state.move_number,
             "game_over": coordinator.game_state.game_over,
-            "winner": coordinator.game_state.winner
+            "winner": coordinator.game_state.winner,
+            "game_history": [move.model_dump() for move in coordinator.game_state.game_history]
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting game state: {str(e)}")
@@ -555,6 +624,11 @@ async def ai_move():
         # Get AI move via MCP coordination
         ai_result = await coordinator.get_ai_move()
         
+        # Safety check for None result
+        if ai_result is None:
+            print("[DEBUG] AI result is None, using emergency fallback")
+            return {"success": False, "error": "AI move failed - no result returned"}
+        
         if ai_result.get("success"):
             return {
                 "success": True,
@@ -578,13 +652,40 @@ async def reset_game():
 
 @app.get("/agents/status")
 async def get_agent_status():
-    """Get status of all MCP agents"""
+    """Get status of all agents"""
     try:
+        # Handle different agent types
+        async def get_agent_info(agent, agent_name):
+            if agent is None:
+                return None
+            
+            # Check if it's a LangChain agent (no get_agent_status method)
+            if not hasattr(agent, 'get_agent_status'):
+                return {
+                    "agent_id": agent_name,
+                    "status": "active",
+                    "framework": "langchain",
+                    "model": getattr(agent, 'model_name', 'unknown'),
+                    "type": str(type(agent).__name__)
+                }
+            
+            # CrewAI agent with get_agent_status method
+            try:
+                return await agent.get_agent_status()
+            except Exception as e:
+                return {
+                    "agent_id": agent_name,
+                    "status": "error",
+                    "error": str(e),
+                    "framework": "crewai",
+                    "type": str(type(agent).__name__)
+                }
+        
         status = {
-            "scout": await scout_agent.get_agent_status() if scout_agent else None,
-            "strategist": await strategist_agent.get_agent_status() if strategist_agent else None,
-            "executor": await executor_agent.get_agent_status() if executor_agent else None,
-            "coordinator": coordinator.get_agent_status()
+            "scout": await get_agent_info(scout_agent, "scout"),
+            "strategist": await get_agent_info(strategist_agent, "strategist"),
+            "executor": await get_agent_info(executor_agent, "executor"),
+            "coordinator": coordinator.get_agent_status() if coordinator else None
         }
         return status
     except Exception as e:
@@ -594,6 +695,7 @@ async def get_agent_status():
 async def switch_agent_model(agent_id: str, model_config: ModelSwitchRequest):
     """Switch an agent's model via MCP"""
     try:
+        # Validate agent exists
         agents = {
             "scout": scout_agent,
             "strategist": strategist_agent,
@@ -603,10 +705,84 @@ async def switch_agent_model(agent_id: str, model_config: ModelSwitchRequest):
         if agent_id not in agents or agents[agent_id] is None:
             raise HTTPException(status_code=404, detail="Agent not found")
         
+        # Validate model exists in registry
+        from models.registry import model_registry
+        model_config_obj = model_registry.get_model(model_config.model)
+        if not model_config_obj:
+            available_models = [m.name for m in model_registry.get_available_models()]
+            raise HTTPException(
+                status_code=422, 
+                detail=f"Model '{model_config.model}' not found. Available models: {', '.join(available_models)}"
+            )
+        
+        # Check if model is available
+        if not model_config_obj.is_available:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Model '{model_config.model}' is not available. Reason: {model_config_obj._get_unavailable_reason(model_config_obj, False)}"
+            )
+        
         result = await agents[agent_id].switch_llm_model({"model": model_config.model})
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error switching model: {str(e)}")
+
+@app.get("/models")
+async def get_available_models():
+    """Get available models for switching"""
+    try:
+        from models.registry import model_registry
+        return {"models": model_registry.get_model_info()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting models: {str(e)}")
+
+@app.get("/framework")
+async def get_framework_info():
+    """Get current agent framework information"""
+    try:
+        from utils.config import config
+        agent_framework = config.get("agent_framework", "mode", default="langchain")
+        return {
+            "current_framework": agent_framework,
+            "available_frameworks": ["crewai", "langchain"],
+            "description": {
+                "crewai": "CrewAI agents with MCP protocol (more complex, full agent coordination)",
+                "langchain": "Direct LangChain agents (faster, simpler, more reliable)"
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting framework info: {str(e)}")
+
+class FrameworkSwitchRequest(BaseModel):
+    """Request model for switching agent framework"""
+    framework: str
+
+@app.post("/framework/switch")
+async def switch_framework(request: FrameworkSwitchRequest):
+    """Switch between CrewAI and LangChain frameworks (requires restart)"""
+    try:
+        if request.framework not in ["crewai", "langchain"]:
+            raise HTTPException(status_code=400, detail="Framework must be 'crewai' or 'langchain'")
+        
+        # Update config file
+        import json
+        with open('config.json', 'r') as f:
+            config_data = json.load(f)
+        if "agent_framework" not in config_data:
+            config_data["agent_framework"] = {}
+        config_data["agent_framework"]["mode"] = request.framework
+        with open('config.json', 'w') as f:
+            json.dump(config_data, f, indent=2)
+        
+        return {
+            "success": True,
+            "message": f"Framework switched to {request.framework}. Please restart the application to apply changes.",
+            "current_framework": request.framework
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error switching framework: {str(e)}")
 
 @app.get("/mcp-logs")
 async def get_mcp_logs():
@@ -630,56 +806,55 @@ async def debug_agents():
 
 @app.get("/agents/{agent_id}/metrics")
 async def get_agent_metrics(agent_id: str):
-    """Get performance metrics for a specific agent via MCP"""
+    """Get performance metrics for a specific agent"""
     try:
-        # In distributed mode, agents are None - fetch from agent servers
-        if distributed_mode:
-            agent_ports = {
-                "scout": 3001,
-                "strategist": 3002,
-                "executor": 3003
-            }
-
-            if agent_id not in agent_ports:
-                raise HTTPException(status_code=404, detail="Agent not found")
-
-            # Try to fetch metrics from agent server
-            import httpx
-            try:
-                async with httpx.AsyncClient(timeout=5.0) as client:
-                    response = await client.post(
-                        f"http://localhost:{agent_ports[agent_id]}/mcp",
-                        json={
-                            "jsonrpc": "2.0",
-                            "id": 1,
-                            "method": "tools/call",
-                            "params": {
-                                "name": "get_performance_metrics",
-                                "arguments": {}
-                            }
-                        }
-                    )
-                    if response.status_code == 200:
-                        result = response.json()
-                        return result.get("result", {})
-                    else:
-                        raise HTTPException(status_code=503, detail=f"Agent server unavailable (status {response.status_code})")
-            except httpx.RequestError as e:
-                raise HTTPException(status_code=503, detail=f"Agent server unreachable: {str(e)}")
-
-        # Local mode - use direct agent references
-        agents = {
-            "scout": scout_agent,
-            "strategist": strategist_agent,
-            "executor": executor_agent
-        }
-
-        if agent_id not in agents or agents[agent_id] is None:
+        if agent_id not in ["scout", "strategist", "executor"]:
             raise HTTPException(status_code=404, detail="Agent not found")
-
-        # Get metrics from the agent's MCP tool
-        metrics = await agents[agent_id].get_performance_metrics()
-        return metrics
+        
+        # Get the appropriate agent
+        agent = None
+        if agent_id == "scout":
+            agent = scout_agent
+        elif agent_id == "strategist":
+            agent = strategist_agent
+        elif agent_id == "executor":
+            agent = executor_agent
+        
+        if agent is None:
+            raise HTTPException(status_code=404, detail="Agent not found")
+        
+        # Handle different agent types
+        if not hasattr(agent, 'get_performance_metrics'):
+            # LangChain agent - return basic metrics
+            return {
+                "agent_id": agent_id,
+                "status": "active",
+                "framework": "langchain",
+                "model": getattr(agent, 'model_name', 'unknown'),
+                "request_count": 0,
+                "avg_response_time": 0.0,
+                "min_response_time": 0.0,
+                "max_response_time": 0.0,
+                "total_tokens": 0,
+                "api_success_rate": 100.0,
+                "api_error_count": 0,
+                "current_model": getattr(agent, 'model_name', 'unknown'),
+                "mcp_connected": False
+            }
+        
+        # CrewAI agent with metrics method
+        try:
+            return await agent.get_performance_metrics()
+        except Exception as e:
+            return {
+                "agent_id": agent_id,
+                "status": "error",
+                "framework": "crewai",
+                "error": str(e),
+                "request_count": 0,
+                "avg_response_time": 0.0,
+                "api_success_rate": 0.0
+            }
     except HTTPException:
         raise
     except Exception as e:

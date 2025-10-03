@@ -301,6 +301,17 @@ class ModelRegistry:
                 requires_api_key=False
             ),
             ModelConfig(
+                name="llama3.2-1b",
+                provider=ModelProvider.OLLAMA,
+                model_id="llama3.2:1b",
+                display_name="Llama3.2 1B",
+                description="Llama3.2 1B model, ultra-fast performance and speed",
+                estimated_cost_per_1k_tokens=0.0,
+                max_tokens=4096,
+                temperature=0.1,
+                requires_api_key=False
+            ),
+            ModelConfig(
                 name="llama3.2-3b",
                 provider=ModelProvider.OLLAMA,
                 model_id="llama3.2:3b",

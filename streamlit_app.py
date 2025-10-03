@@ -289,11 +289,16 @@ def switch_agent_model(agent_id, model):
         if response.status_code == 200:
             return response.json()
         else:
-            st.error(f"Error switching model: {response.status_code}")
-            return None
+            # Parse error message from API
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('detail', f'HTTP {response.status_code}')
+            except:
+                error_msg = f'HTTP {response.status_code}'
+            
+            return {"success": False, "error": error_msg}
     except Exception as e:
-        st.error(f"Error switching model: {e}")
-        return None
+        return {"success": False, "error": str(e)}
 
 def get_agent_metrics(agent_id):
     """Get agent performance metrics"""
@@ -425,6 +430,8 @@ def render_game_board(board, game_over=False):
         margin: 0 auto !important;
         box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
         transition: all 0.3s ease !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
     
     .stButton > button[key="new_game"]:hover,
@@ -450,36 +457,30 @@ def render_game_board(board, game_over=False):
         box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
     }
     
-    /* Force bright green for secondary buttons (NEW GAME button) */
-    button[data-testid="baseButton-secondary"],
-    button[data-testid="baseButton-secondary"]:hover,
-    button[data-testid="baseButton-secondary"]:focus,
-    button[data-testid="baseButton-secondary"]:active {
-        background: #00ff00 !important;
-        background-color: #00ff00 !important;
-        background-image: none !important;
-        color: white !important;
-        border: 3px solid #00ff00 !important;
-        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
-        font-weight: bold !important;
-        font-size: 18px !important;
+    
+    /* Lighter info boxes */
+    .stAlert {
+        background-color: #2a3a4a !important;
+        border: 1px solid #4a5a6a !important;
+        border-radius: 8px !important;
     }
     
-    /* Target the specific NEW GAME button by key */
-    button[key="new_game"],
-    button[key="new_game"]:hover,
-    button[key="new_game"]:focus,
-    button[key="new_game"]:active {
-        background: #00ff00 !important;
-        background-color: #00ff00 !important;
-        background-image: none !important;
-        color: white !important;
-        border: 3px solid #00ff00 !important;
-        box-shadow: 0 0 20px rgba(0,255,0,0.4) !important;
-        font-weight: bold !important;
-        font-size: 18px !important;
+    .stAlert > div {
+        background-color: #2a3a4a !important;
+        color: #e0e0e0 !important;
     }
     
+    .stInfo {
+        background-color: #2a3a4a !important;
+        border: 1px solid #4a5a6a !important;
+        border-radius: 8px !important;
+    }
+    
+    .stInfo > div {
+        background-color: #2a3a4a !important;
+        color: #e0e0e0 !important;
+    }
+
     .game-board {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -677,6 +678,7 @@ def render_game_board(board, game_over=False):
                     # Empty cell - clickable button
                     if not game_over:
                         if st.button("", key=f"move_{row}_{col}", help=f"Click to place X at ({row}, {col})", use_container_width=True):
+                            # Make move instantly
                             result = make_move(row, col)
                             if result:
                                 st.success(f"Move made at ({row}, {col})")
@@ -688,7 +690,7 @@ def render_game_board(board, game_over=False):
                         st.button("", key=f"disabled_{row}_{col}", disabled=True, use_container_width=True)
     
     # Single NEW GAME button - spans across the board
-    if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="secondary", use_container_width=True):
+    if st.button("🔄 NEW GAME", key="new_game", help="Start a new game", type="primary", use_container_width=True):
         # Reset backend game state
         try:
             response = requests.post(f"{API_BASE}/reset-game")
@@ -875,14 +877,36 @@ def render_model_switching():
         st.error("Failed to load agent status")
         return
     
-    # Available models
-    available_models = [
-        "gpt-5",
-        "gpt-5-mini", 
-        "gpt-4",
-        "llama3:latest",
-        "llama3.2:3b"
-    ]
+    # Fetch available models from API
+    try:
+        models_response = requests.get(f"{API_BASE}/models")
+        if models_response.status_code == 200:
+            models_data = models_response.json()
+            available_models = []
+            model_descriptions = {}
+            
+            for model_name, model_info in models_data.get("models", {}).items():
+                if model_info.get("is_available", False):
+                    available_models.append(model_name)
+                    model_descriptions[model_name] = f"{model_info.get('display_name', model_name)} - {model_info.get('description', '')}"
+            
+            # If no available models, show all models with their status
+            if not available_models:
+                st.warning("No models are currently available. Showing all models:")
+                for model_name, model_info in models_data.get("models", {}).items():
+                    available_models.append(model_name)
+                    status = "✅ Available" if model_info.get("is_available", False) else "❌ Unavailable"
+                    reason = model_info.get("unavailable_reason", "")
+                    model_descriptions[model_name] = f"{model_info.get('display_name', model_name)} - {status} - {reason}"
+            
+            # Debug info
+            st.info(f"Found {len(available_models)} models: {available_models}")
+        else:
+            st.error(f"Failed to load available models: HTTP {models_response.status_code}")
+            return
+    except Exception as e:
+        st.error(f"Error loading models: {e}")
+        return
     
     agents = ["scout", "strategist", "executor"]
     agent_names = {
@@ -893,15 +917,26 @@ def render_model_switching():
     
     for agent_id in agents:
         agent_data = agent_status.get(agent_id)
+        
+        # Get the current model name
         if agent_data:
-            # Get the actual model name, not generic "LLM"
             current_model = agent_data.get('current_model', 'Unknown')
             if current_model == 'LLM' or current_model == 'Unknown':
                 # Try to get the actual model name from other fields
                 actual_model = agent_data.get('model_name', agent_data.get('llm_model', 'gpt-5-mini'))
                 current_model = actual_model
-            
-            with st.expander(f"{agent_names.get(agent_id, agent_id)} - Current: {current_model}", expanded=False):
+        else:
+            # Default model when agent is not available
+            current_model = 'llama3.2-1b'  # Default model
+        
+        with st.expander(f"{agent_names.get(agent_id, agent_id)} - Current: {current_model}", expanded=False):
+            if available_models:
+                # Show model descriptions
+                st.markdown("**Available Models:**")
+                for model in available_models[:5]:  # Show first 5 models
+                    if model in model_descriptions:
+                        st.markdown(f"• **{model}**: {model_descriptions[model]}")
+                
                 selected_model = st.selectbox(
                     f"Select new model for {agent_id}:",
                     available_models,
@@ -914,7 +949,10 @@ def render_model_switching():
                         st.success(f"Successfully switched {agent_id} to {selected_model}")
                         st.rerun()
                     else:
-                        st.error(f"Failed to switch {agent_id} model")
+                        error_msg = result.get('error', 'Unknown error') if result else 'No response from server'
+                        st.error(f"Failed to switch {agent_id} model: {error_msg}")
+            else:
+                st.warning("No available models found")
 
 def main():
     """Main Streamlit app"""
@@ -1006,8 +1044,7 @@ def main():
             
             # Auto-trigger AI move if it's the AI's turn
             if current_player == "ai" and not game_over:
-                st.info("🤖 AI is thinking...")
-                # Trigger AI move automatically
+                # Trigger AI move automatically (should be instant)
                 try:
                     # Use dedicated AI move endpoint
                     ai_result = requests.post(f"{API_BASE}/ai-move")
@@ -1031,6 +1068,10 @@ def main():
             with col1:
                 st.markdown("### 🎮 Game Board")
                 
+                # Show first-move delay explanation
+                if move_number == 0:
+                    st.info("💡 **First move tip**: The AI may take a few seconds to respond on the first move as it loads the model. Subsequent moves will be faster!")
+                
                 # Render game board
                 render_game_board(board, game_over)
                 
@@ -1048,27 +1089,19 @@ def main():
             with col2:
                 st.markdown("### 📝 Move History")
                 
-                # Show move history from current board state
-                moves = []
-                for row_idx, row in enumerate(board):
-                    for col_idx, cell in enumerate(row):
-                        if cell:
-                            moves.append({
-                                'symbol': cell,
-                                'row': row_idx,
-                                'col': col_idx
-                            })
-                
-                if moves:
-                    for i, move in enumerate(moves, 1):
-                        symbol = move['symbol']
-                        row = move['row']
-                        col = move['col']
+                # Show move history from actual game history
+                if 'game_history' in game_state and game_state['game_history']:
+                    for i, move in enumerate(game_state['game_history'], 1):
+                        player = move.get('player', 'unknown')
+                        position = move.get('position', {})
+                        row = position.get('row', 0)
+                        col = position.get('col', 0)
+                        symbol = position.get('value', '')
                         
-                        if symbol == 'X':
-                            st.write(f"{i}. 👤 You placed X at ({row}, {col})")
+                        if player == 'player':
+                            st.write(f"{i}. 👤 You placed {symbol} at ({row}, {col})")
                         else:
-                            st.write(f"{i}. 🤖 Double-O-AI placed O at ({row}, {col})")
+                            st.write(f"{i}. 🤖 Double-O-AI placed {symbol} at ({row}, {col})")
                 else:
                     st.info("No moves yet - click a cell to start!")
                 

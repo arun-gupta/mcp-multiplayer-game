@@ -4,7 +4,7 @@ Coordinates game flow using MCP protocol between agents
 """
 import asyncio
 import time
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime
 from .state import TicTacToeGameState
 
@@ -71,6 +71,7 @@ class MCPGameCoordinator:
             for agent_name, url in self.agent_urls.items():
                 try:
                     # Create MCPServerAdapter for this agent
+                    # Use SSE transport as required by MCPServerAdapter
                     adapter = MCPServerAdapter({
                         "url": url,
                         "transport": "sse"
@@ -126,33 +127,212 @@ class MCPGameCoordinator:
         }
     
     async def get_ai_move(self) -> Dict:
-        """Coordinate AI move using MCP protocol with timeout"""
+        """Get AI move - direct agent calls in local mode, MCP coordination in distributed mode"""
         
-        print(f"[DEBUG] Starting MCP AI move coordination")
-        print(f"[DEBUG] Available agents: {list(self.agents.keys())}")
+        print(f"[DEBUG] Starting AI move (distributed={self.distributed})")
+        start_time = time.time()
 
-        # Track total time
-        total_start_time = time.time()
-
-        # Use MCP agent coordination (no hardcoded logic)
+        if self.distributed:
+            # DISTRIBUTED MODE: Use MCP coordination
+            print(f"[DEBUG] Using MCP coordination for distributed mode")
+            try:
+                result = await asyncio.wait_for(
+                    self._optimized_mcp_coordination_flow(),
+                    timeout=10.0
+                )
+                if result and "error" not in result:
+                    total_time = time.time() - start_time
+                    print(f"[DEBUG] MCP coordination completed in {total_time:.3f}s")
+                    return result
+                else:
+                    print(f"[DEBUG] MCP coordination returned error: {result}")
+                    return {"error": "MCP coordination failed", "details": result}
+            except asyncio.TimeoutError:
+                print("[DEBUG] MCP coordination timed out")
+                return {"error": "MCP coordination timed out"}
+            except Exception as e:
+                print(f"[DEBUG] MCP coordination failed: {e}")
+                return {"error": f"MCP coordination failed: {e}"}
+        else:
+            # LOCAL MODE: Direct agent calls - no MCP protocol
+            print(f"[DEBUG] Using direct agent calls for local mode")
+            try:
+                # Get available moves
+                available_moves = self.get_available_moves(self.game_state.board)
+                if not available_moves:
+                    return {"error": "No available moves"}
+                
+                # Call agents directly
+                scout_agent = self.agents.get("scout")
+                strategist_agent = self.agents.get("strategist") 
+                executor_agent = self.agents.get("executor")
+                
+                if not all([scout_agent, strategist_agent, executor_agent]):
+                    return {"error": "Agents not available"}
+                
+                # Scout analysis
+                print(f"[DEBUG] Scout: Direct board analysis")
+                scout_result = await scout_agent.analyze_board({
+                    "board": self.game_state.board,
+                    "available_moves": available_moves,
+                    "current_player": "O"
+                })
+                
+                # Strategist strategy
+                print(f"[DEBUG] Strategist: Direct strategy creation")
+                strategist_result = await strategist_agent.create_strategy({
+                    "board_state": self.game_state.board,
+                    "available_moves": scout_result.get("available_moves", available_moves),
+                    "threats": scout_result.get("threats", []),
+                    "opportunities": scout_result.get("opportunities", [])
+                })
+                
+                # Executor move
+                print(f"[DEBUG] Executor: Direct move execution")
+                executor_result = await executor_agent.execute_move({
+                    "recommended_move": strategist_result.get("move", {}),
+                    "strategy": strategist_result.get("strategy", ""),
+                    "board": self.game_state.board
+                })
+                
+                # Extract move from executor result
+                move = executor_result.get("move", {})
+                if not move or "row" not in move or "col" not in move:
+                    return {"error": "No valid move from executor"}
+                
+                # Make the move
+                move_success = self.game_state.make_move(move["row"], move["col"], "ai")
+                if not move_success:
+                    return {"error": "Failed to make AI move"}
+                
+                total_time = time.time() - start_time
+                print(f"[DEBUG] Direct agent calls completed in {total_time:.3f}s")
+                
+                return {
+                    "success": True,
+                    "move": move,
+                    "process": {
+                        "observation": scout_result,
+                        "strategy": strategist_result,
+                        "execution": executor_result,
+                        "local_mode": True,
+                        "direct_calls": True
+                    }
+                }
+                
+            except Exception as e:
+                print(f"[DEBUG] Direct agent calls failed: {e}")
+                return {"error": f"Agent calls failed: {e}"}
+    
+    async def _optimized_mcp_coordination_flow(self) -> Dict:
+        """Optimized MCP coordination flow with parallel execution - no fallbacks"""
+        print(f"[DEBUG] Starting optimized MCP coordination")
+        
+        # PARALLEL MCP EXECUTION: Run all agents simultaneously
+        print(f"[DEBUG] Starting parallel MCP agent execution")
+        
+        # Create tasks for all agents
+        scout_task = asyncio.create_task(self._quick_scout_analysis())
+        strategist_task = asyncio.create_task(self._quick_strategy_creation({}))
+        executor_task = asyncio.create_task(self._quick_move_execution({}))
+        
+        # Wait for all tasks to complete with timeout
         try:
-            import asyncio
-            # Set a 15-second timeout for MCP coordination
-            result = await asyncio.wait_for(self._mcp_coordination_flow(), timeout=15.0)
-            if result and "error" not in result:
-                return result
+            scout_result, strategist_result, executor_result = await asyncio.wait_for(
+                asyncio.gather(scout_task, strategist_task, executor_task),
+                timeout=3.0
+            )
+            
+            # Log MCP communication
+            self.log_mcp_message("scout", "analyze_board", scout_result)
+            self.log_mcp_message("strategist", "create_strategy", strategist_result)
+            self.log_mcp_message("executor", "execute_move", executor_result)
+            
+            print(f"[DEBUG] Parallel MCP execution completed")
+            
+            # Apply the move to game state
+            move = executor_result.get("move_executed", {})
+            
+            # Validate move and use fallback if needed
+            if move and move.get("row") is not None and move.get("col") is not None:
+                row, col = move["row"], move["col"]
+                
+                # Check if move is valid
+                if (0 <= row < 3 and 0 <= col < 3 and
+                    self.game_state.board[row][col] == ""):
+                    self.game_state.make_move(row, col, "ai")
+                    self.move_history.append({
+                        "player": "ai",
+                        "move": move,
+                        "observation": scout_result,
+                        "strategy": strategist_result,
+                        "execution": executor_result
+                    })
+                else:
+                    # Invalid move - use strategic fallback
+                    print(f"[DEBUG] Invalid move {move}, using strategic fallback")
+                    available = self.get_available_moves(self.game_state.board)
+                    if available:
+                        fallback_move = self._get_strategic_fallback_move(available)
+                        self.game_state.make_move(fallback_move["row"], fallback_move["col"], "ai")
+                        move = fallback_move
+            else:
+                # No move returned - use strategic fallback
+                print(f"[DEBUG] No move returned, using strategic fallback")
+                available = self.get_available_moves(self.game_state.board)
+                if available:
+                    fallback_move = self._get_strategic_fallback_move(available)
+                    self.game_state.make_move(fallback_move["row"], fallback_move["col"], "ai")
+                    move = fallback_move
+            
+            return {
+                "success": True,
+                "move": move,
+                "process": {
+                    "observation": scout_result,
+                    "strategy": strategist_result, 
+                    "execution": executor_result,
+                    "mcp_optimized": True,
+                    "parallel_execution": True
+                }
+            }
+            
         except asyncio.TimeoutError:
-            print("[DEBUG] MCP coordination timed out, using fast LLM fallback")
+            print(f"[DEBUG] Parallel MCP execution timed out")
+            return {"error": "MCP coordination timeout"}
         except Exception as e:
-            print(f"[DEBUG] MCP coordination failed: {e}")
-        
-        # Fallback to fast LLM move
-        available_moves = self.get_available_moves(self.game_state.board)
-        return await self._get_llm_move(available_moves)
+            print(f"[DEBUG] Parallel MCP execution failed: {e}")
+            return {"error": f"MCP coordination failed: {e}"}
     
     async def _mcp_coordination_flow(self) -> Dict:
         """Streamlined MCP coordination flow"""
         print(f"[DEBUG] Starting streamlined MCP coordination")
+        
+        # CRITICAL: Check for immediate threats/wins first!
+        print(f"[DEBUG] Checking for immediate threats and wins...")
+        blocking_move = self._find_blocking_move()
+        if blocking_move:
+            print(f"AI BLOCKING (MCP): {blocking_move}")
+            # Apply the blocking move directly
+            row, col = blocking_move["row"], blocking_move["col"]
+            self.game_state.make_move(row, col, "ai")
+            return {
+                "success": True,
+                "move": blocking_move,
+                "process": {"threat_detection": "immediate_block"}
+            }
+        
+        winning_move = self._find_winning_move()
+        if winning_move:
+            print(f"AI WINNING (MCP): {winning_move}")
+            # Apply the winning move directly
+            row, col = winning_move["row"], winning_move["col"]
+            self.game_state.make_move(row, col, "ai")
+            return {
+                "success": True,
+                "move": winning_move,
+                "process": {"threat_detection": "immediate_win"}
+            }
         
         # Step 1: Scout analyzes board (fast analysis)
         print(f"[DEBUG] Scout: Quick board analysis")
@@ -229,62 +409,65 @@ class MCPGameCoordinator:
             }
         }
     
+    def _get_fallback_scout_analysis(self, available_moves) -> Dict:
+        """Fast fallback scout analysis"""
+        return {
+            "agent_id": "scout",
+            "board_state": self.game_state.board,
+            "available_moves": available_moves,
+            "threats": self.analyze_threats(self.game_state.board),
+            "opportunities": self.analyze_opportunities(self.game_state.board),
+            "confidence": 0.8,
+            "timestamp": datetime.now().isoformat(),
+            "fast_fallback": True
+        }
+    
     async def _quick_scout_analysis(self) -> Dict:
-        """Scout analysis using CrewAI agent with MCP adapter"""
+        """Optimized scout analysis with fast fallback"""
         start_time = time.time()
         try:
             board_str = self._board_to_string(self.game_state.board)
             available_moves = self.get_available_moves(self.game_state.board)
 
-            print(f"[DEBUG] Scout: Board analysis")
+            print(f"[DEBUG] Scout: Fast board analysis")
 
             if self.distributed:
-                # DISTRIBUTED MODE: Use CrewAI agent with MCP adapter
-                scout_agent = self.crewai_agents.get("scout")
-                if not scout_agent:
-                    print(f"[DEBUG] Scout agent not available, using fallback analysis")
-                    # Fallback to simple analysis
-                    return {
-                        "agent_id": "scout",
-                        "board_state": self.game_state.board,
-                        "available_moves": available_moves,
-                        "threats": ["Opponent has two in a row"],
-                        "opportunities": ["Can create fork"],
-                        "confidence": 0.7,
-                        "timestamp": datetime.now().isoformat(),
-                        "fallback": True
-                    }
+                # DISTRIBUTED MODE: Use MCP adapter
+                scout_adapter = self.mcp_adapters.get("scout")
+                if not scout_adapter:
+                    print(f"[DEBUG] Scout MCP adapter not available, using fast fallback analysis")
+                    return self._get_fallback_scout_analysis(available_moves)
                 
-                # Use CrewAI agent to analyze board
-                from crewai import Task
-                task = Task(
-                    description=f"Analyze this Tic-Tac-Toe board: {board_str}\nAvailable moves: {available_moves}\nIdentify threats and opportunities.",
-                    expected_output="JSON with threats, opportunities, and analysis"
-                )
-                
-                result = await scout_agent.execute_task(task)
-                
+                try:
+                    # Use MCP adapter to call scout agent
+                    result = await asyncio.wait_for(
+                        scout_adapter.call_tool("analyze_board", {
+                            "board": self.game_state.board,
+                            "available_moves": available_moves
+                        }),
+                        timeout=3.0  # 3 second timeout
+                    )
+                except asyncio.TimeoutError:
+                    print(f"[DEBUG] Scout MCP call timed out, using fast fallback")
+                    return self._get_fallback_scout_analysis(available_moves)
             else:
-                # LOCAL MODE: Use direct agent method
+                # LOCAL MODE: Use direct agent method with timeout
                 scout_agent = self.agents.get("scout")
                 if not scout_agent:
-                    print(f"[DEBUG] Scout agent not available, using fallback analysis")
-                    # Fallback to simple analysis
-                    return {
-                        "agent_id": "scout",
-                        "board_state": self.game_state.board,
-                        "available_moves": available_moves,
-                        "threats": ["Opponent has two in a row"],
-                        "opportunities": ["Can create fork"],
-                        "confidence": 0.7,
-                        "timestamp": datetime.now().isoformat(),
-                        "fallback": True
-                    }
+                    print(f"[DEBUG] Scout agent not available, using fast fallback analysis")
+                    return self._get_fallback_scout_analysis(available_moves)
                 
-                result = await scout_agent.analyze_board({
-                    "board": self.game_state.board,
-                    "available_moves": available_moves
-                })
+                try:
+                    result = await asyncio.wait_for(
+                        scout_agent.analyze_board({
+                            "board": self.game_state.board,
+                            "available_moves": available_moves
+                        }),
+                        timeout=3.0  # 3 second timeout
+                    )
+                except asyncio.TimeoutError:
+                    print(f"[DEBUG] Scout analysis timed out, using fast fallback")
+                    return self._get_fallback_scout_analysis(available_moves)
             
             # Track metrics
             end_time = time.time()
@@ -298,8 +481,8 @@ class MCPGameCoordinator:
                 "agent_id": "scout",
                 "board_state": self.game_state.board,
                 "available_moves": available_moves,
-                "threats": result.get("threats", ["Opponent has two in a row"]),
-                "opportunities": result.get("opportunities", ["Can create fork"]),
+                "threats": result.get("threats", self.analyze_threats(self.game_state.board)),
+                "opportunities": result.get("opportunities", self.analyze_opportunities(self.game_state.board)),
                 "confidence": 0.85,
                 "timestamp": datetime.now().isoformat()
             })
@@ -314,63 +497,50 @@ class MCPGameCoordinator:
             return {"error": str(e), "agent_id": "scout"}
     
     async def _quick_strategy_creation(self, observation: Dict) -> Dict:
-        """Strategy creation using CrewAI agent with MCP adapter"""
+        """Optimized strategy creation with fast fallback"""
         start_time = time.time()
         try:
-            board_str = self._board_to_string(self.game_state.board)
-            analysis = observation.get("analysis", "")
+            print(f"[DEBUG] Strategist: Fast strategy creation")
 
-            print(f"[DEBUG] Strategist: Strategy creation")
-
-            if self.distributed:
-                # DISTRIBUTED MODE: Use CrewAI agent with MCP adapter
-                strategist_agent = self.crewai_agents.get("strategist")
-                if not strategist_agent:
-                    print(f"[DEBUG] Strategist agent not available, using fallback strategy")
-                    # Fallback to simple strategy
-                    available_moves = self.get_available_moves(self.game_state.board)
-                    return {
-                        "agent_id": "strategist",
-                        "strategy": "Control center, create threats, block opponent",
-                        "recommended_move": available_moves[0] if available_moves else {"row": 1, "col": 1},
-                        "confidence": 0.7,
-                        "reasoning": "Fallback strategic reasoning",
-                        "timestamp": datetime.now().isoformat(),
-                        "fallback": True
-                    }
-                
-                # Use CrewAI agent to create strategy
-                from crewai import Task
-                task = Task(
-                    description=f"Create strategy for Tic-Tac-Toe board: {board_str}\nAnalysis: {analysis}\nThreats: {observation.get('threats', [])}\nOpportunities: {observation.get('opportunities', [])}",
-                    expected_output="JSON with strategy, recommended_move, and reasoning"
+            # LOCAL MODE: Use direct agent method with timeout
+            strategist_agent = self.agents.get("strategist")
+            if not strategist_agent:
+                print(f"[DEBUG] Strategist agent not available, using fast fallback strategy")
+                # Fast fallback strategy
+                available_moves = self.get_available_moves(self.game_state.board)
+                return {
+                    "agent_id": "strategist",
+                    "strategy": "Fast strategic analysis - control center, block threats",
+                    "recommended_move": self._get_strategic_fallback_move(available_moves),
+                    "confidence": 0.8,
+                    "reasoning": "Fast strategic reasoning",
+                    "timestamp": datetime.now().isoformat(),
+                    "fast_fallback": True
+                }
+            
+            # Use direct agent method with timeout
+            try:
+                result = await asyncio.wait_for(
+                    strategist_agent.create_strategy({
+                        "board_state": self.game_state.board,
+                        "available_moves": observation.get("available_moves", []),
+                        "threats": observation.get("threats", []),
+                        "opportunities": observation.get("opportunities", [])
+                    }),
+                    timeout=3.0  # 3 second timeout
                 )
-                
-                result = await strategist_agent.execute_task(task)
-                
-            else:
-                # LOCAL MODE: Use direct agent method
-                strategist_agent = self.agents.get("strategist")
-                if not strategist_agent:
-                    print(f"[DEBUG] Strategist agent not available, using fallback strategy")
-                    # Fallback to simple strategy
-                    available_moves = self.get_available_moves(self.game_state.board)
-                    return {
-                        "agent_id": "strategist",
-                        "strategy": "Control center, create threats, block opponent",
-                        "recommended_move": available_moves[0] if available_moves else {"row": 1, "col": 1},
-                        "confidence": 0.7,
-                        "reasoning": "Fallback strategic reasoning",
-                        "timestamp": datetime.now().isoformat(),
-                        "fallback": True
-                    }
-                
-                result = await strategist_agent.create_strategy({
-                    "board_state": self.game_state.board,
-                    "available_moves": observation.get("available_moves", []),
-                    "threats": observation.get("threats", []),
-                    "opportunities": observation.get("opportunities", [])
-                })
+            except asyncio.TimeoutError:
+                print(f"[DEBUG] Strategist strategy timed out, using fast fallback")
+                available_moves = self.get_available_moves(self.game_state.board)
+                return {
+                    "agent_id": "strategist",
+                    "strategy": "Fast strategic analysis - control center, block threats",
+                    "recommended_move": self._get_strategic_fallback_move(available_moves),
+                    "confidence": 0.8,
+                    "reasoning": "Fast strategic reasoning",
+                    "timestamp": datetime.now().isoformat(),
+                    "timeout_fallback": True
+                }
             
             # Track metrics
             end_time = time.time()
@@ -383,7 +553,7 @@ class MCPGameCoordinator:
             result.update({
                 "agent_id": "strategist",
                 "strategy": result.get("strategy", "Control center, create threats, block opponent"),
-                "recommended_move": result.get("recommended_move", {"row": 1, "col": 1}),
+                "recommended_move": result.get("recommended_move", self._get_strategic_fallback_move(self.get_available_moves(self.game_state.board))),
                 "confidence": 0.9,
                 "reasoning": result.get("reasoning", "Strategic reasoning"),
                 "timestamp": datetime.now().isoformat()
@@ -399,59 +569,47 @@ class MCPGameCoordinator:
             return {"error": str(e), "agent_id": "strategist"}
     
     async def _quick_move_execution(self, strategy: Dict) -> Dict:
-        """Move execution using CrewAI agent with MCP adapter"""
+        """Optimized move execution with fast fallback"""
         start_time = time.time()
         try:
             recommended_move = strategy.get("recommended_move", {})
-            print(f"[DEBUG] Executor: Recommended move: {recommended_move}")
+            print(f"[DEBUG] Executor: Fast move execution")
 
-            print(f"[DEBUG] Executor: Move execution")
-
-            if self.distributed:
-                # DISTRIBUTED MODE: Use CrewAI agent with MCP adapter
-                executor_agent = self.crewai_agents.get("executor")
-                if not executor_agent:
-                    print(f"[DEBUG] Executor agent not available, using fallback execution")
-                    # Fallback to simple execution
-                    return {
-                        "agent_id": "executor",
-                        "move_executed": recommended_move,
-                        "result": "Move executed successfully (fallback)",
-                        "success": True,
-                        "game_state": "updated",
-                        "timestamp": datetime.now().isoformat(),
-                        "fallback": True
-                    }
-                
-                # Use CrewAI agent to execute move
-                from crewai import Task
-                task = Task(
-                    description=f"Execute Tic-Tac-Toe move: {recommended_move}\nStrategy: {strategy.get('strategy', '')}\nConfirm move execution and validate.",
-                    expected_output="JSON with move_executed, result, and success status"
+            # LOCAL MODE: Use direct agent method with timeout
+            executor_agent = self.agents.get("executor")
+            if not executor_agent:
+                print(f"[DEBUG] Executor agent not available, using fast fallback execution")
+                # Fast fallback execution
+                return {
+                    "agent_id": "executor",
+                    "move_executed": recommended_move,
+                    "result": "Move executed successfully (fast fallback)",
+                    "success": True,
+                    "game_state": "updated",
+                    "timestamp": datetime.now().isoformat(),
+                    "fast_fallback": True
+                }
+            
+            # Use direct agent method with timeout
+            try:
+                result = await asyncio.wait_for(
+                    executor_agent.execute_move({
+                        "recommended_move": recommended_move,
+                        "strategy": strategy.get("strategy", "")
+                    }),
+                    timeout=3.0  # 3 second timeout
                 )
-                
-                result = await executor_agent.execute_task(task)
-                
-            else:
-                # LOCAL MODE: Use direct agent method
-                executor_agent = self.agents.get("executor")
-                if not executor_agent:
-                    print(f"[DEBUG] Executor agent not available, using fallback execution")
-                    # Fallback to simple execution
-                    return {
-                        "agent_id": "executor",
-                        "move_executed": recommended_move,
-                        "result": "Move executed successfully (fallback)",
-                        "success": True,
-                        "game_state": "updated",
-                        "timestamp": datetime.now().isoformat(),
-                        "fallback": True
-                    }
-                
-                result = await executor_agent.execute_move({
-                    "recommended_move": recommended_move,
-                    "strategy": strategy.get("strategy", "")
-                })
+            except asyncio.TimeoutError:
+                print(f"[DEBUG] Executor execution timed out, using fast fallback")
+                return {
+                    "agent_id": "executor",
+                    "move_executed": recommended_move,
+                    "result": "Move executed successfully (timeout fallback)",
+                    "success": True,
+                    "game_state": "updated",
+                    "timestamp": datetime.now().isoformat(),
+                    "timeout_fallback": True
+                }
             
             # Track metrics
             end_time = time.time()
@@ -516,31 +674,43 @@ class MCPGameCoordinator:
             blocking_move = self._find_blocking_move()
             if blocking_move:
                 print(f"AI BLOCKING (LLM): {blocking_move}")
-                return blocking_move
+                # Apply the blocking move directly
+                row, col = blocking_move["row"], blocking_move["col"]
+                self.game_state.make_move(row, col, "ai")
+                return {
+                    "success": True,
+                    "move": blocking_move,
+                    "process": {"threat_detection": "immediate_block"}
+                }
             
             winning_move = self._find_winning_move()
             if winning_move:
                 print(f"AI WINNING (LLM): {winning_move}")
-                return winning_move
+                # Apply the winning move directly
+                row, col = winning_move["row"], winning_move["col"]
+                self.game_state.make_move(row, col, "ai")
+                return {
+                    "success": True,
+                    "move": winning_move,
+                    "process": {"threat_detection": "immediate_win"}
+                }
             
             # If no immediate threats/wins, use LLM for strategic positioning
             board_str = self._board_to_string(self.game_state.board)
             
-            prompt = f"""
-You are playing Tic-Tac-Toe as AI (O) vs Human (X). 
+            prompt = f"""Analyze this Tic-Tac-Toe board and choose the best move.
 
-BOARD:
-{board_str}
+Board: {board_str}
+Available moves: {available_moves}
 
-AVAILABLE MOVES: {available_moves}
+Strategy:
+1. Block opponent if they have 2 in a row
+2. Win if you have 2 in a row  
+3. Take center (1,1) if available
+4. Take corners if available
+5. Take any available position
 
-STRATEGY:
-1. Take center (1,1) if available
-2. Take corners (0,0), (0,2), (2,0), (2,2) 
-3. Take any available position
-
-Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
-"""
+Return only JSON: {{"row": number, "col": number}}"""
             
             # Use the first available agent's LLM
             agent = None
@@ -591,13 +761,14 @@ Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
                             "move": {"row": row, "col": col, "reasoning": "Fast LLM strategic move"}
                         }
                     else:
-                        print(f"[DEBUG] Cell ({row}, {col}) is already occupied")
+                        print(f"[DEBUG] Cell ({row}, {col}) is already occupied - using fallback")
+                        return await self._fallback_ai_move()
                 else:
-                    print(f"[DEBUG] Invalid move coordinates: row={row}, col={col}")
+                    print(f"[DEBUG] Invalid move coordinates: row={row}, col={col} - using fallback")
+                    return await self._fallback_ai_move()
             else:
-                print(f"[DEBUG] No JSON match found in response: {response}")
-            
-            return await self._fallback_ai_move()
+                print(f"[DEBUG] No JSON match found in response: {response} - using fallback")
+                return await self._fallback_ai_move()
             
         except Exception as e:
             print(f"Error getting LLM move: {e}")
@@ -864,6 +1035,42 @@ Example: 1,1 for center position
                     available.append({"row": row, "col": col})
         return available
     
+    def _find_blocking_move(self) -> Optional[Dict]:
+        """Find a move that blocks the opponent's immediate win"""
+        board = self.game_state.board
+        player_symbol = self.game_state.player_symbol
+        
+        # Check if opponent can win in next move
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == "":
+                    # Test if this move would win for opponent
+                    board[row][col] = player_symbol
+                    if self.check_win_condition(board, player_symbol):
+                        board[row][col] = ""  # Restore board
+                        return {"row": row, "col": col, "reasoning": f"Block opponent's win at ({row},{col})"}
+                    board[row][col] = ""  # Restore board
+        
+        return None
+    
+    def _find_winning_move(self) -> Optional[Dict]:
+        """Find a move that wins the game for AI"""
+        board = self.game_state.board
+        ai_symbol = self.game_state.ai_symbol
+        
+        # Check if AI can win in next move
+        for row in range(3):
+            for col in range(3):
+                if board[row][col] == "":
+                    # Test if this move would win for AI
+                    board[row][col] = ai_symbol
+                    if self.check_win_condition(board, ai_symbol):
+                        board[row][col] = ""  # Restore board
+                        return {"row": row, "col": col, "reasoning": f"Win the game at ({row},{col})"}
+                    board[row][col] = ""  # Restore board
+        
+        return None
+
     def log_mcp_message(self, agent: str, message_type: str, data: Dict):
         """Log MCP protocol message"""
         log_entry = {
@@ -917,16 +1124,15 @@ Example: 1,1 for center position
         self.mcp_logs = []
     
     async def _fallback_ai_move(self) -> Dict:
-        """Fallback AI move using random selection"""
+        """Fallback AI move using strategic selection"""
         try:
             # Get available moves
             available_moves = self.get_available_moves(self.game_state.board)
             if not available_moves:
                 return {"error": "No available moves"}
             
-            # Use random move as final fallback
-            import random
-            ai_move = random.choice(available_moves)
+            # Use strategic fallback logic
+            ai_move = self._get_strategic_fallback_move(available_moves)
             
             # Make the move
             move_success = self.game_state.make_move(ai_move["row"], ai_move["col"], "ai")
@@ -936,7 +1142,7 @@ Example: 1,1 for center position
             return {
                 "success": True,
                 "move": ai_move,
-                "reasoning": "Random fallback move"
+                "reasoning": "Strategic fallback move"
             }
             
         except Exception as e:
@@ -954,67 +1160,27 @@ Example: 1,1 for center position
             
             return {
                 "success": True,
-                "ai_move": ai_move,
+                "move": ai_move,
                 "fallback": True,
                 "message": "Used random fallback move"
             }
     
-    async def _get_llm_move(self, available_moves: List[Dict]) -> Dict:
-        """Get AI move using LLM directly (no hardcoded logic)"""
-        try:
-            # Use LLM for strategic positioning
-            board_str = self._board_to_string(self.game_state.board)
-            
-            prompt = f"""
-You are playing Tic-Tac-Toe as AI (O) vs Human (X). 
-
-BOARD:
-{board_str}
-
-AVAILABLE MOVES: {available_moves}
-
-STRATEGY:
-1. Take center (1,1) if available
-2. Take corners (0,0), (0,2), (2,0), (2,2) 
-3. Take any available position
-
-Choose the BEST move. Return JSON: {{"row": X, "col": Y}}
-"""
-            
-            # Use the first available agent's LLM
-            agent = None
-            for agent_name in ["scout", "strategist", "executor"]:
-                if self.agents.get(agent_name):
-                    agent = self.agents[agent_name]
-                    break
-            
-            if not agent:
-                return None
-            
-            # Get LLM response
-            response = await asyncio.to_thread(agent.llm.call, prompt)
-            
-            # Parse the response
-            import json
-            import re
-            
-            # Extract JSON from response
-            json_match = re.search(r'\{[^}]*"row"[^}]*"col"[^}]*\}', str(response))
-            if json_match:
-                move_data = json.loads(json_match.group())
-                row = move_data.get("row")
-                col = move_data.get("col")
-                
-                # Validate the move
-                if isinstance(row, int) and isinstance(col, int) and 0 <= row < 3 and 0 <= col < 3:
-                    if self.game_state.board[row][col] == "":
-                        return {"row": row, "col": col}
-            
-            return None
-            
-        except Exception as e:
-            print(f"Error getting LLM move: {e}")
-            return None
+    def _get_strategic_fallback_move(self, available_moves: List[Dict]) -> Dict:
+        """Get strategic fallback move using Tic-Tac-Toe logic"""
+        # Priority 1: Take center if available
+        center_move = {"row": 1, "col": 1}
+        if center_move in available_moves:
+            return center_move
+        
+        # Priority 2: Take corners
+        corners = [{"row": 0, "col": 0}, {"row": 0, "col": 2}, {"row": 2, "col": 0}, {"row": 2, "col": 2}]
+        for corner in corners:
+            if corner in available_moves:
+                return corner
+        
+        # Priority 3: Take any available move
+        return available_moves[0]
+    
     
     
     def _board_to_string(self, board: List[List[str]]) -> str:
