@@ -971,33 +971,6 @@ def main():
         st.session_state.trigger_ai_move = False
         print(f"[DEBUG] Initialize trigger_ai_move to False")
     
-    # Add debug buttons
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🔧 Clear Session State (Debug)", key="clear_session"):
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            st.rerun()
-    
-    with col2:
-        if st.button("🔄 Reset Game State", key="reset_game"):
-            # Reset backend game state
-            try:
-                response = requests.post(f"{API_BASE}/reset-game")
-                if response.status_code == 200:
-                    st.success("🎮 Game state reset!")
-                else:
-                    st.error("Failed to reset game on server")
-            except Exception as e:
-                st.error(f"Error resetting game: {e}")
-            st.rerun()
-    
-    # Add manual AI move trigger for testing
-    if st.button("🤖 Force AI Move (Debug)", key="force_ai_move"):
-        print(f"[DEBUG] Force AI Move button clicked!")
-        st.session_state.trigger_ai_move = True
-        print(f"[DEBUG] Set trigger_ai_move = True")
-        st.rerun()
     
     # Header with GitHub link
     st.markdown("""
