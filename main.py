@@ -62,8 +62,7 @@ from models.factory import ModelFactory
 app = FastAPI(
     title="MCP Protocol Tic Tac Toe",
     description="Multi-Agent Game Simulation using CrewAI + MCP Protocol",
-    version="2.0.0",
-    lifespan=lifespan
+    version="2.0.0"
 )
 
 # Add CORS middleware
@@ -103,9 +102,9 @@ class AgentStatusResponse(BaseModel):
     agents: Dict[str, Any]
     coordinator: Dict[str, Any]
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan context manager for startup and shutdown"""
+@app.on_event("startup")
+async def startup_event():
+    """Start agents and coordinator based on framework mode"""
     global scout_agent, strategist_agent, executor_agent, coordinator, distributed_mode
     
     print("🚀 Startup event triggered - initializing agents...")
@@ -298,14 +297,6 @@ async def lifespan(app: FastAPI):
         print("="*50 + "\n")
 
     print("🎉 MCP CrewAI system initialized!")
-    
-    # Yield control back to FastAPI
-    yield
-    
-    # Shutdown logic (if needed)
-    print("🛑 Shutting down...")
-    print("🚀 Game is fully pre-warmed and ready to play!")
-    print("⚡ First move should now be instant!")
 
 @app.get("/")
 async def root():
@@ -890,6 +881,11 @@ if __name__ == "__main__":
     
     # Get API config from config file
     api_config = config.get_api_config()
+    
+    # Manually call startup to ensure agents are initialized
+    import asyncio
+    print("🚀 Manually initializing agents...")
+    asyncio.run(startup_event())
     
     uvicorn.run(
         "main:app",
