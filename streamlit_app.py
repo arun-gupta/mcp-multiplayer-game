@@ -993,7 +993,9 @@ def main():
     
     # Add manual AI move trigger for testing
     if st.button("🤖 Force AI Move (Debug)", key="force_ai_move"):
+        print(f"[DEBUG] Force AI Move button clicked!")
         st.session_state.trigger_ai_move = True
+        print(f"[DEBUG] Set trigger_ai_move = True")
         st.rerun()
     
     # Header with GitHub link
