@@ -1174,7 +1174,28 @@ def main():
                 
                 # Fetch fresh game state for Move History to ensure we have latest data
                 st.write(f"🔍 **Debug - About to call get_game_state() for Move History**")
-                fresh_game_state = get_game_state()
+                
+                # Try direct API call to bypass any caching
+                import time
+                import random
+                cache_buster = int(time.time() * 1000)
+                random_seed = random.randint(1000, 9999)
+                st.write(f"🔍 **Debug - Making direct API call with cache-buster: {cache_buster}, random: {random_seed}**")
+                
+                try:
+                    import requests
+                    response = requests.get(f"{API_BASE}/state?t={cache_buster}&r={random_seed}")
+                    st.write(f"🔍 **Debug - Direct API response status: {response.status_code}**")
+                    if response.status_code == 200:
+                        fresh_game_state = response.json()
+                        st.write(f"🔍 **Debug - Direct API response: {fresh_game_state}**")
+                    else:
+                        st.write(f"🔍 **Debug - Direct API failed: {response.status_code}**")
+                        fresh_game_state = get_game_state()
+                except Exception as e:
+                    st.write(f"🔍 **Debug - Direct API error: {e}**")
+                    fresh_game_state = get_game_state()
+                
                 move_history = []
                 
                 # Debug: Show fresh game_state info in UI
