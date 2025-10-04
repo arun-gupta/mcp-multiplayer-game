@@ -1189,7 +1189,6 @@ def main():
                 st.write(f"🔍 **Debug - Making direct API call with cache-buster: {cache_buster}, random: {random_seed}**")
                 
                 try:
-                    import requests
                     response = requests.get(f"{API_BASE}/state?t={cache_buster}&r={random_seed}")
                     st.write(f"🔍 **Debug - Direct API response status: {response.status_code}**")
                     if response.status_code == 200:
