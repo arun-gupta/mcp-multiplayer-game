@@ -1174,9 +1174,14 @@ def main():
                 
                 # Use the same game_state that's already being used for the game board
                 move_history = []
+                print(f"[DEBUG] Move History - game_state type: {type(game_state)}")
+                print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
+                print(f"[DEBUG] Move History - game_state game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
+                
                 if game_state and 'game_history' in game_state:
                     move_history = game_state['game_history']
                     print(f"[DEBUG] Using game_state game_history: {len(move_history)} moves")
+                    print(f"[DEBUG] Move History content: {move_history}")
                 else:
                     print(f"[DEBUG] No game_history in current game_state")
                 
