@@ -1174,16 +1174,18 @@ def main():
                 
                 # Use the same game_state that's already being used for the game board
                 move_history = []
-                print(f"[DEBUG] Move History - game_state type: {type(game_state)}")
-                print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
-                print(f"[DEBUG] Move History - game_state game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
+                
+                # Debug: Show game_state info in UI
+                st.write(f"🔍 **Debug - game_state type:** {type(game_state)}")
+                st.write(f"🔍 **Debug - game_state keys:** {list(game_state.keys()) if game_state else 'None'}")
+                st.write(f"🔍 **Debug - game_history:** {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
                 
                 if game_state and 'game_history' in game_state:
                     move_history = game_state['game_history']
-                    print(f"[DEBUG] Using game_state game_history: {len(move_history)} moves")
-                    print(f"[DEBUG] Move History content: {move_history}")
+                    st.write(f"🔍 **Debug - Using game_history: {len(move_history)} moves**")
+                    st.write(f"🔍 **Debug - Move History content:** {move_history}")
                 else:
-                    print(f"[DEBUG] No game_history in current game_state")
+                    st.write(f"🔍 **Debug - No game_history in current game_state**")
                 
                 if move_history:
                     print(f"[DEBUG] Rendering {len(move_history)} moves in Move History")
