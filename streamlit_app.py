@@ -1173,13 +1173,19 @@ def main():
                 
                 
                 # Fetch fresh game state for Move History to ensure we have latest data
+                st.write(f"🔍 **Debug - About to call get_game_state() for Move History**")
                 fresh_game_state = get_game_state()
                 move_history = []
                 
                 # Debug: Show fresh game_state info in UI
                 st.write(f"🔍 **Debug - fresh_game_state type:** {type(fresh_game_state)}")
-                st.write(f"🔍 **Debug - fresh_game_state keys:** {list(fresh_game_state.keys()) if fresh_game_state else 'None'}")
-                st.write(f"🔍 **Debug - fresh_game_history:** {fresh_game_state.get('game_history', 'NOT_FOUND') if fresh_game_state else 'None'}")
+                st.write(f"🔍 **Debug - fresh_game_state is None:** {fresh_game_state is None}")
+                if fresh_game_state:
+                    st.write(f"🔍 **Debug - fresh_game_state keys:** {list(fresh_game_state.keys())}")
+                    st.write(f"🔍 **Debug - fresh_game_state full content:** {fresh_game_state}")
+                    st.write(f"🔍 **Debug - fresh_game_history:** {fresh_game_state.get('game_history', 'NOT_FOUND')}")
+                else:
+                    st.write(f"🔍 **Debug - fresh_game_state is None or empty**")
                 
                 if fresh_game_state and 'game_history' in fresh_game_state:
                     move_history = fresh_game_state['game_history']
