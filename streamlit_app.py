@@ -712,19 +712,9 @@ def render_game_board(board, game_over=False):
                                 else:
                                     print(f"[DEBUG] Not setting trigger_ai_move - game_over: {result.get('game_over')}, current_player: {result.get('current_player')}")
                                 
-                                # Force immediate Move History update by directly updating session state
-                                print(f"[DEBUG] Adding player move to Move History immediately")
-                                if 'immediate_move_history' not in st.session_state:
-                                    st.session_state.immediate_move_history = []
-                                
-                                # Add player move to immediate history
-                                player_move_entry = {
-                                    'move_number': len(st.session_state.immediate_move_history) + 1,
-                                    'player': 'player',
-                                    'position': {'row': row, 'col': col, 'value': 'X'}
-                                }
-                                st.session_state.immediate_move_history.append(player_move_entry)
-                                print(f"[DEBUG] Added player move to immediate history: {player_move_entry}")
+                                # Force Move History refresh by setting flag
+                                st.session_state.force_move_history_refresh = True
+                                print(f"[DEBUG] Set force_move_history_refresh = True for immediate Move History update")
                                 
                                 st.rerun()  # Show player move first
                             else:
@@ -753,16 +743,12 @@ def render_game_board(board, game_over=False):
         st.session_state.move_history = []
         
         # Clear Move History session state
-        if 'immediate_move_history' in st.session_state:
-            del st.session_state.immediate_move_history
-        if 'latest_move_history' in st.session_state:
-            del st.session_state.latest_move_history
-        if 'local_move_history' in st.session_state:
-            del st.session_state.local_move_history
-        if 'move_history_refresh' in st.session_state:
-            del st.session_state.move_history_refresh
         if 'force_move_history_refresh' in st.session_state:
             del st.session_state.force_move_history_refresh
+        if 'move_history_refresh' in st.session_state:
+            del st.session_state.move_history_refresh
+        if 'game_state_cache' in st.session_state:
+            del st.session_state.game_state_cache
         
         print(f"[DEBUG] NEW GAME: Cleared all Move History session state")
         st.rerun()
@@ -1155,19 +1141,9 @@ def main():
                                 
                                 st.success(f"✅ AI move completed in {duration:.3f}s")
                                 
-                                # Add AI move to immediate history
-                                print(f"[DEBUG] Adding AI move to immediate history")
-                                if 'immediate_move_history' not in st.session_state:
-                                    st.session_state.immediate_move_history = []
-                                
-                                ai_move = result.get('move', {})
-                                ai_move_entry = {
-                                    'move_number': len(st.session_state.immediate_move_history) + 1,
-                                    'player': 'ai',
-                                    'position': {'row': ai_move.get('row', 0), 'col': ai_move.get('col', 0), 'value': 'O'}
-                                }
-                                st.session_state.immediate_move_history.append(ai_move_entry)
-                                print(f"[DEBUG] Added AI move to immediate history: {ai_move_entry}")
+                                # Force Move History refresh after AI move
+                                st.session_state.force_move_history_refresh = True
+                                print(f"[DEBUG] Set force_move_history_refresh = True after AI move")
                                 
                                 print(f"[DEBUG] AI move successful, calling st.rerun()")
                                 st.rerun()
@@ -1211,16 +1187,22 @@ def main():
                         # Force another rerun to show the updated Move History
                         st.rerun()
                 
-                # Use immediate move history for instant updates, fallback to API data
+                # Force fresh API call if Move History refresh is needed
+                if st.session_state.get('force_move_history_refresh', False):
+                    print(f"[DEBUG] Force Move History refresh - fetching fresh game state")
+                    fresh_game_state = get_game_state()
+                    if fresh_game_state:
+                        game_state = fresh_game_state
+                        st.session_state.force_move_history_refresh = False  # Reset flag
+                        print(f"[DEBUG] Fresh game state fetched, reset force_move_history_refresh")
+                
+                # Use API data for Move History (same source as game board)
                 move_history = []
-                if st.session_state.get('immediate_move_history'):
-                    move_history = st.session_state.immediate_move_history
-                    print(f"[DEBUG] Using immediate_move_history: {len(move_history)} moves")
-                elif game_state and 'game_history' in game_state:
+                if game_state and 'game_history' in game_state:
                     move_history = game_state['game_history']
                     print(f"[DEBUG] Using API game_history: {len(move_history)} moves")
                 else:
-                    print(f"[DEBUG] No move history available")
+                    print(f"[DEBUG] No game_history in API data")
                 
                 if move_history:
                     print(f"[DEBUG] Rendering {len(move_history)} moves in Move History")
