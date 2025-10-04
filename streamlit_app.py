@@ -210,7 +210,6 @@ st.markdown("""
 def get_game_state():
     """Get current game state from MCP API"""
     try:
-        import time
         import random
         # Add multiple cache-busting parameters to force fresh data
         cache_buster = int(time.time() * 1000)  # milliseconds
@@ -1182,7 +1181,6 @@ def main():
                 st.write(f"🔍 **Debug - About to call get_game_state() for Move History**")
                 
                 # Try direct API call to bypass any caching
-                import time
                 import random
                 cache_buster = int(time.time() * 1000)
                 random_seed = random.randint(1000, 9999)
