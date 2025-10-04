@@ -701,6 +701,10 @@ def render_game_board(board, game_over=False):
                                     del st.session_state.game_state_cache
                                     print(f"[DEBUG] Cleared game_state_cache")
                                 
+                                # Set flag to force Move History refresh on next render
+                                st.session_state.force_move_history_refresh = True
+                                print(f"[DEBUG] Set force_move_history_refresh = True")
+                                
                                 # Check if AI should move (set flag for next render)
                                 if not result.get('game_over', False) and result.get('current_player') == 'ai':
                                     st.session_state.trigger_ai_move = True
@@ -1146,15 +1150,21 @@ def main():
             with col2:
                 st.markdown("### 📝 Move History")
                 
-                # Add refresh button for Move History
-                if st.button("🔄 Refresh Move History", key="refresh_move_history"):
-                    st.rerun()
-                
                 # Show move history - force fresh data from API
                 print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
                 print(f"[DEBUG] Move History - game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
                 print(f"[DEBUG] Move History - local_move_history: {st.session_state.get('local_move_history', 'NOT_FOUND')}")
                 print(f"[DEBUG] Move History - move_history_refresh: {st.session_state.get('move_history_refresh', 'NOT_SET')}")
+                print(f"[DEBUG] Move History - force_move_history_refresh: {st.session_state.get('force_move_history_refresh', 'NOT_SET')}")
+                
+                # Force fresh API call if Move History refresh is needed
+                if st.session_state.get('force_move_history_refresh', False):
+                    print(f"[DEBUG] Force Move History refresh - fetching fresh game state")
+                    fresh_game_state = get_game_state()
+                    if fresh_game_state:
+                        game_state = fresh_game_state
+                        st.session_state.force_move_history_refresh = False  # Reset flag
+                        print(f"[DEBUG] Fresh game state fetched, reset force_move_history_refresh")
                 
                 # Force use API data for Move History (more reliable than session state)
                 move_history = []
