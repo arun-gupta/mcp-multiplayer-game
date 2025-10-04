@@ -1165,6 +1165,8 @@ def main():
                         game_state = fresh_game_state
                         st.session_state.force_move_history_refresh = False  # Reset flag
                         print(f"[DEBUG] Fresh game state fetched, reset force_move_history_refresh")
+                        # Force another rerun to show the updated Move History
+                        st.rerun()
                 
                 # Force use API data for Move History (more reliable than session state)
                 move_history = []
