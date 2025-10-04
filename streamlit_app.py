@@ -744,6 +744,18 @@ def render_game_board(board, game_over=False):
         st.session_state.game_over = False
         st.session_state.winner = None
         st.session_state.move_history = []
+        
+        # Clear Move History session state
+        if 'latest_move_history' in st.session_state:
+            del st.session_state.latest_move_history
+        if 'local_move_history' in st.session_state:
+            del st.session_state.local_move_history
+        if 'move_history_refresh' in st.session_state:
+            del st.session_state.move_history_refresh
+        if 'force_move_history_refresh' in st.session_state:
+            del st.session_state.force_move_history_refresh
+        
+        print(f"[DEBUG] NEW GAME: Cleared all Move History session state")
         st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
