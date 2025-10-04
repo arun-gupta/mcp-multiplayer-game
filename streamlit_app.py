@@ -1177,46 +1177,21 @@ def main():
                 print(f"[DEBUG] Move History - force_move_history_refresh: {st.session_state.get('force_move_history_refresh', 'NOT_SET')}")
                 
                 
-                # Fetch fresh game state for Move History to ensure we have latest data
-                st.write(f"🔍 **Debug - About to call get_game_state() for Move History**")
-                
-                # Try direct API call to bypass any caching
-                import random
-                cache_buster = int(time.time() * 1000)
-                random_seed = random.randint(1000, 9999)
-                st.write(f"🔍 **Debug - Making direct API call with cache-buster: {cache_buster}, random: {random_seed}**")
-                
-                try:
-                    response = requests.get(f"{API_BASE}/state?t={cache_buster}&r={random_seed}")
-                    st.write(f"🔍 **Debug - Direct API response status: {response.status_code}**")
-                    if response.status_code == 200:
-                        fresh_game_state = response.json()
-                        st.write(f"🔍 **Debug - Direct API response: {fresh_game_state}**")
-                    else:
-                        st.write(f"🔍 **Debug - Direct API failed: {response.status_code}**")
-                        fresh_game_state = get_game_state()
-                except Exception as e:
-                    st.write(f"🔍 **Debug - Direct API error: {e}**")
-                    fresh_game_state = get_game_state()
-                
+                # Use the same game_state that's already being used for the game board
                 move_history = []
                 
-                # Debug: Show fresh game_state info in UI
-                st.write(f"🔍 **Debug - fresh_game_state type:** {type(fresh_game_state)}")
-                st.write(f"🔍 **Debug - fresh_game_state is None:** {fresh_game_state is None}")
-                if fresh_game_state:
-                    st.write(f"🔍 **Debug - fresh_game_state keys:** {list(fresh_game_state.keys())}")
-                    st.write(f"🔍 **Debug - fresh_game_state full content:** {fresh_game_state}")
-                    st.write(f"🔍 **Debug - fresh_game_history:** {fresh_game_state.get('game_history', 'NOT_FOUND')}")
-                else:
-                    st.write(f"🔍 **Debug - fresh_game_state is None or empty**")
+                # Debug: Show game_state info in UI
+                st.write(f"🔍 **Debug - Using same game_state as game board**")
+                st.write(f"🔍 **Debug - game_state type:** {type(game_state)}")
+                st.write(f"🔍 **Debug - game_state keys:** {list(game_state.keys()) if game_state else 'None'}")
+                st.write(f"🔍 **Debug - game_state game_history:** {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
                 
-                if fresh_game_state and 'game_history' in fresh_game_state:
-                    move_history = fresh_game_state['game_history']
-                    st.write(f"🔍 **Debug - Using fresh game_history: {len(move_history)} moves**")
+                if game_state and 'game_history' in game_state:
+                    move_history = game_state['game_history']
+                    st.write(f"🔍 **Debug - Using game_state game_history: {len(move_history)} moves**")
                     st.write(f"🔍 **Debug - Move History content:** {move_history}")
                 else:
-                    st.write(f"🔍 **Debug - No game_history in fresh game_state**")
+                    st.write(f"🔍 **Debug - No game_history in current game_state**")
                 
                 if move_history:
                     print(f"[DEBUG] Rendering {len(move_history)} moves in Move History")
