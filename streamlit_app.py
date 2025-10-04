@@ -211,10 +211,12 @@ def get_game_state():
     """Get current game state from MCP API"""
     try:
         import time
-        # Add cache-busting parameter to force fresh data
+        import random
+        # Add multiple cache-busting parameters to force fresh data
         cache_buster = int(time.time() * 1000)  # milliseconds
-        print(f"[DEBUG] Fetching game state from API (cache-buster: {cache_buster})")
-        response = requests.get(f"{API_BASE}/state?t={cache_buster}")
+        random_seed = random.randint(1000, 9999)  # random number
+        print(f"[DEBUG] Fetching game state from API (cache-buster: {cache_buster}, random: {random_seed})")
+        response = requests.get(f"{API_BASE}/state?t={cache_buster}&r={random_seed}")
         print(f"[DEBUG] Game state API response status: {response.status_code}")
         if response.status_code == 200:
             result = response.json()
@@ -689,6 +691,10 @@ def render_game_board(board, game_over=False):
                                 # Force refresh of game state to update Move History immediately
                                 print(f"[DEBUG] Player move result: {result}")
                                 print(f"[DEBUG] Forcing game state refresh for Move History update")
+                                
+                                # Force Move History refresh by updating session state
+                                st.session_state.move_history_refresh = time.time()
+                                print(f"[DEBUG] Set move_history_refresh = {st.session_state.move_history_refresh}")
                                 
                                 # Check if AI should move (set flag for next render)
                                 if not result.get('game_over', False) and result.get('current_player') == 'ai':
