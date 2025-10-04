@@ -1055,8 +1055,13 @@ def main():
     """, unsafe_allow_html=True)
     
     # Check API connection
+    st.write(f"🔍 **Debug - API_BASE:** {API_BASE}")
     try:
+        st.write(f"🔍 **Debug - Making health request to:** {API_BASE}/health")
         health_response = requests.get(f"{API_BASE}/health", timeout=5)
+        st.write(f"🔍 **Debug - Health response status:** {health_response.status_code}")
+        st.write(f"🔍 **Debug - Health response content:** {health_response.text}")
+        
         if health_response.status_code == 200:
             health_data = health_response.json()
             st.success("✅ AI Team Ready - Three agents are online and ready to play!")
@@ -1065,6 +1070,7 @@ def main():
             return
     except Exception as e:
         st.error("❌ AI Team Offline - Cannot connect to backend")
+        st.write(f"🔍 **Debug - Exception:** {e}")
         st.info("Make sure to run: `python main.py`")
         return
     
