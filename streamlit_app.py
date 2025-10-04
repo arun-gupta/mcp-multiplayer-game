@@ -686,18 +686,6 @@ def render_game_board(board, game_over=False):
                             if result and result.get('success'):
                                 st.success(f"✅ Your move recorded at ({row}, {col})")
                                 
-                                # Update local move history immediately
-                                if 'local_move_history' not in st.session_state:
-                                    st.session_state.local_move_history = []
-                                
-                                move_number = len(st.session_state.local_move_history) + 1
-                                st.session_state.local_move_history.append({
-                                    'move_number': move_number,
-                                    'player': 'player',
-                                    'position': {'row': row, 'col': col, 'value': 'X'}
-                                })
-                                print(f"[DEBUG] Updated local move history: {st.session_state.local_move_history}")
-                                
                                 # Force refresh of game state to update Move History immediately
                                 print(f"[DEBUG] Player move result: {result}")
                                 print(f"[DEBUG] Forcing game state refresh for Move History update")
@@ -1147,20 +1135,21 @@ def main():
             with col2:
                 st.markdown("### 📝 Move History")
                 
-                # Show move history - prioritize local session state for real-time updates
+                # Show move history - force fresh data from API
                 print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
                 print(f"[DEBUG] Move History - game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
                 print(f"[DEBUG] Move History - local_move_history: {st.session_state.get('local_move_history', 'NOT_FOUND')}")
                 
-                # Use local move history if available (for real-time updates), otherwise fall back to API data
-                move_history = st.session_state.get('local_move_history', [])
-                if not move_history and game_state and 'game_history' in game_state:
+                # Force use API data for Move History (more reliable than session state)
+                move_history = []
+                if game_state and 'game_history' in game_state:
                     move_history = game_state['game_history']
-                    # Sync local history with API data
-                    st.session_state.local_move_history = move_history
-                    print(f"[DEBUG] Synced local move history with API data")
+                    print(f"[DEBUG] Using API game_history: {len(move_history)} moves")
+                else:
+                    print(f"[DEBUG] No game_history in API data")
                 
                 if move_history:
+                    print(f"[DEBUG] Rendering {len(move_history)} moves in Move History")
                     for move in move_history:
                         move_number = move.get('move_number', 0)
                         player = move.get('player', 'unknown')
@@ -1174,6 +1163,7 @@ def main():
                         else:
                             st.write(f"{move_number}. 🤖 Double-O-AI placed {symbol} at ({row}, {col})")
                 else:
+                    print(f"[DEBUG] No moves to display - showing default message")
                     st.info("No moves yet - click a cell to start!")
                 
                 # Game outcome is already shown at the top of the game board
