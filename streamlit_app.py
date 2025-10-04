@@ -1054,13 +1054,8 @@ def main():
     """, unsafe_allow_html=True)
     
     # Check API connection
-    st.write(f"🔍 **Debug - API_BASE:** {API_BASE}")
     try:
-        st.write(f"🔍 **Debug - Making health request to:** {API_BASE}/health")
         health_response = requests.get(f"{API_BASE}/health", timeout=5)
-        st.write(f"🔍 **Debug - Health response status:** {health_response.status_code}")
-        st.write(f"🔍 **Debug - Health response content:** {health_response.text}")
-        
         if health_response.status_code == 200:
             health_data = health_response.json()
             st.success("✅ AI Team Ready - Three agents are online and ready to play!")
@@ -1069,7 +1064,6 @@ def main():
             return
     except Exception as e:
         st.error("❌ AI Team Offline - Cannot connect to backend")
-        st.write(f"🔍 **Debug - Exception:** {e}")
         st.info("Make sure to run: `python main.py`")
         return
     
@@ -1180,18 +1174,8 @@ def main():
                 # Use the same game_state that's already being used for the game board
                 move_history = []
                 
-                # Debug: Show game_state info in UI
-                st.write(f"🔍 **Debug - Using same game_state as game board**")
-                st.write(f"🔍 **Debug - game_state type:** {type(game_state)}")
-                st.write(f"🔍 **Debug - game_state keys:** {list(game_state.keys()) if game_state else 'None'}")
-                st.write(f"🔍 **Debug - game_state game_history:** {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
-                
                 if game_state and 'game_history' in game_state:
                     move_history = game_state['game_history']
-                    st.write(f"🔍 **Debug - Using game_state game_history: {len(move_history)} moves**")
-                    st.write(f"🔍 **Debug - Move History content:** {move_history}")
-                else:
-                    st.write(f"🔍 **Debug - No game_history in current game_state**")
                 
                 if move_history:
                     print(f"[DEBUG] Rendering {len(move_history)} moves in Move History")
