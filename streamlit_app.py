@@ -696,6 +696,11 @@ def render_game_board(board, game_over=False):
                                 st.session_state.move_history_refresh = time.time()
                                 print(f"[DEBUG] Set move_history_refresh = {st.session_state.move_history_refresh}")
                                 
+                                # Force immediate Move History update by clearing cache
+                                if 'game_state_cache' in st.session_state:
+                                    del st.session_state.game_state_cache
+                                    print(f"[DEBUG] Cleared game_state_cache")
+                                
                                 # Check if AI should move (set flag for next render)
                                 if not result.get('game_over', False) and result.get('current_player') == 'ai':
                                     st.session_state.trigger_ai_move = True
@@ -1141,10 +1146,15 @@ def main():
             with col2:
                 st.markdown("### 📝 Move History")
                 
+                # Add refresh button for Move History
+                if st.button("🔄 Refresh Move History", key="refresh_move_history"):
+                    st.rerun()
+                
                 # Show move history - force fresh data from API
                 print(f"[DEBUG] Move History - game_state keys: {list(game_state.keys()) if game_state else 'None'}")
                 print(f"[DEBUG] Move History - game_history: {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
                 print(f"[DEBUG] Move History - local_move_history: {st.session_state.get('local_move_history', 'NOT_FOUND')}")
+                print(f"[DEBUG] Move History - move_history_refresh: {st.session_state.get('move_history_refresh', 'NOT_SET')}")
                 
                 # Force use API data for Move History (more reliable than session state)
                 move_history = []
