@@ -1172,20 +1172,21 @@ def main():
                 print(f"[DEBUG] Move History - force_move_history_refresh: {st.session_state.get('force_move_history_refresh', 'NOT_SET')}")
                 
                 
-                # Use the same game_state that's already being used for the game board
+                # Fetch fresh game state for Move History to ensure we have latest data
+                fresh_game_state = get_game_state()
                 move_history = []
                 
-                # Debug: Show game_state info in UI
-                st.write(f"🔍 **Debug - game_state type:** {type(game_state)}")
-                st.write(f"🔍 **Debug - game_state keys:** {list(game_state.keys()) if game_state else 'None'}")
-                st.write(f"🔍 **Debug - game_history:** {game_state.get('game_history', 'NOT_FOUND') if game_state else 'None'}")
+                # Debug: Show fresh game_state info in UI
+                st.write(f"🔍 **Debug - fresh_game_state type:** {type(fresh_game_state)}")
+                st.write(f"🔍 **Debug - fresh_game_state keys:** {list(fresh_game_state.keys()) if fresh_game_state else 'None'}")
+                st.write(f"🔍 **Debug - fresh_game_history:** {fresh_game_state.get('game_history', 'NOT_FOUND') if fresh_game_state else 'None'}")
                 
-                if game_state and 'game_history' in game_state:
-                    move_history = game_state['game_history']
-                    st.write(f"🔍 **Debug - Using game_history: {len(move_history)} moves**")
+                if fresh_game_state and 'game_history' in fresh_game_state:
+                    move_history = fresh_game_state['game_history']
+                    st.write(f"🔍 **Debug - Using fresh game_history: {len(move_history)} moves**")
                     st.write(f"🔍 **Debug - Move History content:** {move_history}")
                 else:
-                    st.write(f"🔍 **Debug - No game_history in current game_state**")
+                    st.write(f"🔍 **Debug - No game_history in fresh game_state**")
                 
                 if move_history:
                     print(f"[DEBUG] Rendering {len(move_history)} moves in Move History")
