@@ -1,4 +1,4 @@
-# 🎮 Agentic Tic-Tac-Toe with CrewAI and MCP
+# 🎮 Agentic Tic-Tac-Toe: Multi-Framework AI with MCP Protocol Support
 
 [![YouTube Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?style=for-the-badge&logo=youtube)](https://youtu.be/6kMry-zlO3U)
 [![Version](https://img.shields.io/badge/Demo%20Version-v1.0-orange?style=for-the-badge)](https://youtu.be/6kMry-zlO3U)
