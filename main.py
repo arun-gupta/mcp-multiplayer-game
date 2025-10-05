@@ -57,6 +57,7 @@ from agents.strategist_langchain import StrategistLangChain
 from agents.executor_langchain import ExecutorLangChain
 from models.registry import model_registry
 from models.factory import ModelFactory
+from models.shared_llm import SharedLLMConnection
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -163,27 +164,40 @@ async def startup_event():
     # Initialize agents based on framework mode
     if agent_framework == "langchain":
         print("🔗 Using LangChain agents (faster and more reliable)")
+        print("📦 Creating shared LLM connection for all agents")
+
+        # Create single shared LLM connection
         try:
-            scout_agent = ScoutLangChain(default_model)
-            print(f"✅ Scout LangChain Agent created with {default_model}")
+            shared_llm = SharedLLMConnection(default_model)
+            print(f"✅ Shared LLM connection created: {shared_llm.model_name}")
+        except Exception as e:
+            print(f"❌ Error creating shared LLM connection: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
+            shared_llm = None
+
+        # Create agents with shared LLM connection
+        try:
+            scout_agent = ScoutLangChain(shared_llm=shared_llm)
+            print(f"✅ Scout LangChain Agent created")
         except Exception as e:
             print(f"❌ Error creating Scout LangChain Agent: {e}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
             scout_agent = None
-        
+
         try:
-            strategist_agent = StrategistLangChain(default_model)
-            print(f"✅ Strategist LangChain Agent created with {default_model}")
+            strategist_agent = StrategistLangChain(shared_llm=shared_llm)
+            print(f"✅ Strategist LangChain Agent created")
         except Exception as e:
             print(f"❌ Error creating Strategist LangChain Agent: {e}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
             strategist_agent = None
-        
+
         try:
-            executor_agent = ExecutorLangChain(default_model)
-            print(f"✅ Executor LangChain Agent created with {default_model}")
+            executor_agent = ExecutorLangChain(shared_llm=shared_llm)
+            print(f"✅ Executor LangChain Agent created")
         except Exception as e:
             print(f"❌ Error creating Executor LangChain Agent: {e}")
             import traceback

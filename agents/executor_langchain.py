@@ -5,14 +5,12 @@ Replaces CrewAI Executor with direct LangChain implementation
 
 import json
 import asyncio
-from typing import Dict, List, Any
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_community.chat_models import ChatLiteLLM
+from typing import Dict, List, Any, Optional
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
+from models.shared_llm import SharedLLMConnection
 
 
 class MoveExecution(BaseModel):
@@ -25,12 +23,29 @@ class MoveExecution(BaseModel):
 
 class ExecutorLangChain:
     """LangChain-based Executor agent for move execution"""
-    
-    def __init__(self, model_name: str = "gpt-5-mini"):
-        self.model_name = model_name
-        self.llm = self._create_llm()
+
+    def __init__(self, shared_llm: Optional[SharedLLMConnection] = None, model_name: str = "gpt-5-mini"):
+        """
+        Initialize Executor agent
+
+        Args:
+            shared_llm: Optional SharedLLMConnection instance. If provided, uses shared connection.
+            model_name: Model name (only used if shared_llm is None)
+        """
+        if shared_llm:
+            self.shared_llm = shared_llm
+            self.llm = shared_llm.get_connection()
+            self.model_name = shared_llm.model_name
+            print(f"✅ ExecutorLangChain using shared LLM: {self.model_name}")
+        else:
+            # Fallback: create own connection (backward compatibility)
+            self.shared_llm = SharedLLMConnection(model_name)
+            self.llm = self.shared_llm.get_connection()
+            self.model_name = model_name
+            print(f"⚠️ ExecutorLangChain creating own LLM connection: {self.model_name}")
+
         self.parser = PydanticOutputParser(pydantic_object=MoveExecution)
-        
+
         # Create the prompt template
         self.prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a Tic-Tac-Toe move execution expert. Your job is to validate and execute moves.
@@ -54,28 +69,6 @@ Current Player: {current_player}
 
 Validate and execute the move:""")
         ])
-    
-    def _create_llm(self):
-        """Create the appropriate LLM based on model name"""
-        if "gpt" in self.model_name.lower():
-            # GPT-5 models don't support custom temperature, use default
-            return ChatOpenAI(
-                model=self.model_name,
-                timeout=30.0
-            )
-        elif "claude" in self.model_name.lower():
-            return ChatAnthropic(
-                model=self.model_name,
-                temperature=0.1,
-                timeout=30.0
-            )
-        else:
-            # Use LiteLLM for other models
-            return ChatLiteLLM(
-                model=self.model_name,
-                temperature=0.1,
-                timeout=30.0
-            )
     
     async def execute_move(self, execution_input: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a move based on strategy recommendation"""

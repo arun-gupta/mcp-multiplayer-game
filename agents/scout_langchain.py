@@ -5,14 +5,12 @@ Replaces CrewAI Scout with direct LangChain implementation
 
 import json
 import asyncio
-from typing import Dict, List, Any
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_community.chat_models import ChatLiteLLM
+from typing import Dict, List, Any, Optional
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
+from models.shared_llm import SharedLLMConnection
 
 
 class BoardAnalysis(BaseModel):
@@ -25,17 +23,34 @@ class BoardAnalysis(BaseModel):
 
 class ScoutLangChain:
     """LangChain-based Scout agent for board analysis"""
-    
-    def __init__(self, model_name: str = "gpt-5-mini"):
-        self.model_name = model_name
-        self.llm = self._create_llm()
+
+    def __init__(self, shared_llm: Optional[SharedLLMConnection] = None, model_name: str = "gpt-5-mini"):
+        """
+        Initialize Scout agent
+
+        Args:
+            shared_llm: Optional SharedLLMConnection instance. If provided, uses shared connection.
+            model_name: Model name (only used if shared_llm is None)
+        """
+        if shared_llm:
+            self.shared_llm = shared_llm
+            self.llm = shared_llm.get_connection()
+            self.model_name = shared_llm.model_name
+            print(f"✅ ScoutLangChain using shared LLM: {self.model_name}")
+        else:
+            # Fallback: create own connection (backward compatibility)
+            self.shared_llm = SharedLLMConnection(model_name)
+            self.llm = self.shared_llm.get_connection()
+            self.model_name = model_name
+            print(f"⚠️ ScoutLangChain creating own LLM connection: {self.model_name}")
+
         self.parser = PydanticOutputParser(pydantic_object=BoardAnalysis)
-        
+
         # Create the prompt template
         self.prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a Tic-Tac-Toe board analysis expert. Your job is to analyze the current board state and identify:
 1. IMMEDIATE THREATS: Positions where the opponent can win in their next move
-2. WINNING OPPORTUNITIES: Positions where we can win in our next move  
+2. WINNING OPPORTUNITIES: Positions where we can win in our next move
 3. STRATEGIC MOVES: Best positions for center control, corner control, etc.
 
 Analyze the board and provide structured output with threats, opportunities, and strategic moves.
@@ -47,28 +62,6 @@ Available Moves: {available_moves}
 
 Provide your analysis:""")
         ])
-    
-    def _create_llm(self):
-        """Create the appropriate LLM based on model name"""
-        if "gpt" in self.model_name.lower():
-            # GPT-5 models don't support custom temperature, use default
-            return ChatOpenAI(
-                model=self.model_name,
-                timeout=30.0
-            )
-        elif "claude" in self.model_name.lower():
-            return ChatAnthropic(
-                model=self.model_name,
-                temperature=0.1,
-                timeout=30.0
-            )
-        else:
-            # Use LiteLLM for other models
-            return ChatLiteLLM(
-                model=self.model_name,
-                temperature=0.1,
-                timeout=30.0
-            )
     
     async def analyze_board(self, board_state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze the board and return structured analysis"""

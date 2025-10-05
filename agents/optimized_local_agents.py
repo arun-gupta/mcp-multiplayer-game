@@ -2,7 +2,7 @@
 """
 Optimized Local Agents for True Local Mode
 - Shared Ollama connection
-- Shared model instance  
+- Shared model instance
 - No MCP server setup
 - Pre-created tasks during warmup
 - Direct method calls only
@@ -12,46 +12,10 @@ import asyncio
 import json
 import time
 from typing import Dict, List, Optional, Any
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_community.llms import Ollama
 import os
 
-
-class SharedLLMConnection:
-    """Shared LLM connection across all agents"""
-    
-    def __init__(self, model_name: str = "llama3.2:1b"):
-        self.model_name = model_name
-        self.llm = None
-        self.connection_count = 0
-        self._initialize_llm()
-    
-    def _initialize_llm(self):
-        """Initialize shared LLM connection"""
-        try:
-            if "gpt" in self.model_name.lower():
-                self.llm = ChatOpenAI(model=self.model_name, timeout=30.0)  # Increased timeout
-            elif "claude" in self.model_name.lower():
-                self.llm = ChatAnthropic(model=self.model_name, timeout=30.0)  # Increased timeout
-            else:
-                # Use Ollama for local models
-                self.llm = Ollama(model=self.model_name, timeout=30.0)  # Increased timeout
-            print(f"✅ Shared LLM connection initialized: {self.model_name}")
-        except Exception as e:
-            print(f"❌ Failed to initialize shared LLM: {e}")
-            # Fallback to Ollama
-            self.llm = Ollama(model="llama3.2:1b", timeout=30.0)  # Increased timeout
-            self.model_name = "llama3.2:1b"
-    
-    def get_connection(self):
-        """Get shared LLM connection"""
-        self.connection_count += 1
-        return self.llm
-    
-    def release_connection(self):
-        """Release LLM connection"""
-        self.connection_count -= 1
+# Import shared LLM connection from common module
+from models.shared_llm import SharedLLMConnection
 
 
 class OptimizedScoutAgent:

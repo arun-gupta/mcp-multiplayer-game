@@ -5,14 +5,12 @@ Replaces CrewAI Strategist with direct LangChain implementation
 
 import json
 import asyncio
-from typing import Dict, List, Any
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_community.chat_models import ChatLiteLLM
+from typing import Dict, List, Any, Optional
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.prompts import ChatPromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
+from models.shared_llm import SharedLLMConnection
 
 
 class StrategyRecommendation(BaseModel):
@@ -25,12 +23,29 @@ class StrategyRecommendation(BaseModel):
 
 class StrategistLangChain:
     """LangChain-based Strategist agent for move strategy"""
-    
-    def __init__(self, model_name: str = "gpt-5-mini"):
-        self.model_name = model_name
-        self.llm = self._create_llm()
+
+    def __init__(self, shared_llm: Optional[SharedLLMConnection] = None, model_name: str = "gpt-5-mini"):
+        """
+        Initialize Strategist agent
+
+        Args:
+            shared_llm: Optional SharedLLMConnection instance. If provided, uses shared connection.
+            model_name: Model name (only used if shared_llm is None)
+        """
+        if shared_llm:
+            self.shared_llm = shared_llm
+            self.llm = shared_llm.get_connection()
+            self.model_name = shared_llm.model_name
+            print(f"✅ StrategistLangChain using shared LLM: {self.model_name}")
+        else:
+            # Fallback: create own connection (backward compatibility)
+            self.shared_llm = SharedLLMConnection(model_name)
+            self.llm = self.shared_llm.get_connection()
+            self.model_name = model_name
+            print(f"⚠️ StrategistLangChain creating own LLM connection: {self.model_name}")
+
         self.parser = PydanticOutputParser(pydantic_object=StrategyRecommendation)
-        
+
         # Create the prompt template
         self.prompt = ChatPromptTemplate.from_messages([
             ("system", """You are a Tic-Tac-Toe strategy expert. Your job is to create the optimal strategy based on board analysis.
@@ -51,28 +66,6 @@ Current Player: {current_player}
 
 Recommend the best move:""")
         ])
-    
-    def _create_llm(self):
-        """Create the appropriate LLM based on model name"""
-        if "gpt" in self.model_name.lower():
-            # GPT-5 models don't support custom temperature, use default
-            return ChatOpenAI(
-                model=self.model_name,
-                timeout=30.0
-            )
-        elif "claude" in self.model_name.lower():
-            return ChatAnthropic(
-                model=self.model_name,
-                temperature=0.1,
-                timeout=30.0
-            )
-        else:
-            # Use LiteLLM for other models
-            return ChatLiteLLM(
-                model=self.model_name,
-                temperature=0.1,
-                timeout=30.0
-            )
     
     async def create_strategy(self, strategy_input: Dict[str, Any]) -> Dict[str, Any]:
         """Create strategy based on board analysis"""
