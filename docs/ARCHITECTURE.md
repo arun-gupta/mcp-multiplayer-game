@@ -15,7 +15,51 @@ This document describes the comprehensive architecture of the Multi-Agent Tic Ta
 
 ## Deployment Modes
 
-This project supports **two deployment modes** with different architectural patterns:
+This project supports **four deployment modes** with progressively sophisticated architectures:
+
+### ⚡ Simple Mode
+**Architecture**: Single LLM call with rule-based pre-checks
+
+- **Agents**: None (direct LLM call)
+- **Framework**: No agent framework
+- **Performance**: Fastest (<1s)
+- **Use case**: Quick testing, minimal setup
+- **File**: `simple_api.py`
+- **Start**: `python simple_api.py`
+- **Processes**: 1
+- **Benefits**:
+  - ✅ Extremely fast response time
+  - ✅ Minimal dependencies
+  - ✅ Rule-based logic for win/block moves
+  - ✅ LLM only for strategic positioning
+
+**Decision Logic**:
+1. Check for immediate winning move (rule-based)
+2. Check for blocking opponent win (rule-based)
+3. If neither, consult LLM for strategic move selection
+
+### 🎯 Optimized Mode
+**Architecture**: 3-agent pipeline with shared LLM, no CrewAI
+
+- **Agents**: Scout, Strategist, Executor (3 separate classes)
+- **Framework**: Pure LangChain agents (no CrewAI)
+- **Performance**: Fast (1-2s)
+- **Use case**: Separation of concerns, efficient multi-agent
+- **Files**: `agents/scout_langchain.py`, `agents/strategist_langchain.py`, `agents/executor_langchain.py`
+- **Coordinator**: `OptimizedLocalCoordinator` in `optimized_local_agents.py`
+- **Start**: Set `AGENT_FRAMEWORK=langchain` in main.py
+- **Processes**: 1
+- **Benefits**:
+  - ✅ Shared LLM connection (resource efficient)
+  - ✅ Clear separation of concerns
+  - ✅ Fallback logic for each agent role
+  - ✅ No CrewAI overhead
+
+**Architecture Evolution**:
+- Scout → Strategist → Executor pipeline
+- Each agent has specialized responsibilities
+- Shared `SharedLLMConnection` for efficiency
+- Direct Python method calls (no MCP simulation)
 
 ### 🏠 Local Mode (Default)
 **Architecture**: Single-process, in-memory communication
@@ -56,14 +100,31 @@ This project supports **two deployment modes** with different architectural patt
 
 | Requirement | Recommended Mode | Reason |
 |-------------|------------------|---------|
-| Development & Testing | Local | Faster iteration, easier debugging |
-| Single Machine Production | Local | Better performance, simpler deployment |
+| Quick Testing | Simple | Minimal setup, fastest response |
+| Learning Agent Architecture | Optimized | Clean separation of concerns |
+| Development & Testing | Local | Full features, easier debugging |
+| Single Machine Production | Local or Optimized | Performance + maintainability |
 | Multi-Machine Deployment | Distributed | True distributed architecture |
-| MCP Protocol Demonstration | Distributed | Shows full protocol implementation |
-| Performance Critical | Local | Lower latency, higher throughput |
-| Fault Tolerance | Distributed | Process isolation, independent failures |
+| MCP Protocol Demonstration | Local or Distributed | Protocol compliance |
+| Performance Critical | Simple or Optimized | Lowest latency |
+| Fault Tolerance | Distributed | Process isolation |
+| Multi-Agent Collaboration | Local (CrewAI) | Full agent framework features |
 
-**This document primarily describes Local Mode architecture. See "Distributed Mode Architecture" section below for distributed deployment details.**
+### Deployment Modes Comparison
+
+| Feature | Simple | Optimized | Local | Distributed |
+|---------|--------|-----------|-------|-------------|
+| **Agents** | None | 3 (LangChain) | 3 (CrewAI) | 3 (CrewAI) |
+| **Framework** | None | LangChain | CrewAI | CrewAI + MCP |
+| **LLM Connection** | Single call | Shared | Per agent | Per agent |
+| **Processes** | 1 | 1 | 1 | 4 |
+| **Transport** | N/A | Direct calls | Direct calls | HTTP/JSON-RPC |
+| **Response Time** | <1s | 1-2s | 2-5s | 3-8s |
+| **MCP Protocol** | No | No | Simulation | Full |
+| **Complexity** | Minimal | Low | Medium | High |
+| **Use Case** | Quick test | Efficient multi-agent | Full features | Multi-machine |
+
+**This document primarily describes Local Mode architecture. See "Optimized Mode" and "Distributed Mode Architecture" sections below for other modes.**
 
 ## Architecture Diagram
 
@@ -688,6 +749,97 @@ npx @modelcontextprotocol/inspector
 # - URL: http://localhost:8000/mcp/scout
 # - Connection: Direct
 ```
+
+## Simple Mode Architecture
+
+**Simple Mode** provides the fastest AI response by combining rule-based logic with minimal LLM usage:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                  FastAPI Server (Port 8000)                 │
+│                     simple_api.py                           │
+│                                                             │
+│  Game Endpoints:                                            │
+│  • POST /make-move  → Player move                          │
+│  • POST /ai-move    → AI move (with logic below)           │
+│  • POST /reset-game → Reset game                           │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+              ┌────────────────────┐
+              │  AI Move Logic     │
+              └────────┬───────────┘
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+    ┌─────────┐  ┌─────────┐  ┌─────────────┐
+    │ Win?    │  │ Block?  │  │ LLM Call    │
+    │ (Rule)  │  │ (Rule)  │  │ (Strategic) │
+    └─────────┘  └─────────┘  └─────────────┘
+```
+
+**Key Features**:
+- **Rule-based pre-checks**: `find_immediate_win()`, `find_blocking_move()`
+- **LLM only when needed**: Strategic positioning for complex scenarios
+- **No agent framework**: Direct function calls
+- **Fastest response**: <1 second for most moves
+
+**When to use**: Quick testing, minimal dependencies, performance-critical single-move scenarios
+
+## Optimized Mode Architecture
+
+**Optimized Mode** demonstrates clean multi-agent architecture without CrewAI overhead:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              FastAPI Server (Port 8000)                     │
+│                    main.py                                  │
+└──────────────────────┬──────────────────────────────────────┘
+                       │
+                       ▼
+┌─────────────────────────────────────────────────────────────┐
+│         OptimizedLocalCoordinator                           │
+│         (optimized_local_agents.py)                         │
+│                                                             │
+│  Pipeline: Scout → Strategist → Executor                   │
+│  Shared: SharedLLMConnection (single LLM instance)         │
+└──────────┬──────────┬──────────┬───────────────────────────┘
+           │          │          │
+           ▼          ▼          ▼
+    ┌──────────┐ ┌──────────┐ ┌──────────┐
+    │  Scout   │ │Strategist│ │ Executor │
+    │LangChain │ │LangChain │ │LangChain │
+    │          │ │          │ │          │
+    │ Analyze  │ │ Evaluate │ │ Execute  │
+    │ Board    │ │ Moves    │ │ Move     │
+    └────┬─────┘ └────┬─────┘ └────┬─────┘
+         │            │            │
+         └────────────┴────────────┘
+                      │
+                      ▼
+          ┌─────────────────────────┐
+          │ SharedLLMConnection     │
+          │ (models/shared_llm.py)  │
+          │                         │
+          │ Single LLM instance     │
+          │ Shared across 3 agents  │
+          └─────────────────────────┘
+```
+
+**Key Features**:
+- **No CrewAI**: Pure LangChain agents for lower overhead
+- **Shared LLM connection**: Single `SharedLLMConnection` instance
+- **Separation of concerns**: Each agent has specialized role
+- **Fallback logic**: Each agent has deterministic fallbacks
+
+**Files**:
+- `agents/scout_langchain.py` - Board analysis
+- `agents/strategist_langchain.py` - Move evaluation
+- `agents/executor_langchain.py` - Move execution
+- `agents/optimized_local_agents.py` - Coordinator + SharedLLMConnection
+- `models/shared_llm.py` - Shared LLM connection class
+
+**When to use**: Learning multi-agent patterns, efficient resource usage, architectural clarity
 
 ## Distributed Mode Architecture
 
