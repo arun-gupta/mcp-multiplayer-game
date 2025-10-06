@@ -144,7 +144,7 @@ def main():
     
     # Title
     st.title("🎮 Optimized Tic Tac Toe")
-    st.subheader("Shared Resources • < 1 Second Per Move • No MCP Servers")
+    st.subheader("Optimized Mode")
     
     # Check backend health
     if not check_backend_health():

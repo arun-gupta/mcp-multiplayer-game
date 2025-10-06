@@ -185,7 +185,17 @@ async def ai_move():
         raise HTTPException(status_code=400, detail="Game is over")
     
     if current_game.current_player != "O":
-        raise HTTPException(status_code=400, detail="Not AI's turn")
+        # Return current game state instead of error - AI move might have been handled automatically
+        return {
+            "success": False,
+            "message": "Not AI's turn - move may have been handled automatically",
+            "game_state": {
+                "board": current_game.board,
+                "current_player": current_game.current_player,
+                "game_over": current_game.is_game_over(),
+                "winner": current_game.get_winner()
+            }
+        }
     
     start_time = time.time()
     

@@ -50,7 +50,17 @@ def get_ai_move():
     """Get AI move"""
     try:
         response = requests.post(f"{API_BASE}/game/ai-move")
-        return response.json() if response.status_code == 200 else None
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 400:
+            # Handle case where AI move was already handled automatically
+            try:
+                data = response.json()
+                if data.get("message") == "Not AI's turn - move may have been handled automatically":
+                    return {"success": True, "message": "AI move handled automatically"}
+            except:
+                pass
+        return None
     except:
         return None
 
